@@ -23,7 +23,7 @@ function openPreview(button) {
 
   lightboxImage.src = image.currentSrc || image.src;
   lightboxImage.alt = image.alt;
-  lightboxCaption.textContent = button.querySelector("span")?.textContent || image.alt;
+  lightboxCaption.textContent = button.querySelector(".detail-shot-label")?.textContent || image.alt;
   lightbox.classList.add("is-open");
   lightbox.setAttribute("aria-hidden", "false");
   document.body.classList.add("is-previewing");

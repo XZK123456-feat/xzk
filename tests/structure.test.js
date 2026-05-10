@@ -8,6 +8,7 @@ const websiteDetailPath = path.join(root, "website-design.html");
 const cssPath = path.join(root, "styles.css");
 const jsPath = path.join(root, "script.js");
 const detailJsPath = path.join(root, "website-design.js");
+const normalize = (content) => content.replace(/\r\n/g, "\n");
 
 assert.ok(fs.existsSync(htmlPath), "index.html should exist");
 assert.ok(fs.existsSync(websiteDetailPath), "website-design.html should exist");
@@ -15,11 +16,11 @@ assert.ok(fs.existsSync(cssPath), "styles.css should exist");
 assert.ok(fs.existsSync(jsPath), "script.js should exist");
 assert.ok(fs.existsSync(detailJsPath), "website-design.js should exist");
 
-const html = fs.readFileSync(htmlPath, "utf8");
-const websiteDetailHtml = fs.readFileSync(websiteDetailPath, "utf8");
-const css = fs.readFileSync(cssPath, "utf8");
-const js = fs.readFileSync(jsPath, "utf8");
-const detailJs = fs.readFileSync(detailJsPath, "utf8");
+const html = normalize(fs.readFileSync(htmlPath, "utf8"));
+const websiteDetailHtml = normalize(fs.readFileSync(websiteDetailPath, "utf8"));
+const css = normalize(fs.readFileSync(cssPath, "utf8"));
+const js = normalize(fs.readFileSync(jsPath, "utf8"));
+const detailJs = normalize(fs.readFileSync(detailJsPath, "utf8"));
 
 [
   "ZK.PORTFOLIO",
