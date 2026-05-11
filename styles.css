@@ -1444,29 +1444,9 @@ body.is-previewing {
 }
 
 .detail-shot-ui {
-  position: absolute;
-  right: 10px;
-  bottom: 10px;
-  z-index: 3;
-  display: grid;
-  grid-template-columns: repeat(3, 13px);
-  gap: 4px;
-  padding: 4px;
-  border: 2px solid var(--ink);
-  border-radius: 8px;
-  background: transparent;
-  box-shadow: none;
+  display: none;
 }
 
-.detail-shot-ui i {
-  display: block;
-  width: 13px;
-  height: 13px;
-  border: 1px solid var(--ink);
-  border-radius: 3px;
-  background: transparent;
-  box-shadow: none;
-}
 
 .mobile-shot img {
   aspect-ratio: 9 / 16;
