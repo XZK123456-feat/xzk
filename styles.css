@@ -1324,15 +1324,14 @@ body.is-previewing {
   position: relative;
   display: grid;
   gap: 0;
-  padding: 10px;
-  border: 4px solid var(--ink);
-  border-radius: 24px;
+  padding: 8px;
+  border: 2px solid var(--ink);
+  border-radius: 16px;
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.18), transparent 28%),
     linear-gradient(180deg, #f7f7fb 0%, #ececf5 100%);
   box-shadow:
-    10px 10px 0 var(--ink),
-    inset 0 0 0 3px rgba(255, 255, 255, 0.74);
+    4px 4px 0 var(--ink);
   color: var(--ink);
   cursor: zoom-in;
   font: inherit;
@@ -1353,8 +1352,7 @@ body.is-previewing {
 .detail-shot:focus-visible {
   transform: translate(-5px, -6px) rotate(-0.35deg);
   box-shadow:
-    16px 16px 0 var(--ink),
-    inset 0 0 0 3px rgba(255, 255, 255, 0.8);
+    8px 8px 0 var(--ink);
   filter: saturate(1.08);
 }
 
@@ -1366,8 +1364,7 @@ body.is-previewing {
 .detail-shot:active {
   transform: translate(2px, 2px) rotate(0deg);
   box-shadow:
-    6px 6px 0 var(--ink),
-    inset 0 0 0 3px rgba(255, 255, 255, 0.76);
+    3px 3px 0 var(--ink);
 }
 
 .detail-shot-label {
@@ -1383,17 +1380,15 @@ body.is-previewing {
 .detail-shot-frame {
   position: relative;
   display: block;
-  padding: 12px;
-  border: 4px solid var(--ink);
-  border-radius: 18px;
+  padding: 8px;
+  border: 2px solid var(--ink);
+  border-radius: 12px;
   background:
     linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
     linear-gradient(180deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
     transparent;
   background-size: 12px 12px, 12px 12px, auto;
-  box-shadow:
-    inset 0 0 0 3px rgba(0, 0, 0, 0.28),
-    0 8px 0 rgba(16, 16, 16, 0.24);
+  box-shadow: none;
   overflow: hidden;
 }
 
@@ -1456,21 +1451,21 @@ body.is-previewing {
   display: grid;
   grid-template-columns: repeat(3, 13px);
   gap: 4px;
-  padding: 6px;
-  border: 3px solid var(--ink);
-  border-radius: 12px;
-  background: #555a71;
-  box-shadow: 4px 4px 0 rgba(16, 16, 16, 0.34);
+  padding: 4px;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
 }
 
 .detail-shot-ui i {
   display: block;
   width: 13px;
   height: 13px;
-  border: 2px solid var(--ink);
-  border-radius: 5px;
-  background: #303346;
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--ink);
+  border-radius: 3px;
+  background: transparent;
+  box-shadow: none;
 }
 
 .mobile-shot img {
