@@ -1314,7 +1314,7 @@ body.is-previewing {
 }
 
 .mobile-gallery {
-  grid-template-columns: repeat(2, minmax(140px, 280px));
+  grid-template-columns: repeat(3, minmax(120px, 200px));
 }
 
 .pc-gallery {
