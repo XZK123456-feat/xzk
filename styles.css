@@ -1474,12 +1474,12 @@ body.is-previewing {
 }
 
 .mobile-shot img {
-  aspect-ratio: 9 / 18;
+  aspect-ratio: 9 / 16;
   object-fit: contain;
 }
 
 .mobile-shot .detail-shot-frame {
-  padding-inline: clamp(18px, 2.8vw, 38px);
+  padding-inline: clamp(8px, 1.4vw, 18px);
 }
 
 .pc-shot img {
