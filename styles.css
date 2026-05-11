@@ -1310,14 +1310,15 @@ body.is-previewing {
   z-index: 1;
   display: grid;
   gap: 14px;
+  justify-content: center;
 }
 
 .mobile-gallery {
-  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  grid-template-columns: repeat(4, minmax(120px, 200px));
 }
 
 .pc-gallery {
-  grid-template-columns: repeat(2, minmax(240px, 1fr));
+  grid-template-columns: repeat(2, minmax(240px, 420px));
 }
 
 .detail-shot {
