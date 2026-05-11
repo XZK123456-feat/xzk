@@ -1325,7 +1325,7 @@ body.is-previewing {
   position: relative;
   display: grid;
   gap: 0;
-  padding: 6px;
+  padding: 3px;
   border: 2px solid var(--ink);
   border-radius: 16px;
   background:
@@ -1381,7 +1381,7 @@ body.is-previewing {
 .detail-shot-frame {
   position: relative;
   display: block;
-  padding: 6px;
+  padding: 3px;
   border: 2px solid var(--ink);
   border-radius: 12px;
   background:
@@ -1455,7 +1455,7 @@ body.is-previewing {
 }
 
 .mobile-shot .detail-shot-frame {
-  padding-inline: clamp(8px, 1.4vw, 18px);
+  padding-inline: clamp(4px, 0.8vw, 10px);
 }
 
 .pc-shot img {
