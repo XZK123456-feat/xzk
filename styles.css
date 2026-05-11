@@ -1412,7 +1412,7 @@ body.is-previewing {
   position: relative;
   display: grid;
   place-items: center;
-  border: 3px solid rgba(16, 16, 16, 0.96);
+  border: 0;
   border-radius: 13px;
   background: transparent;
   overflow: hidden;
