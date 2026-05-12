@@ -47,3 +47,4 @@ window.addEventListener("keydown", (event) => {
     closePreview();
   }
 });
+

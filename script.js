@@ -214,3 +214,4 @@ const dataStatsObserver = new IntersectionObserver(
 if (dataCardsSection) {
   dataStatsObserver.observe(dataCardsSection);
 }
+
