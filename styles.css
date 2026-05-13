@@ -591,11 +591,15 @@ body.motion-ready .hero-card.is-revealed .hero-stat:nth-child(3) {
   border-radius: 26px;
 }
 
-.mission-website {
+.mission-website,
+.mission-ua,
+.mission-community {
   transition: transform 180ms ease, box-shadow 180ms ease;
 }
 
-.mission-website:hover {
+.mission-website:hover,
+.mission-ua:hover,
+.mission-community:hover {
   transform: translate(-4px, -4px);
   box-shadow: 16px 16px 0 var(--ink);
 }
