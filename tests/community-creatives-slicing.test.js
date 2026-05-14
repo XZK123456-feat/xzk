@@ -26,12 +26,14 @@ const groups = [
   ["party-misc", "小恐龙派对其他素材", 15],
   ["ulala-anniversary", "不休的乌拉拉周年庆", 2],
   ["ulala-set", "乌拉拉套图", 16],
+  ["lili-tangquan", "狸狸汤泉", 28],
 ];
 
-assert.ok(html.includes("运营图58张 · 小恐龙派对40张 · 乌拉拉18张"), "NO.3 summary should reflect sliced community assets");
+assert.ok(html.includes("运营图86张 · 小恐龙派对40张 · 乌拉拉18张 · 狸狸汤泉28张"), "NO.3 summary should reflect sliced community assets");
 assert.ok(html.includes("data-community-gallery"), "NO.3 detail should render galleries from named hooks");
 assert.ok(html.includes("#party-feature"), "NO.3 nav should link to the party feature section");
 assert.ok(html.includes("#ulala-set"), "NO.3 nav should link to the ULaLa set section");
+assert.ok(html.includes("#lili-tangquan"), "NO.3 nav should link to the lili tangquan section");
 assert.ok(js.includes("sourceGroups"), "NO.3 detail script should render thumbnails from a source manifest");
 assert.ok(js.includes(".detail-shot-label"), "generated NO.3 thumbnails should keep the lightbox caption hook");
 
