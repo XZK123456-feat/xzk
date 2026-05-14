@@ -1621,6 +1621,22 @@ body.is-previewing {
   font-size: 24px;
 }
 
+.zoom-hint {
+  justify-self: center;
+  padding: 8px 20px;
+  border: 3px solid var(--yellow);
+  border-radius: 999px;
+  background: rgba(16, 16, 16, 0.78);
+  color: var(--yellow);
+  font-size: 18px;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.zoom-hint.is-hidden {
+  opacity: 0;
+}
+
 .lightbox-close {
   position: fixed;
   right: 24px;
