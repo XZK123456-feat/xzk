@@ -20,7 +20,7 @@ function listPngs(folder) {
   return fs.readdirSync(folder).filter((name) => name.endsWith(".png")).sort();
 }
 
-assert.ok(html.includes("横图60 · 竖图36 · 九图162 = 共258张"), "UA detail summary should count every individual creative");
+assert.ok(html.includes("横图60 · 竖图36 · 九图18组 = 共114个缩略图"), "UA detail summary should count nine-grid creatives by 3x3 groups");
 assert.ok(html.includes('data-ua-gallery="horizontal"'), "horizontal gallery should be generated from a named hook");
 assert.ok(html.includes('data-ua-gallery="vertical"'), "vertical gallery should be generated from a named hook");
 assert.ok(html.includes('data-ua-gallery="nine-grid"'), "nine-grid gallery should be generated from a named hook");
@@ -28,7 +28,7 @@ assert.ok(html.includes('data-ua-gallery="nine-grid"'), "nine-grid gallery shoul
 assert.ok(js.includes("sourceGroups"), "UA detail script should render thumbnails from a source manifest");
 assert.ok(js.includes("横图1") && js.includes("count: 20"), "horizontal source sheets should be split into individual tiles");
 assert.ok(js.includes("竖图4") && js.includes("count: 36"), "vertical source sheet should be split into individual tiles");
-assert.ok(js.includes("九图5") && js.includes("count: 162"), "nine-grid source sheet should be split into individual tiles");
+assert.ok(js.includes("九图5") && js.includes("count: 18"), "nine-grid source sheet should be split into 18 grouped 3x3 thumbnails");
 assert.ok(js.includes(".detail-shot-label"), "generated thumbnails should keep the lightbox caption hook");
 
 const horizontal = listPngs(path.join(slicedRoot, "horizontal"));
@@ -37,7 +37,7 @@ const nineGrid = listPngs(path.join(slicedRoot, "nine-grid"));
 
 assert.strictEqual(horizontal.length, 60, "horizontal source sheets should produce 60 single creatives");
 assert.strictEqual(vertical.length, 36, "vertical source sheet should produce 36 single creatives");
-assert.strictEqual(nineGrid.length, 162, "nine-grid source sheet should produce 162 single creatives");
+assert.strictEqual(nineGrid.length, 18, "nine-grid source sheet should produce 18 grouped 3x3 creatives");
 
 horizontal.forEach((name) => {
   const { width, height } = readPngSize(path.join(slicedRoot, "horizontal", name));
@@ -53,8 +53,8 @@ vertical.forEach((name) => {
 
 nineGrid.forEach((name) => {
   const { width, height } = readPngSize(path.join(slicedRoot, "nine-grid", name));
-  assert.ok(width >= 270 && width <= 320, `${name} should be one nine-grid tile wide, got ${width}`);
-  assert.ok(height >= 270 && height <= 320, `${name} should be one nine-grid tile tall, got ${height}`);
+  assert.ok(width >= 850 && width <= 900, `${name} should be one grouped nine-grid thumbnail wide, got ${width}`);
+  assert.ok(height >= 850 && height <= 900, `${name} should be one grouped nine-grid thumbnail tall, got ${height}`);
 });
 
 console.log("ua creatives slicing checks passed");

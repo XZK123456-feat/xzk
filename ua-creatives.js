@@ -16,7 +16,7 @@ const sourceGroups = {
   "nine-grid": {
     label: "九图",
     shotClass: "pc-shot square-shot",
-    groups: [{ prefix: "九图5", count: 162 }],
+    groups: [{ prefix: "九图5", count: 18 }],
   },
 };
 

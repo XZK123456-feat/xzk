@@ -93,13 +93,30 @@ def slice_source(filename: str, category: str, prefix: str) -> int:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     index = 1
-    for row, (top, bottom) in enumerate(y_intervals, start=1):
-        for col, (left, right) in enumerate(x_intervals, start=1):
-            crop = image.crop((left, top, right, bottom))
-            out_path = output_dir / f"{prefix}-{index:03d}.png"
-            crop.save(out_path, "PNG", optimize=True)
-            print(f"{out_path.relative_to(ROOT)} ({crop.width}x{crop.height}) row={row} col={col}")
-            index += 1
+    if category == "nine-grid":
+        group_size = 3
+        if len(x_intervals) % group_size != 0 or len(y_intervals) % group_size != 0:
+            raise RuntimeError(f"{filename} cannot be grouped into 3x3 thumbnails")
+
+        for row in range(0, len(y_intervals), group_size):
+            for col in range(0, len(x_intervals), group_size):
+                left = x_intervals[col][0]
+                right = x_intervals[col + group_size - 1][1]
+                top = y_intervals[row][0]
+                bottom = y_intervals[row + group_size - 1][1]
+                crop = image.crop((left, top, right, bottom))
+                out_path = output_dir / f"{prefix}-{index:03d}.png"
+                crop.save(out_path, "PNG", optimize=True)
+                print(f"{out_path.relative_to(ROOT)} ({crop.width}x{crop.height}) group={index}")
+                index += 1
+    else:
+        for row, (top, bottom) in enumerate(y_intervals, start=1):
+            for col, (left, right) in enumerate(x_intervals, start=1):
+                crop = image.crop((left, top, right, bottom))
+                out_path = output_dir / f"{prefix}-{index:03d}.png"
+                crop.save(out_path, "PNG", optimize=True)
+                print(f"{out_path.relative_to(ROOT)} ({crop.width}x{crop.height}) row={row} col={col}")
+                index += 1
 
     image.close()
     return index - 1
