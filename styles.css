@@ -1248,6 +1248,22 @@ body.is-previewing {
   font-size: clamp(24px, 2vw, 38px);
 }
 
+.featured-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 18px 0 0;
+  padding: 12px 30px;
+  border: 3px solid var(--yellow);
+  border-radius: 999px;
+  background: var(--black-ui-texture);
+  color: var(--yellow);
+  font-size: clamp(22px, 1.7vw, 32px);
+  font-style: normal;
+  box-shadow: 4px 4px 0 var(--yellow);
+  animation: uiTextureDrift 9s linear infinite;
+}
+
 .detail-summary {
   width: min(100%, 1160px);
   margin: 0 auto;
@@ -1319,6 +1335,26 @@ body.is-previewing {
 
 .mobile-gallery {
   grid-template-columns: repeat(3, minmax(120px, 200px));
+}
+
+.ua-vertical-gallery {
+  grid-template-columns: repeat(9, minmax(90px, 130px));
+  gap: 8px;
+}
+
+.ua-horizontal-gallery {
+  grid-template-columns: repeat(10, minmax(150px, 260px));
+  gap: 6px;
+}
+
+.ua-horizontal-gallery .detail-shot-frame {
+  padding: 1px;
+}
+
+.ua-horizontal-gallery .pc-shot img {
+  aspect-ratio: auto;
+  width: 100%;
+  height: auto;
 }
 
 .pc-gallery {
@@ -1759,7 +1795,9 @@ body.is-previewing {
   .summary-strip,
   .detail-summary,
   .mobile-gallery,
-  .pc-gallery {
+  .pc-gallery,
+  .ua-vertical-gallery,
+  .ua-horizontal-gallery {
     grid-template-columns: 1fr;
   }
 

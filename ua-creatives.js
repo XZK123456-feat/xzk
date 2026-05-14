@@ -3,20 +3,28 @@ const sourceGroups = {
     label: "横图",
     shotClass: "pc-shot",
     groups: [
-      { prefix: "横图1", count: 20 },
-      { prefix: "横图2", count: 20 },
-      { prefix: "横图3", count: 20 },
+      { prefix: "横图1", count: 20, ext: "png" },
+      { prefix: "横图2", count: 20, ext: "png" },
+      { prefix: "横图3", count: 20, ext: "png" },
+      { prefix: "横图4", count: 20, ext: "jpg" },
     ],
   },
   vertical: {
     label: "竖图",
     shotClass: "mobile-shot",
-    groups: [{ prefix: "竖图4", count: 36 }],
+    groups: [
+      { prefix: "竖图4", count: 36, ext: "png" },
+      { prefix: "竖图5", count: 18, ext: "jpg" },
+    ],
   },
   "nine-grid": {
     label: "九图",
     shotClass: "pc-shot square-shot",
-    groups: [{ prefix: "九图5", count: 18 }],
+    groups: [
+      { prefix: "九图5", count: 18, ext: "png" },
+      { prefix: "九图6", count: 1, ext: "png" },
+      { prefix: "九图7", count: 1, ext: "png" },
+    ],
   },
 };
 
@@ -29,7 +37,7 @@ function buildFiles(configKey) {
   return config.groups.flatMap((group) =>
     Array.from({ length: group.count }, (_, index) => ({
       label: `${config.label} ${paddedIndex(index + 1)} / ${group.prefix}`,
-      src: `assets/ua-creatives/sliced/${configKey}/${group.prefix}-${paddedIndex(index + 1)}.png`,
+      src: `assets/ua-creatives/sliced/${configKey}/${group.prefix}-${paddedIndex(index + 1)}.${group.ext || "png"}`,
     })),
   );
 }
