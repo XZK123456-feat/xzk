@@ -33,7 +33,7 @@ const sourceGroups = [
     key: "lili-tangquan",
     label: "狸狸汤泉",
     prefix: "lili-tangquan",
-    count: 25,
+    count: 24,
   },
 ];
 

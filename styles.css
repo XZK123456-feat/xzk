@@ -1621,6 +1621,86 @@ body.is-previewing {
   font-size: 24px;
 }
 
+/* ---------- Vibecoding placeholder ---------- */
+.vibecoding-gallery {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 320px;
+}
+
+.vibecoding-placeholder {
+  width: 100%;
+  max-width: 960px;
+}
+
+.vibecoding-preview-frame {
+  display: grid;
+  gap: 16px;
+  justify-items: center;
+  padding: 60px 32px;
+  border: 3px dashed var(--ink);
+  border-radius: 20px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent 30%),
+    linear-gradient(180deg, #f0f0f8 0%, #e4e4f0 100%);
+  box-shadow: 6px 6px 0 var(--ink);
+  text-align: center;
+}
+
+.vibecoding-subtitle {
+  font-family: "Smilecomix", "Comic Sans MS", "Arial Rounded MT Bold", system-ui, sans-serif;
+  font-size: clamp(20px, 2.2vw, 34px);
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: 3px;
+  margin-left: 14px;
+  padding: 10px 24px;
+  border: 3px solid var(--yellow);
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--yellow) 0%, #ffcc00 50%, var(--yellow) 100%);
+  box-shadow:
+    0 0 18px rgba(255, 210, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  vertical-align: middle;
+  white-space: nowrap;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+/* ---------- Topbar VibeCoding tag ---------- */
+.vibecoding-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 74px;
+  margin-left: 16px;
+  padding: 0 34px;
+  border: 6px solid var(--ink);
+  border-radius: 999px;
+  background: white;
+  box-shadow: 0 7px 0 var(--ink);
+  color: var(--ink);
+  font-size: clamp(16px, 1.2vw, 24px);
+  font-weight: 700;
+  letter-spacing: 1px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.vibecoding-label {
+  font-family: "Smilecomix", "Comic Sans MS", "Arial Rounded MT Bold", system-ui, sans-serif;
+  font-size: 32px;
+  color: var(--ink);
+  letter-spacing: 2px;
+}
+
+.vibecoding-pending {
+  font-size: 18px;
+  color: #666;
+  letter-spacing: 1px;
+}
+
+/* ---------- Lightbox / Zoom ---------- */
 .zoom-hint {
   justify-self: center;
   padding: 8px 20px;
@@ -1798,6 +1878,10 @@ body.is-previewing {
   .nav-pill {
     min-width: 86px;
     padding: 0 16px;
+  }
+
+  .vibecoding-tag {
+    margin-left: 0;
   }
 
   .section-panel {
@@ -2064,7 +2148,8 @@ body.is-previewing {
   }
 
   .brand-pill,
-  .nav-pill {
+  .nav-pill,
+  .vibecoding-tag {
     height: 44px;
     border-width: 4px;
     box-shadow: 0 4px 0 var(--ink);
@@ -2080,6 +2165,12 @@ body.is-previewing {
     min-width: 55px;
     padding: 0 10px;
     font-size: 14px;
+  }
+
+  .vibecoding-tag {
+    margin-left: 0;
+    padding: 0 14px;
+    font-size: 13px;
   }
 
   .nav-pills {
