@@ -1365,6 +1365,15 @@ body.is-previewing {
   grid-template-columns: repeat(4, minmax(150px, 240px));
 }
 
+.community-gallery {
+  grid-template-columns: repeat(3, minmax(220px, 360px));
+  align-items: start;
+}
+
+.community-compact-gallery {
+  grid-template-columns: repeat(4, minmax(160px, 260px));
+}
+
 .detail-shot {
   position: relative;
   display: grid;
@@ -1517,6 +1526,16 @@ body.is-previewing {
 
 .square-shot .detail-shot-frame {
   padding: 10px;
+}
+
+.community-shot .detail-shot-frame {
+  padding: 10px;
+}
+
+.community-shot img {
+  max-height: 420px;
+  aspect-ratio: auto;
+  object-fit: contain;
 }
 
 @keyframes detailScanline {
@@ -1796,6 +1815,7 @@ body.is-previewing {
   .detail-summary,
   .mobile-gallery,
   .pc-gallery,
+  .community-gallery,
   .ua-vertical-gallery,
   .ua-horizontal-gallery {
     grid-template-columns: 1fr;

@@ -62,8 +62,8 @@ assert.ok(html.includes("asset-caption"), "non-interactive asset descriptions sh
 assert.ok(!html.includes("<button type=\"button\">优质买量图片</button>"), "asset descriptions should not look like clickable buttons");
 assert.ok(!html.includes("<button type=\"button\">买量视频素材</button>"), "video descriptions should not look like clickable buttons");
 assert.ok(html.includes("primary-metric"), "main output numbers should be marked as primary metrics");
-assert.ok(html.includes("Codex vibecoding"), "AI tools should include Codex vibecoding");
-assert.ok(html.indexOf("Codex vibecoding") < html.indexOf("Nanobanana系列"), "Codex vibecoding should be the first AI tool");
+assert.ok(html.includes("Claude Code + Codex 进行 vibe coding"), "AI tools should include Claude Code and Codex vibe coding");
+assert.ok(html.indexOf("Claude Code + Codex 进行 vibe coding") < html.indexOf("Nanobanana系列"), "Claude Code and Codex vibe coding should be the first AI tool");
 assert.ok(html.includes("AIGC / 买量 / 运营 / 品宣"), "hero category should keep AIGC, buying, operation, and branding");
 assert.ok(html.includes("2024.08 - 至今"), "hero date should start at 2024.08");
 assert.ok(html.includes("hero-dashboard"), "hero should include an outcome dashboard");
