@@ -1,3 +1,77 @@
+const sourceGroups = {
+  horizontal: {
+    label: "横图",
+    shotClass: "pc-shot",
+    groups: [
+      { prefix: "横图1", count: 20 },
+      { prefix: "横图2", count: 20 },
+      { prefix: "横图3", count: 20 },
+    ],
+  },
+  vertical: {
+    label: "竖图",
+    shotClass: "mobile-shot",
+    groups: [{ prefix: "竖图4", count: 36 }],
+  },
+  "nine-grid": {
+    label: "九图",
+    shotClass: "pc-shot square-shot",
+    groups: [{ prefix: "九图5", count: 162 }],
+  },
+};
+
+function paddedIndex(index) {
+  return String(index).padStart(3, "0");
+}
+
+function buildFiles(configKey) {
+  const config = sourceGroups[configKey];
+  return config.groups.flatMap((group) =>
+    Array.from({ length: group.count }, (_, index) => ({
+      label: `${config.label} ${paddedIndex(index + 1)} / ${group.prefix}`,
+      src: `assets/ua-creatives/sliced/${configKey}/${group.prefix}-${paddedIndex(index + 1)}.png`,
+    })),
+  );
+}
+
+function createShot(configKey, item, index) {
+  const config = sourceGroups[configKey];
+  const button = document.createElement("button");
+  button.className = `detail-shot ${config.shotClass}`;
+  button.type = "button";
+  button.dataset.detailPreview = "";
+  button.setAttribute("aria-label", `预览${config.label} ${paddedIndex(index + 1)}`);
+
+  button.innerHTML = `
+    <span class="detail-shot-label">${item.label}</span>
+    <span class="detail-shot-frame" aria-hidden="true">
+      <span class="detail-shot-glass">
+        <img src="${item.src}" alt="买量${item.label}" loading="lazy" />
+      </span>
+      <span class="detail-shot-ui" aria-hidden="true"><i></i><i></i><i></i></span>
+    </span>
+  `;
+
+  return button;
+}
+
+function renderGalleries() {
+  Object.keys(sourceGroups).forEach((configKey) => {
+    const gallery = document.querySelector(`[data-ua-gallery="${configKey}"]`);
+    if (!gallery) {
+      return;
+    }
+
+    const fragment = document.createDocumentFragment();
+    buildFiles(configKey).forEach((item, index) => {
+      fragment.append(createShot(configKey, item, index));
+    });
+    gallery.append(fragment);
+  });
+}
+
+renderGalleries();
+
 const previewButtons = Array.from(document.querySelectorAll("[data-detail-preview]"));
 const lightbox = document.querySelector(".website-lightbox");
 const lightboxImage = lightbox?.querySelector("img");

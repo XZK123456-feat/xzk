@@ -1325,6 +1325,10 @@ body.is-previewing {
   grid-template-columns: repeat(3, minmax(200px, 350px));
 }
 
+.ua-square-gallery {
+  grid-template-columns: repeat(4, minmax(150px, 240px));
+}
+
 .detail-shot {
   position: relative;
   display: grid;
@@ -1468,6 +1472,15 @@ body.is-previewing {
 
 .pc-shot .detail-shot-frame {
   padding: 12px;
+}
+
+.square-shot img {
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+}
+
+.square-shot .detail-shot-frame {
+  padding: 10px;
 }
 
 @keyframes detailScanline {

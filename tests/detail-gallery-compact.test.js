@@ -12,7 +12,7 @@ assert.ok(
   "thumbnail labels should be visually hidden to remove per-image titles",
 );
 assert.ok(
-  css.includes(".detail-gallery {\n  position: relative;\n  z-index: 1;\n  display: grid;\n  gap: 22px;"),
+  css.includes(".detail-gallery {\n  position: relative;\n  z-index: 1;\n  display: grid;\n  gap: 14px;"),
   "gallery item gap should be tighter",
 );
 assert.ok(
