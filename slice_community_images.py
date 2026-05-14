@@ -6,6 +6,7 @@ from PIL import Image, ImageChops
 
 ROOT = Path(__file__).resolve().parent
 SOURCE_DIR = Path(r"C:\Users\xiaozikang\Desktop\运营图")
+LILI_SOURCE = Path(r"C:\Users\xiaozikang\Desktop\资源 1@4x.png")
 ASSET_DIR = ROOT / "assets" / "community-creatives"
 SOURCE_ASSET_DIR = ASSET_DIR / "source"
 SLICED_DIR = ASSET_DIR / "sliced"
@@ -93,6 +94,34 @@ MANIFEST = [
     },
 ]
 
+LILI_REGIONS = [
+    (1, 14, 976, 1315),
+    (1002, 14, 1979, 1315),
+    (1986, 4, 2847, 866),
+    (2866, 4, 3727, 866),
+    (3754, 17, 4612, 875),
+    (5013, 0, 5727, 951),
+    (5760, 0, 6473, 951),
+    (1986, 880, 2847, 1742),
+    (2866, 880, 3727, 1742),
+    (3754, 893, 4612, 1751),
+    (5013, 993, 5727, 1945),
+    (5760, 993, 6473, 1945),
+    (1, 1336, 976, 2635),
+    (1004, 1336, 1978, 2635),
+    (1986, 1761, 2847, 2622),
+    (2866, 1761, 3727, 2622),
+    (3750, 1769, 4616, 2635),
+    (4648, 2020, 5892, 3632),
+    (5927, 1997, 7164, 3647),
+    (0, 2649, 788, 3648),
+    (809, 2649, 1559, 3648),
+    (1582, 2649, 2332, 3648),
+    (2353, 2652, 3102, 3648),
+    (3118, 2656, 3858, 3648),
+    (3880, 2656, 4611, 3648),
+]
+
 
 def assert_inside_workspace(path: Path) -> None:
     resolved = path.resolve()
@@ -112,6 +141,27 @@ def trim_white_border(image: Image.Image) -> Image.Image:
 
 def flatten_regions(regions: list[list[tuple[int, int, int, int]]]) -> list[tuple[int, int, int, int]]:
     return [region for row in regions for region in row]
+
+
+def slice_lili_tangquan(clear_existing: bool = True) -> int:
+    if not LILI_SOURCE.exists():
+        raise FileNotFoundError(LILI_SOURCE)
+
+    output_dir = SLICED_DIR / "lili-tangquan"
+    assert_inside_workspace(output_dir)
+    if clear_existing and output_dir.exists():
+        shutil.rmtree(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    image = Image.open(LILI_SOURCE).convert("RGBA")
+    for index, box in enumerate(LILI_REGIONS, start=1):
+        crop = image.crop(box)
+        output = output_dir / f"lili-tangquan-{index:03d}.png"
+        crop.save(output, "PNG", optimize=True)
+        print(f"{output.relative_to(ROOT)} ({crop.width}x{crop.height})")
+
+    image.close()
+    return len(LILI_REGIONS)
 
 
 def reset_output() -> None:
@@ -147,6 +197,8 @@ def main() -> None:
             total += 1
 
         image.close()
+
+    total += slice_lili_tangquan(clear_existing=False)
 
     print(f"\nDone. total={total}")
 

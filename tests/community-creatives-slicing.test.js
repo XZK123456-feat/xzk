@@ -26,10 +26,10 @@ const groups = [
   ["party-misc", "小恐龙派对其他素材", 15],
   ["ulala-anniversary", "不休的乌拉拉周年庆", 2],
   ["ulala-set", "乌拉拉套图", 16],
-  ["lili-tangquan", "狸狸汤泉", 28],
+  ["lili-tangquan", "狸狸汤泉", 25],
 ];
 
-assert.ok(html.includes("运营图86张 · 小恐龙派对40张 · 乌拉拉18张 · 狸狸汤泉28张"), "NO.3 summary should reflect sliced community assets");
+assert.ok(html.includes("运营图83张 · 小恐龙派对40张 · 乌拉拉18张 · 狸狸汤泉25张"), "NO.3 summary should reflect sliced community assets");
 assert.ok(html.includes("data-community-gallery"), "NO.3 detail should render galleries from named hooks");
 assert.ok(html.includes("#party-feature"), "NO.3 nav should link to the party feature section");
 assert.ok(html.includes("#ulala-set"), "NO.3 nav should link to the ULaLa set section");
@@ -48,6 +48,10 @@ groups.forEach(([folder, label, count]) => {
     const { width, height } = readPngSize(path.join(slicedRoot, folder, name));
     assert.ok(width >= 260, `${name} should be wide enough to show as a thumbnail`);
     assert.ok(height >= 260, `${name} should be tall enough to show as a thumbnail`);
+    if (folder === "lili-tangquan") {
+      assert.ok(width >= 700, `${name} should not be a partial lili crop, got width ${width}`);
+      assert.ok(height >= 850, `${name} should not be a partial lili crop, got height ${height}`);
+    }
   });
 });
 
