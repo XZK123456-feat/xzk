@@ -215,3 +215,45 @@ if (dataCardsSection) {
   dataStatsObserver.observe(dataCardsSection);
 }
 
+const resumeOverlay = document.querySelector(".resume-overlay");
+const resumeOpenBtn = document.querySelector(".floating-resume");
+const resumeCloseBtn = document.querySelector(".resume-overlay-close");
+
+function openResume(e) {
+  e.preventDefault();
+  if (!resumeOverlay) return;
+  resumeOverlay.classList.add("is-open");
+  resumeOverlay.setAttribute("aria-hidden", "false");
+  document.body.classList.add("is-previewing");
+  resumeOverlay.querySelector(".resume-modal").scrollTop = 0;
+}
+
+function closeResume() {
+  if (!resumeOverlay) return;
+  resumeOverlay.classList.remove("is-open");
+  resumeOverlay.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("is-previewing");
+}
+
+if (resumeOpenBtn) {
+  resumeOpenBtn.addEventListener("click", openResume);
+}
+
+if (resumeCloseBtn) {
+  resumeCloseBtn.addEventListener("click", closeResume);
+}
+
+if (resumeOverlay) {
+  resumeOverlay.addEventListener("click", function(e) {
+    if (e.target === resumeOverlay) {
+      closeResume();
+    }
+  });
+
+  document.addEventListener("keydown", function(e) {
+    if (e.key === "Escape" && resumeOverlay.classList.contains("is-open")) {
+      closeResume();
+    }
+  });
+}
+
