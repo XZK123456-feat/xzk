@@ -1379,21 +1379,17 @@ body.is-previewing {
 }
 
 .mobile-gallery {
-  grid-template-columns: repeat(3, minmax(120px, 200px));
+  grid-template-columns: repeat(3, minmax(150px, 240px));
 }
 
 .ua-vertical-gallery {
-  grid-template-columns: repeat(9, minmax(90px, 130px));
+  grid-template-columns: repeat(9, minmax(100px, 150px));
   gap: 8px;
 }
 
 .ua-horizontal-gallery {
-  grid-template-columns: repeat(10, minmax(150px, 260px));
+  grid-template-columns: repeat(10, minmax(170px, 290px));
   gap: 6px;
-}
-
-.ua-horizontal-gallery .detail-shot-frame {
-  padding: 1px;
 }
 
 .ua-horizontal-gallery .pc-shot img {
@@ -1403,34 +1399,31 @@ body.is-previewing {
 }
 
 .pc-gallery {
-  grid-template-columns: repeat(3, minmax(200px, 350px));
+  grid-template-columns: repeat(3, minmax(220px, 400px));
 }
 
 .ua-square-gallery {
-  grid-template-columns: repeat(4, minmax(150px, 240px));
+  grid-template-columns: repeat(4, minmax(170px, 270px));
 }
 
 .community-gallery {
-  grid-template-columns: repeat(3, minmax(220px, 360px));
+  grid-template-columns: repeat(3, minmax(250px, 420px));
   align-items: start;
 }
 
 .community-compact-gallery {
-  grid-template-columns: repeat(4, minmax(160px, 260px));
+  grid-template-columns: repeat(4, minmax(180px, 300px));
 }
 
 .detail-shot {
   position: relative;
   display: grid;
   gap: 0;
-  padding: 3px;
+  padding: 0;
   border: 2px solid var(--ink);
-  border-radius: 16px;
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.18), transparent 28%),
-    linear-gradient(180deg, #f7f7fb 0%, #ececf5 100%);
-  box-shadow:
-    4px 4px 0 var(--ink);
+  border-radius: 14px;
+  background: white;
+  box-shadow: 4px 4px 0 var(--ink);
   color: var(--ink);
   cursor: zoom-in;
   font: inherit;
@@ -1476,54 +1469,6 @@ body.is-previewing {
   white-space: nowrap;
 }
 
-.detail-shot-frame {
-  position: relative;
-  display: block;
-  padding: 3px;
-  border: 2px solid var(--ink);
-  border-radius: 12px;
-  background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
-    transparent;
-  background-size: 12px 12px, 12px 12px, auto;
-  box-shadow: none;
-  overflow: hidden;
-}
-
-.detail-shot-frame::before {
-  content: "";
-  position: absolute;
-  inset: -55% -35%;
-  z-index: 2;
-  background: linear-gradient(115deg, transparent 36%, rgba(255, 255, 255, 0.22) 49%, transparent 61%);
-  transform: translateX(-42%) rotate(4deg);
-  animation: detailScanline 4.8s ease-in-out infinite;
-  pointer-events: none;
-}
-
-.detail-shot-glass {
-  position: relative;
-  display: grid;
-  place-items: center;
-  border: 0;
-  border-radius: 13px;
-  background: transparent;
-  overflow: hidden;
-}
-
-.detail-shot-glass::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 22%),
-    repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0 1px, transparent 1px 6px);
-  mix-blend-mode: screen;
-  opacity: 0.3;
-  pointer-events: none;
-}
 
 .detail-shot img {
   display: block;
@@ -1542,26 +1487,13 @@ body.is-previewing {
   filter: contrast(1.04) saturate(1.08);
 }
 
-.detail-shot-ui {
-  display: none;
-}
-
-
 .mobile-shot img {
   aspect-ratio: 9 / 16;
   object-fit: contain;
 }
 
-.mobile-shot .detail-shot-frame {
-  padding-inline: clamp(4px, 0.8vw, 10px);
-}
-
 .pc-shot img {
   aspect-ratio: 16 / 8.6;
-}
-
-.pc-shot .detail-shot-frame {
-  padding: 12px;
 }
 
 .square-shot img {
@@ -1569,46 +1501,16 @@ body.is-previewing {
   object-fit: cover;
 }
 
-.square-shot .detail-shot-frame {
-  padding: 10px;
-}
-
-.community-shot .detail-shot-frame {
-  padding: 10px;
-}
-
 .community-shot img {
-  max-height: 420px;
+  max-height: 480px;
   aspect-ratio: auto;
   object-fit: contain;
-}
-
-@keyframes detailScanline {
-  0%,
-  54% {
-    transform: translateX(-48%) rotate(4deg);
-    opacity: 0;
-  }
-
-  68% {
-    opacity: 1;
-  }
-
-  100% {
-    transform: translateX(46%) rotate(4deg);
-    opacity: 0;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .detail-shot,
   .detail-shot img {
     transition: none;
-  }
-
-  .detail-shot-frame::before {
-    animation: none;
-    opacity: 0;
   }
 
   .detail-shot:hover,
@@ -2378,7 +2280,6 @@ body.is-previewing {
   }
 
   .detail-shot {
-    padding: 12px;
     border-width: 4px;
     box-shadow: 6px 6px 0 var(--ink);
   }
