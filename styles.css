@@ -1633,23 +1633,32 @@ body.is-previewing {
   width: min(100%, 1420px);
   max-height: 88vh;
   margin: 0;
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 16px;
 }
 
-.website-lightbox img {
+.lightbox-image-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
   max-width: 100%;
+}
+
+.website-lightbox img {
+  max-width: calc(100% - 140px);
   max-height: 82vh;
-  justify-self: center;
   border: 6px solid white;
   border-radius: 18px;
   background: white;
   object-fit: contain;
   box-shadow: 16px 16px 0 var(--yellow);
+  flex-shrink: 1;
 }
 
 .website-lightbox figcaption {
-  justify-self: center;
   padding: 10px 22px;
   border: 4px solid var(--ink);
   border-radius: 999px;
@@ -1659,10 +1668,7 @@ body.is-previewing {
 }
 
 .lightbox-arrow {
-  position: fixed;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 61;
+  flex-shrink: 0;
   width: 64px;
   height: 80px;
   display: flex;
@@ -1672,7 +1678,7 @@ body.is-previewing {
   border-radius: 16px;
   background: var(--yellow);
   color: var(--ink);
-  font-size: 48px;
+  font-size: 62px;
   line-height: 1;
   cursor: pointer;
   box-shadow: 6px 6px 0 var(--ink);
@@ -1684,34 +1690,45 @@ body.is-previewing {
     box-shadow 170ms ease;
 }
 
+.lightbox-arrow span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transform: translateY(-2px);
+}
+
 .website-lightbox.is-open .lightbox-arrow {
   opacity: 1;
   pointer-events: auto;
 }
 
-.lightbox-prev { left: 28px; }
-.lightbox-next { right: 28px; }
-
 .lightbox-arrow:hover {
-  transform: translateY(calc(-50% + 3px));
+  transform: translateY(3px);
   box-shadow: 3px 3px 0 var(--ink);
 }
 
 .lightbox-arrow:active {
-  transform: translateY(calc(-50% + 6px));
+  transform: translateY(6px);
   box-shadow: 1px 1px 0 var(--ink);
 }
 
 @media (max-width: 860px) {
+  .lightbox-image-row {
+    gap: 8px;
+  }
+
+  .website-lightbox img {
+    max-width: calc(100% - 100px);
+  }
+
   .lightbox-arrow {
-    width: 48px;
-    height: 60px;
-    font-size: 36px;
+    width: 44px;
+    height: 56px;
+    font-size: 42px;
     border-radius: 12px;
     border-width: 4px;
   }
-  .lightbox-prev { left: 10px; }
-  .lightbox-next { right: 10px; }
 }
 
 /* ---------- Vibecoding placeholder ---------- */
