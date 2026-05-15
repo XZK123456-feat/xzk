@@ -305,6 +305,19 @@ body.motion-ready [data-reveal="summary-strip"].is-revealed::after {
   text-shadow: 6px 5px 0 var(--ink);
 }
 
+.category-chip {
+  position: absolute;
+  top: -40px;
+  right: 150px;
+  padding: 24px 44px;
+  border: 6px solid var(--ink);
+  border-radius: 999px;
+  background: white;
+  color: var(--ink);
+  rotate: 2deg;
+  font-size: clamp(18px, 1.6vw, 28px);
+}
+
 .hero-mainline {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -1920,6 +1933,10 @@ body.is-previewing {
     text-align: left;
   }
 
+  .category-chip {
+    right: 24px;
+  }
+
   .tool-row,
   .contents-grid,
   .work-item,
@@ -2187,6 +2204,17 @@ body.is-previewing {
     top: -100px;
     left: 18px;
     font-size: 46px;
+  }
+
+  .category-chip {
+    top: -34px;
+    left: 16px;
+    right: 16px;
+    max-width: none;
+    justify-content: center;
+    padding: 14px 18px;
+    font-size: 16px;
+    line-height: 1.2;
   }
 
   .tool-stack span,
