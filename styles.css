@@ -2383,12 +2383,76 @@ body.is-previewing {
   }
 }
 
+/* ── Left-side detail directory ── */
+.detail-directory {
+  position: fixed;
+  left: 28px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 55;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.directory-title {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 100px;
+  height: 44px;
+  padding: 0 22px;
+  border: 4px solid var(--ink);
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--yellow);
+  font-size: clamp(16px, 1vw, 20px);
+  font-weight: 800;
+  box-shadow: 4px 4px 0 var(--yellow);
+  margin-bottom: 4px;
+}
+
+.directory-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 130px;
+  height: 48px;
+  padding: 0 18px;
+  border: 4px solid var(--ink);
+  border-radius: 999px;
+  background: white;
+  color: var(--ink);
+  font-size: clamp(14px, 0.9vw, 18px);
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 4px 4px 0 var(--ink);
+  transition: transform 100ms ease, box-shadow 100ms ease, background 160ms ease;
+}
+
+.directory-item:hover {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.directory-item.active {
+  background: var(--yellow);
+  pointer-events: none;
+}
+
+@media (max-width: 1100px) {
+  .detail-directory {
+    display: none;
+  }
+}
+
 /* ── Floating Resume Widget ── */
 .floating-widget {
   position: fixed;
   right: 44px;
   top: 50%;
-  transform: translateY(-50%) scale(0.78);
+  transform: translateY(-50%) scale(1.0);
   z-index: 55;
 }
 
