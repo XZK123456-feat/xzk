@@ -1643,12 +1643,12 @@ body.is-previewing {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 20px;
   max-width: 100%;
 }
 
 .website-lightbox img {
-  max-width: calc(100% - 140px);
+  max-width: calc(100% - 184px);
   max-height: 82vh;
   border: 6px solid white;
   border-radius: 18px;
@@ -1669,13 +1669,13 @@ body.is-previewing {
 
 .lightbox-arrow {
   flex-shrink: 0;
-  width: 64px;
-  height: 80px;
+  width: 72px;
+  height: 72px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: 5px solid var(--ink);
-  border-radius: 16px;
+  border-radius: 18px;
   background: var(--yellow);
   color: var(--ink);
   font-size: 62px;
@@ -1715,18 +1715,18 @@ body.is-previewing {
 
 @media (max-width: 860px) {
   .lightbox-image-row {
-    gap: 8px;
+    gap: 12px;
   }
 
   .website-lightbox img {
-    max-width: calc(100% - 100px);
+    max-width: calc(100% - 128px);
   }
 
   .lightbox-arrow {
-    width: 44px;
-    height: 56px;
-    font-size: 42px;
-    border-radius: 12px;
+    width: 52px;
+    height: 52px;
+    font-size: 36px;
+    border-radius: 14px;
     border-width: 4px;
   }
 }
