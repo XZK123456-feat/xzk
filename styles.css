@@ -2397,8 +2397,8 @@ body.is-previewing {
   max-height: 90vh;
   overflow-y: auto;
   display: grid;
-  gap: 32px;
-  padding: 48px 42px 42px;
+  gap: 16px;
+  padding: 28px 32px 28px;
   border: 7px solid var(--ink);
   border-radius: 38px;
   background:
@@ -2421,7 +2421,7 @@ body.is-previewing {
 .resume-modal::before {
   content: "";
   position: absolute;
-  inset: 18px;
+  inset: 14px;
   border: 4px dashed rgba(16, 16, 16, 0.24);
   border-radius: 28px;
   pointer-events: none;
@@ -2475,15 +2475,15 @@ body.is-previewing {
 .resume-header-card {
   position: relative;
   text-align: center;
-  padding: 28px 0 6px;
+  padding: 18px 0 4px;
 }
 
 .resume-photo {
   position: absolute;
   right: 12px;
   top: -10px;
-  width: 85px;
-  height: 102px;
+  width: 68px;
+  height: 82px;
   border: 4px solid var(--ink);
   border-radius: 12px;
   object-fit: cover;
@@ -2492,7 +2492,7 @@ body.is-previewing {
 
 .resume-name {
   font-family: "Alibaba PuHuiTi", "阿里巴巴普惠体", "ZHYuwanPortfolio", "Microsoft YaHei", "PingFang SC", sans-serif;
-  font-size: clamp(44px, 4.4vw, 72px);
+  font-size: clamp(36px, 3.6vw, 56px);
   font-weight: 800;
   color: var(--ink);
   margin: 0;
@@ -2503,10 +2503,10 @@ body.is-previewing {
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 16px 28px;
-  margin-top: 12px;
+  gap: 10px 18px;
+  margin-top: 8px;
   color: var(--ink);
-  font-size: clamp(16px, 1.3vw, 23px);
+  font-size: clamp(14px, 1.1vw, 18px);
 }
 
 .resume-meta span {
@@ -2515,7 +2515,7 @@ body.is-previewing {
 
 .resume-section {
   position: relative;
-  padding: 28px 32px;
+  padding: 18px 24px;
   border: 5px solid var(--ink);
   border-radius: 24px;
   background:
@@ -2529,9 +2529,9 @@ body.is-previewing {
   z-index: 1;
   display: inline-flex;
   align-items: center;
-  min-height: 66px;
-  margin: 0 0 28px;
-  padding: 0 38px;
+  min-height: 48px;
+  margin: 0 0 16px;
+  padding: 0 26px;
   border: 4px solid var(--ink);
   border-radius: 999px;
   background:
@@ -2539,15 +2539,15 @@ body.is-previewing {
     linear-gradient(90deg, var(--yellow), #ffcc00);
   background-size: 8px 8px, auto;
   color: var(--ink);
-  font-size: clamp(24px, 1.9vw, 36px);
+  font-size: clamp(20px, 1.5vw, 28px);
   box-shadow: 4px 4px 0 rgba(16, 16, 16, 0.22);
 }
 
 .resume-item {
   position: relative;
   z-index: 1;
-  margin-bottom: 22px;
-  padding-left: 18px;
+  margin-bottom: 14px;
+  padding-left: 14px;
   border-left: 4px solid var(--yellow);
 }
 
@@ -2560,35 +2560,35 @@ body.is-previewing {
   align-items: baseline;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 8px 18px;
-  margin-bottom: 6px;
+  gap: 4px 12px;
+  margin-bottom: 4px;
 }
 
 .resume-item-org {
-  font-size: clamp(20px, 1.5vw, 28px);
+  font-size: clamp(16px, 1.2vw, 22px);
   color: var(--ink);
 }
 
 .resume-item-role {
-  font-size: clamp(16px, 1.1vw, 20px);
+  font-size: clamp(13px, 0.9vw, 16px);
   color: #888;
 }
 
 .resume-item-date {
-  font-size: clamp(15px, 1vw, 18px);
+  font-size: clamp(12px, 0.8vw, 15px);
   color: #888;
   white-space: nowrap;
 }
 
 .resume-item-desc {
-  margin: 4px 0 0;
-  font-size: clamp(16px, 1.05vw, 20px);
+  margin: 2px 0 0;
+  font-size: clamp(13px, 0.85vw, 16px);
   color: #1a1a1a;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 .resume-item-desc:first-of-type {
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 .resume-skill-grid {
@@ -2596,11 +2596,11 @@ body.is-previewing {
   z-index: 1;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
+  gap: 12px;
 }
 
 .resume-skill-card {
-  padding: 20px 22px;
+  padding: 14px 16px;
   border: 3px solid var(--ink);
   border-radius: 16px;
   background: white;
@@ -2608,21 +2608,21 @@ body.is-previewing {
 }
 
 .resume-skill-card h4 {
-  margin: 0 0 10px;
+  margin: 0 0 6px;
   display: inline-flex;
-  padding: 6px 16px;
+  padding: 4px 12px;
   border: 2px solid var(--yellow);
   border-radius: 999px;
   background: var(--yellow);
   color: var(--ink);
-  font-size: clamp(18px, 1.25vw, 24px);
+  font-size: clamp(15px, 1vw, 20px);
 }
 
 .resume-skill-card p {
   margin: 0;
-  font-size: clamp(16px, 1.05vw, 20px);
+  font-size: clamp(13px, 0.85vw, 16px);
   color: #1a1a1a;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 @media (max-width: 860px) {
@@ -2631,8 +2631,8 @@ body.is-previewing {
   }
 
   .resume-modal {
-    padding: 32px 18px 24px;
-    gap: 22px;
+    padding: 24px 16px 20px;
+    gap: 14px;
     border-radius: 24px;
     border-width: 5px;
     box-shadow: 12px 12px 0 var(--ink);
@@ -2649,7 +2649,7 @@ body.is-previewing {
   }
 
   .resume-section {
-    padding: 20px 16px;
+    padding: 14px 14px;
   }
 
   .resume-skill-grid {
@@ -2657,6 +2657,6 @@ body.is-previewing {
   }
 
   .resume-name {
-    font-size: 38px;
+    font-size: 32px;
   }
 }
