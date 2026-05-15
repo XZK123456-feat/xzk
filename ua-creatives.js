@@ -201,7 +201,7 @@ previewButtons.forEach((button) => {
 closeButton?.addEventListener("click", closePreview);
 
 lightbox?.addEventListener("click", (event) => {
-  if (event.target === lightbox) {
+  if (!event.target.closest("img, .lightbox-arrow, .lightbox-close")) {
     closePreview();
   }
 });
