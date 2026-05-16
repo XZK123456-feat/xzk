@@ -283,16 +283,26 @@ if (resumeOverlay) {
     return Array.from(gallery.querySelectorAll("[data-detail-preview]"));
   }
 
+  let navigateCooldown = false;
+  const NAV_COOLDOWN_MS = 350;
+
   function navigate(direction) {
     if (!lightbox.classList.contains("is-open")) return;
+    if (navigateCooldown) return;
     const all = getAllPreviews();
     if (all.length === 0) return;
     const idx = all.indexOf(currentButton);
     if (idx === -1) return;
     const nextIdx = idx + direction;
     if (nextIdx < 0 || nextIdx >= all.length) return;
+
+    navigateCooldown = true;
     currentButton = all[nextIdx];
     currentButton.click();
+
+    setTimeout(function () {
+      navigateCooldown = false;
+    }, NAV_COOLDOWN_MS);
   }
 
   prevBtn.addEventListener("click", function(e) {

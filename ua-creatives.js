@@ -39,7 +39,7 @@ function buildFiles(configKey) {
       const idx = paddedIndex(index + 1);
       const ext = group.ext || "png";
       return {
-        label: `${config.label} ${idx} / ${group.prefix}`,
+        label: `${config.label} ${idx}`,
         src: `assets/ua-creatives/sliced/${configKey}/thumbnails/${group.prefix}-${idx}-thumb.jpg`,
         fullSrc: `assets/ua-creatives/sliced/${configKey}/${group.prefix}-${idx}.${ext}`,
       };
