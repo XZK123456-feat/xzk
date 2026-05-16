@@ -2597,10 +2597,10 @@ body.is-previewing {
 
 .resume-photo {
   position: absolute;
-  right: -4px;
-  top: -14px;
-  width: 88px;
-  height: 106px;
+  right: -12px;
+  top: -8px;
+  width: 106px;
+  height: 128px;
   border: 5px solid var(--ink);
   border-radius: 14px;
   object-fit: cover;
