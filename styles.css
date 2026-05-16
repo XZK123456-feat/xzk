@@ -1567,6 +1567,8 @@ body.is-previewing {
 }
 
 .website-lightbox img {
+  position: relative;
+  z-index: 1;
   max-width: calc(100% - 168px);
   max-height: 82vh;
   border: 6px solid white;
@@ -1588,6 +1590,8 @@ body.is-previewing {
 
 .lightbox-arrow {
   flex-shrink: 0;
+  position: relative;
+  z-index: 0;
   width: 64px;
   height: 64px;
   display: flex;
