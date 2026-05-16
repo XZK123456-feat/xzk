@@ -57,7 +57,7 @@ function createShot(group, item, index) {
 
   button.innerHTML = `
     <span class="detail-shot-label">${item.label}</span>
-    <img src="${item.src}" alt="${item.label}" loading="lazy" />
+    <img src="${item.src}" alt="${item.label}" />
   `;
 
   return button;

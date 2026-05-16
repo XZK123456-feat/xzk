@@ -52,7 +52,7 @@ function createShot(configKey, item, index) {
 
   button.innerHTML = `
     <span class="detail-shot-label">${item.label}</span>
-    <img src="${item.src}" alt="买量${item.label}" loading="lazy" />
+    <img src="${item.src}" alt="买量${item.label}" />
   `;
 
   return button;

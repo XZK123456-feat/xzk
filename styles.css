@@ -1558,7 +1558,7 @@ body.is-previewing {
 }
 
 .website-lightbox img {
-  max-width: calc(100% - 184px);
+  max-width: calc(100% - 168px);
   max-height: 82vh;
   border: 6px solid white;
   border-radius: 18px;
@@ -1579,16 +1579,16 @@ body.is-previewing {
 
 .lightbox-arrow {
   flex-shrink: 0;
-  width: 72px;
-  height: 72px;
+  width: 64px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: 5px solid var(--ink);
-  border-radius: 18px;
+  border-radius: 16px;
   background: var(--yellow);
   color: var(--ink);
-  font-size: 62px;
+  font-size: 42px;
   line-height: 1;
   cursor: pointer;
   box-shadow: 6px 6px 0 var(--ink);
@@ -1605,7 +1605,6 @@ body.is-previewing {
   align-items: center;
   justify-content: center;
   line-height: 1;
-  transform: translateY(-2px);
 }
 
 .website-lightbox.is-open .lightbox-arrow {
@@ -1629,14 +1628,14 @@ body.is-previewing {
   }
 
   .website-lightbox img {
-    max-width: calc(100% - 128px);
+    max-width: calc(100% - 120px);
   }
 
   .lightbox-arrow {
-    width: 52px;
-    height: 52px;
-    font-size: 36px;
-    border-radius: 14px;
+    width: 48px;
+    height: 48px;
+    font-size: 32px;
+    border-radius: 12px;
     border-width: 4px;
   }
 }
@@ -1655,6 +1654,7 @@ body.is-previewing {
 }
 
 .vibecoding-preview-frame {
+  position: relative;
   display: grid;
   gap: 16px;
   justify-items: center;
@@ -1666,6 +1666,23 @@ body.is-previewing {
     linear-gradient(180deg, #f0f0f8 0%, #e4e4f0 100%);
   box-shadow: 6px 6px 0 var(--ink);
   text-align: center;
+  overflow: hidden;
+}
+
+.vibecoding-preview-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("assets/website-design/pc/PC端%20(1).png") center/cover no-repeat;
+  opacity: 0.3;
+  border-radius: 20px;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.vibecoding-preview-frame > * {
+  position: relative;
+  z-index: 1;
 }
 
 .vibecoding-subtitle {
