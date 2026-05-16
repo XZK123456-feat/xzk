@@ -42,10 +42,14 @@ function paddedIndex(index) {
 }
 
 function buildFiles(group) {
-  return Array.from({ length: group.count }, (_, index) => ({
-    label: `${group.label} ${paddedIndex(index + 1)}`,
-    src: `assets/community-creatives/sliced/${group.key}/${group.prefix}-${paddedIndex(index + 1)}.png`,
-  }));
+  return Array.from({ length: group.count }, (_, index) => {
+    const idx = paddedIndex(index + 1);
+    return {
+      label: `${group.label} ${idx}`,
+      src: `assets/community-creatives/sliced/${group.key}/thumbnails/${group.prefix}-${idx}-thumb.jpg`,
+      fullSrc: `assets/community-creatives/sliced/${group.key}/${group.prefix}-${idx}.png`,
+    };
+  });
 }
 
 function createShot(group, item, index) {
@@ -53,6 +57,7 @@ function createShot(group, item, index) {
   button.className = "detail-shot community-shot";
   button.type = "button";
   button.dataset.detailPreview = "";
+  button.dataset.full = item.fullSrc;
   button.setAttribute("aria-label", `预览${group.label} ${paddedIndex(index + 1)}`);
 
   button.innerHTML = `
@@ -119,7 +124,7 @@ function openPreview(button) {
   }
 
   resetZoom();
-  lightboxImage.src = image.currentSrc || image.src;
+  lightboxImage.src = button.dataset.full || image.currentSrc || image.src;
   lightboxImage.alt = image.alt;
   lightboxCaption.textContent = button.querySelector(".detail-shot-label")?.textContent || image.alt;
   lightbox.classList.add("is-open");

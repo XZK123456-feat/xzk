@@ -37,7 +37,7 @@ function openPreview(button) {
   }
 
   resetZoom();
-  lightboxImage.src = image.currentSrc || image.src;
+  lightboxImage.src = button.dataset.full || image.currentSrc || image.src;
   lightboxImage.alt = image.alt;
   lightboxCaption.textContent = button.querySelector(".detail-shot-label")?.textContent || image.alt;
   lightbox.classList.add("is-open");
