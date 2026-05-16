@@ -2597,7 +2597,7 @@ body.is-previewing {
 
 .resume-photo {
   position: absolute;
-  right: 0;
+  right: -20px;
   top: -14px;
   width: 88px;
   height: 106px;
