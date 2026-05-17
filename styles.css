@@ -2747,6 +2747,27 @@ body.is-previewing {
 }
 
 @media (max-width: 860px) {
+  .floating-widget {
+    right: 6px;
+    transform: translateY(-50%) scale(0.58);
+    transform-origin: right center;
+  }
+
+  .floating-resume {
+    padding: 14px 12px 12px;
+    border-width: 4px;
+    gap: 6px;
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+
+  .floating-resume-icon {
+    width: 24px;
+  }
+
+  .floating-resume-text {
+    font-size: 14px;
+  }
+
   .resume-overlay {
     padding: 16px;
   }
@@ -2769,13 +2790,21 @@ body.is-previewing {
     border-width: 3px;
   }
 
+  .resume-header-card {
+    min-height: 84px;
+    padding: 12px 70px 8px 0;
+    padding-right: 70px;
+    text-align: left;
+  }
+
   .resume-photo {
-    width: 48px;
-    height: 58px;
-    right: 4px;
-    top: 4px;
+    width: 53px;
+    height: 64px;
+    right: 14px;
+    top: 14px;
     border-radius: 10px;
     border-width: 3px;
+    box-shadow: 3px 3px 0 var(--yellow);
   }
 
   .resume-section {
@@ -2788,5 +2817,11 @@ body.is-previewing {
 
   .resume-name {
     font-size: 32px;
+  }
+
+  .resume-meta {
+    justify-content: flex-start;
+    gap: 6px 10px;
+    font-size: 13px;
   }
 }
