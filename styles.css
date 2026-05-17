@@ -3245,20 +3245,20 @@ body.is-previewing {
   }
 
   .website-lightbox img {
-    max-width: calc(100% - 76px);
-    max-height: 78vh;
-    border-width: 4px;
-    border-radius: 12px;
-    box-shadow: 5px 5px 0 var(--yellow);
+    max-width: calc(100% - 62px);
+    max-height: 72vh;
+    border-width: 3px;
+    border-radius: 10px;
+    box-shadow: 4px 4px 0 var(--yellow);
   }
 
   .lightbox-arrow {
-    width: 34px;
-    min-width: 34px;
-    height: 54px;
+    width: 28px;
+    min-width: 28px;
+    height: 42px;
     border-width: 3px;
-    border-radius: 12px;
-    font-size: 42px;
+    border-radius: 10px;
+    font-size: 26px;
   }
 
   .detail-gallery.is-gallery-loading::after {
@@ -3283,5 +3283,60 @@ body.is-previewing {
     max-height: 92vh;
     padding: 22px 14px 18px;
     border-radius: 22px;
+  }
+
+  .date-chip {
+    min-width: auto;
+    padding: 14px 22px;
+    font-size: 16px;
+    border-width: 3px;
+    box-shadow: 4px 4px 0 rgba(16, 16, 16, 0.26);
+  }
+
+  .data-card {
+    padding: 60px 18px 24px;
+    border-width: 4px;
+    border-radius: 20px;
+    box-shadow: 7px 7px 0 var(--ink);
+  }
+
+  .data-card::before {
+    inset: 10px;
+    border-width: 2px;
+    border-radius: 14px;
+  }
+
+  dl {
+    grid-template-columns: 1fr auto;
+    gap: 14px 16px;
+  }
+
+  dt {
+    font-size: 15px;
+  }
+
+  dd {
+    font-size: 22px;
+    -webkit-text-stroke: 2px var(--ink);
+  }
+
+  .website-lightbox {
+    touch-action: manipulation;
+  }
+
+  .website-lightbox img {
+    touch-action: none;
+  }
+
+  .zoom-hint {
+    font-size: 14px;
+    padding: 6px 14px;
+    border-width: 2px;
+  }
+
+  .website-lightbox figcaption {
+    font-size: 16px;
+    padding: 6px 14px;
+    border-width: 3px;
   }
 }
