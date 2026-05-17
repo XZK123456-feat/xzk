@@ -111,28 +111,92 @@ function createShot(group, item, index) {
 
   button.innerHTML = `
     <span class="detail-shot-label">${item.label}</span>
-    <img src="${item.src}" alt="${item.label}" loading="lazy" />
+    <img src="${item.src}" alt="${item.label}" loading="lazy" decoding="async" />
   `;
 
   return button;
 }
 
-function renderGalleries() {
-  sourceGroups.forEach((group) => {
-    const gallery = document.querySelector(`[data-community-gallery="${group.key}"]`);
-    if (!gallery) { return; }
+const RENDER_BATCH_SIZE = 16;
+const scheduleIdle = window.requestIdleCallback
+  ? (task) => window.requestIdleCallback(task, { timeout: 180 })
+  : (task) => window.setTimeout(task, 24);
 
+function renderGallery(group, gallery) {
+  if (!group || !gallery || gallery.dataset.rendered === "true") {
+    return;
+  }
+
+  let cursor = 0;
+  gallery.dataset.rendered = "true";
+  gallery.classList.add("is-gallery-loading");
+
+  function renderBatch() {
     const fragment = document.createDocumentFragment();
-    group.files.forEach((item, index) => {
-      fragment.append(createShot(group, item, index));
-    });
+    const limit = Math.min(cursor + RENDER_BATCH_SIZE, group.files.length);
+
+    for (; cursor < limit; cursor += 1) {
+      fragment.append(createShot(group, group.files[cursor], cursor));
+    }
+
     gallery.append(fragment);
+
+    if (cursor < group.files.length) {
+      scheduleIdle(renderBatch);
+      return;
+    }
+
+    gallery.classList.remove("is-gallery-loading");
+    gallery.classList.add("is-gallery-ready");
+  }
+
+  renderBatch();
+}
+
+function renderGalleries() {
+  const galleries = sourceGroups
+    .map((group) => ({
+      group,
+      gallery: document.querySelector(`[data-community-gallery="${group.key}"]`),
+    }))
+    .filter((entry) => entry.gallery);
+
+  if (!("IntersectionObserver" in window)) {
+    galleries.forEach(({ group, gallery }) => renderGallery(group, gallery));
+    return;
+  }
+
+  const lazyGalleryObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) {
+          return;
+        }
+
+        const group = sourceGroups.find((item) => item.key === entry.target.dataset.communityGallery);
+        renderGallery(group, entry.target);
+        lazyGalleryObserver.unobserve(entry.target);
+      });
+    },
+    {
+      rootMargin: "520px 0px",
+      threshold: 0.01,
+    },
+  );
+
+  galleries.forEach(({ group, gallery }) => {
+    const section = gallery.closest("section");
+    if (section && `#${section.id}` === window.location.hash) {
+      renderGallery(group, gallery);
+      return;
+    }
+
+    lazyGalleryObserver.observe(gallery);
   });
 }
 
 renderGalleries();
 
-const previewButtons = Array.from(document.querySelectorAll("[data-detail-preview]"));
 const lightbox = document.querySelector(".website-lightbox");
 const lightboxImage = lightbox?.querySelector("img");
 const lightboxCaption = lightbox?.querySelector("figcaption");
@@ -193,8 +257,11 @@ function updateZoomHint() {
   hint.classList.toggle("is-hidden", zoomState.scale > 1);
 }
 
-previewButtons.forEach((button) => {
-  button.addEventListener("click", () => openPreview(button));
+document.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-detail-preview]");
+  if (button) {
+    openPreview(button);
+  }
 });
 
 closeButton?.addEventListener("click", closePreview);

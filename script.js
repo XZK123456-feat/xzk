@@ -62,7 +62,15 @@ function setActiveNav(id) {
 
 function setActiveFromScroll() {
   const probeY = window.scrollY + window.innerHeight * 0.42;
-  const current = sections.findLast((section) => section.offsetTop <= probeY) || sections[0];
+  let current = sections[0];
+
+  for (let index = sections.length - 1; index >= 0; index -= 1) {
+    if (sections[index].offsetTop <= probeY) {
+      current = sections[index];
+      break;
+    }
+  }
+
   setActiveNav(current.id);
 }
 
@@ -88,7 +96,7 @@ function syncHashTarget() {
   const target = id ? document.getElementById(id) : null;
 
   if (target) {
-    target.scrollIntoView({ block: "start" });
+    window.scrollTo({ top: Math.max(0, target.offsetTop), behavior: "auto" });
     setActiveNav(id);
     requestAnimationFrame(revealVisibleItems);
     return;
@@ -98,7 +106,11 @@ function syncHashTarget() {
   requestAnimationFrame(revealVisibleItems);
 }
 
-window.addEventListener("load", syncHashTarget);
+window.addEventListener("load", () => {
+  syncHashTarget();
+  window.setTimeout(syncHashTarget, 120);
+  window.setTimeout(syncHashTarget, 420);
+});
 window.addEventListener("scroll", () => {
   setActiveFromScroll();
   revealVisibleItems();

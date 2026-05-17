@@ -30,14 +30,15 @@ assert.ok(html.includes('data-ua-gallery="vertical"'), "vertical gallery should 
 assert.ok(html.includes('data-ua-gallery="nine-grid"'), "nine-grid gallery should be generated from a named hook");
 
 assert.ok(js.includes("sourceGroups"), "UA detail script should render thumbnails from a source manifest");
-assert.ok(js.includes("横图1") && js.includes("count: 20"), "horizontal source sheets should be split into individual tiles");
-assert.ok(js.includes("横图4") && js.includes('ext: "jpg"'), "horizontal jpg source sheet should stay in the manifest");
-assert.ok(js.includes("竖图4") && js.includes("count: 36"), "vertical png source sheet should be split into individual tiles");
-assert.ok(js.includes("竖图5") && js.includes('ext: "jpg"'), "vertical jpg source sheet should stay in the manifest");
+assert.ok(js.includes("横图 080"), "horizontal manifest should expose 80 thumbnail entries");
+assert.ok(js.includes("竖图 054"), "vertical manifest should expose 54 thumbnail entries");
 assert.ok(js.includes("九图5") && js.includes("count: 18"), "nine-grid source sheet should be split into grouped 3x3 thumbnails");
 assert.ok(js.includes("九图6") && js.includes("count: 1"), "extra nine-grid source should render as one grouped thumbnail");
 assert.ok(js.includes("九图7") && js.includes("count: 1"), "extra nine-grid source should render as one grouped thumbnail");
 assert.ok(js.includes(".detail-shot-label"), "generated thumbnails should keep the lightbox caption hook");
+assert.ok(js.includes('loading="lazy" decoding="async"'), "generated thumbnails should be lazy and async decoded");
+assert.ok(js.includes("IntersectionObserver"), "UA galleries should render only when their section is near the viewport");
+assert.ok(js.includes("RENDER_BATCH_SIZE"), "UA galleries should render thumbnails in batches");
 
 const horizontal = listPngs(path.join(slicedRoot, "horizontal"));
 const vertical = listPngs(path.join(slicedRoot, "vertical"));
@@ -47,21 +48,9 @@ const verticalAll = listImages(path.join(slicedRoot, "vertical"));
 
 assert.strictEqual(horizontalAll.length, 80, "horizontal source sheets should produce 80 single creatives");
 assert.strictEqual(verticalAll.length, 54, "vertical source sheets should produce 54 single creatives");
-assert.strictEqual(horizontal.length, 60, "horizontal png source sheets should produce 60 single creatives");
-assert.strictEqual(vertical.length, 36, "vertical png source sheet should produce 36 single creatives");
+assert.strictEqual(horizontal.length, 0, "horizontal thumbnails should now reference compressed jpg creatives");
+assert.strictEqual(vertical.length, 0, "vertical thumbnails should now reference compressed jpg creatives");
 assert.strictEqual(nineGrid.length, 20, "nine-grid source sheets should produce 20 grouped 3x3 creatives");
-
-horizontal.forEach((name) => {
-  const { width, height } = readPngSize(path.join(slicedRoot, "horizontal", name));
-  assert.ok(width >= 960 && width <= 1030, `${name} should be one horizontal tile wide, got ${width}`);
-  assert.ok(height >= 540 && height <= 590, `${name} should be one horizontal tile tall, got ${height}`);
-});
-
-vertical.forEach((name) => {
-  const { width, height } = readPngSize(path.join(slicedRoot, "vertical", name));
-  assert.ok(width >= 400 && width <= 450, `${name} should be one vertical tile wide, got ${width}`);
-  assert.ok(height >= 730 && height <= 770, `${name} should be one vertical tile tall, got ${height}`);
-});
 
 nineGrid.forEach((name) => {
   const { width, height } = readPngSize(path.join(slicedRoot, "nine-grid", name));

@@ -189,30 +189,93 @@ function createShot(configKey, item, index) {
 
   button.innerHTML = `
     <span class="detail-shot-label">${item.label}</span>
-    <img src="${item.src}" alt="买量${item.label}" />
+    <img src="${item.src}" alt="买量${item.label}" loading="lazy" decoding="async" />
   `;
 
   return button;
 }
 
-function renderGalleries() {
-  Object.keys(sourceGroups).forEach((configKey) => {
-    const gallery = document.querySelector(`[data-ua-gallery="${configKey}"]`);
-    if (!gallery) {
+const RENDER_BATCH_SIZE = 18;
+const scheduleIdle = window.requestIdleCallback
+  ? (task) => window.requestIdleCallback(task, { timeout: 180 })
+  : (task) => window.setTimeout(task, 24);
+
+function renderGallery(configKey, gallery) {
+  if (!gallery || gallery.dataset.rendered === "true") {
+    return;
+  }
+
+  const items = buildFiles(configKey);
+  let cursor = 0;
+  gallery.dataset.rendered = "true";
+  gallery.classList.add("is-gallery-loading");
+
+  function renderBatch() {
+    const fragment = document.createDocumentFragment();
+    const limit = Math.min(cursor + RENDER_BATCH_SIZE, items.length);
+
+    for (; cursor < limit; cursor += 1) {
+      fragment.append(createShot(configKey, items[cursor], cursor));
+    }
+
+    gallery.append(fragment);
+
+    if (cursor < items.length) {
+      scheduleIdle(renderBatch);
       return;
     }
 
-    const fragment = document.createDocumentFragment();
-    buildFiles(configKey).forEach((item, index) => {
-      fragment.append(createShot(configKey, item, index));
-    });
-    gallery.append(fragment);
+    gallery.classList.remove("is-gallery-loading");
+    gallery.classList.add("is-gallery-ready");
+  }
+
+  renderBatch();
+}
+
+function renderGalleries() {
+  const galleries = Object.keys(sourceGroups)
+    .map((configKey) => ({
+      configKey,
+      gallery: document.querySelector(`[data-ua-gallery="${configKey}"]`),
+    }))
+    .filter((entry) => entry.gallery);
+
+  if (!("IntersectionObserver" in window)) {
+    galleries.forEach(({ configKey, gallery }) => renderGallery(configKey, gallery));
+    return;
+  }
+
+  const lazyGalleryObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) {
+          return;
+        }
+
+        const configKey = entry.target.dataset.uaGallery;
+        renderGallery(configKey, entry.target);
+        lazyGalleryObserver.unobserve(entry.target);
+      });
+    },
+    {
+      rootMargin: "520px 0px",
+      threshold: 0.01,
+    },
+  );
+
+  galleries.forEach(({ configKey, gallery }) => {
+    const section = gallery.closest("section");
+    if (section && `#${section.id}` === window.location.hash) {
+      renderGallery(configKey, gallery);
+      return;
+    }
+
+    lazyGalleryObserver.observe(gallery);
   });
 }
 
 renderGalleries();
 
-const previewButtons = Array.from(document.querySelectorAll('[data-detail-preview]'));
 const lightbox = document.querySelector(".website-lightbox");
 const lightboxImage = lightbox?.querySelector("img");
 const lightboxCaption = lightbox?.querySelector("figcaption");
@@ -319,8 +382,11 @@ lightboxImage?.addEventListener('dblclick', (event) => {
   }
 });
 
-previewButtons.forEach((button) => {
-  button.addEventListener("click", () => openPreview(button));
+document.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-detail-preview]");
+  if (button) {
+    openPreview(button);
+  }
 });
 
 closeButton?.addEventListener('click', closePreview);
