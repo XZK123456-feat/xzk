@@ -280,13 +280,25 @@ if (resumeOverlay) {
 
   let currentButton = null;
 
-  // Track which button opened the lightbox
+  // Track which button opened the lightbox, prevent old-image flash
   document.addEventListener("click", function(e) {
     const previewBtn = e.target.closest("[data-detail-preview]");
     if (previewBtn) {
       currentButton = previewBtn;
+      var img = lightbox.querySelector("img");
+      if (img) {
+        img.style.opacity = "0";
+        img.style.transition = "opacity 0.12s ease";
+      }
     }
   }, true);
+
+  var lbImg = lightbox.querySelector("img");
+  if (lbImg) {
+    lbImg.addEventListener("load", function() {
+      this.style.opacity = "1";
+    });
+  }
 
   function getAllPreviews() {
     if (!currentButton) return [];
