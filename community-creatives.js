@@ -97,7 +97,6 @@ const sourceGroups = [
       { label: '狸狸汤泉 018', src: 'assets/community-creatives/sliced/lili-tangquan/thumbnails/18-thumb.webp', fullSrc: 'assets/community-creatives/sliced/lili-tangquan/18.png' },
       { label: '狸狸汤泉 019', src: 'assets/community-creatives/sliced/lili-tangquan/thumbnails/19-thumb.webp', fullSrc: 'assets/community-creatives/sliced/lili-tangquan/19.png' },
       { label: '狸狸汤泉 020', src: 'assets/community-creatives/sliced/lili-tangquan/thumbnails/20-thumb.webp', fullSrc: 'assets/community-creatives/sliced/lili-tangquan/20.png' },
-      { label: '狸狸汤泉 021', src: 'assets/community-creatives/sliced/lili-tangquan/thumbnails/21-thumb.webp', fullSrc: 'assets/community-creatives/sliced/lili-tangquan/21.png' },
     ],
   },
 ];

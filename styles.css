@@ -1420,6 +1420,10 @@ body.is-previewing {
   align-items: start;
 }
 
+[data-community-gallery="ulala-all"] {
+  grid-template-columns: repeat(4, 1fr);
+}
+
 .community-compact-gallery {
   grid-template-columns: repeat(5, 1fr);
 }
