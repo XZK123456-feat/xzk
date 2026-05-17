@@ -284,7 +284,7 @@ if (resumeOverlay) {
   }
 
   let navigateCooldown = false;
-  const NAV_COOLDOWN_MS = 350;
+  const NAV_COOLDOWN_MS = 800;
 
   function navigate(direction) {
     if (!lightbox.classList.contains("is-open")) return;
