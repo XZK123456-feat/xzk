@@ -2364,8 +2364,8 @@ body.is-previewing {
   }
 
   .floating-widget {
-    right: 0px;
-    transform: translateY(-50%) scale(0.05);
+    right: -8px;
+    transform: translateY(-50%) scale(0.30);
   }
 
   .floating-resume {
