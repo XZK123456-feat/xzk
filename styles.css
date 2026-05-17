@@ -1598,7 +1598,7 @@ body.is-previewing {
   align-items: center;
   justify-content: center;
   border: 5px solid var(--ink);
-  border-radius: 16px;
+  border-radius: 20px;
   background: var(--yellow);
   color: var(--ink);
   font-size: 42px;
@@ -1648,7 +1648,7 @@ body.is-previewing {
     width: 48px;
     height: 48px;
     font-size: 32px;
-    border-radius: 12px;
+    border-radius: 16px;
     border-width: 4px;
   }
 }
