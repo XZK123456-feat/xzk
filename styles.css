@@ -2365,7 +2365,7 @@ body.is-previewing {
 
   .floating-widget {
     right: -8px;
-    transform: translateY(-50%) scale(0.30);
+    transform: translateY(-50%) scale(0.22);
   }
 
   .floating-resume {
@@ -2770,8 +2770,8 @@ body.is-previewing {
   }
 
   .resume-photo {
-    width: 64px;
-    height: 77px;
+    width: 48px;
+    height: 58px;
     right: 4px;
     top: 4px;
     border-radius: 10px;
