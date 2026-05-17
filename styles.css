@@ -1416,12 +1416,12 @@ body.is-previewing {
 }
 
 .community-gallery {
-  grid-template-columns: repeat(3, minmax(210px, 340px));
+  grid-template-columns: repeat(5, 1fr);
   align-items: start;
 }
 
 .community-compact-gallery {
-  grid-template-columns: repeat(4, minmax(150px, 240px));
+  grid-template-columns: repeat(5, 1fr);
 }
 
 .detail-shot {
@@ -1510,10 +1510,14 @@ body.is-previewing {
   object-fit: cover;
 }
 
+.community-shot {
+  aspect-ratio: 1 / 1;
+}
+
 .community-shot img {
-  max-height: 360px;
-  aspect-ratio: auto;
-  object-fit: contain;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 @media (prefers-reduced-motion: reduce) {
