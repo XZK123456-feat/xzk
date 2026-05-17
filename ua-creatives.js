@@ -141,6 +141,8 @@ const sourceGroups = {
       { label: '竖图 050', src: 'assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK545_S_霸王龙蛋_AIPS_福利_250722-thumb.jpg', fullSrc: 'assets/ua-creatives/sliced/vertical/ZCXZK545_S_霸王龙蛋_AIPS_福利_250722.jpg' },
       { label: '竖图 051', src: 'assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK549_S_龙和福利_AIPS_福利_250723-thumb.jpg', fullSrc: 'assets/ua-creatives/sliced/vertical/ZCXZK549_S_龙和福利_AIPS_福利_250723.jpg' },
       { label: '竖图 052', src: 'assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK553_S_阿宝休息_AIPS_宠物展示_250724-thumb.jpg', fullSrc: 'assets/ua-creatives/sliced/vertical/ZCXZK553_S_阿宝休息_AIPS_宠物展示_250724.jpg' },
+      { label: '竖图 053', src: 'assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK267_S_老电影胶片_250428-thumb.jpg', fullSrc: 'assets/ua-creatives/sliced/vertical/ZCXZK267_S_老电影胶片_250428.jpg' },
+      { label: '竖图 054', src: 'assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK271_S_苹果商店页面_250429-thumb.jpg', fullSrc: 'assets/ua-creatives/sliced/vertical/ZCXZK271_S_苹果商店页面_250429.jpg' },
     ],
   },
   "nine-grid": {
