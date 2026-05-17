@@ -78,6 +78,11 @@ const sourceGroups = {
       { label: '横图 073', src: 'assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK614_H_躺平白云边_AI_热梗_251013-thumb.jpg', fullSrc: 'assets/ua-creatives/sliced/horizontal/ZCXZK614_H_躺平白云边_AI_热梗_251013.jpg' },
       { label: '横图 074', src: 'assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK66_H_暗黑人宠对战_241226-thumb.jpg', fullSrc: 'assets/ua-creatives/sliced/horizontal/ZCXZK66_H_暗黑人宠对战_241226.jpg' },
       { label: '横图 075', src: 'assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK80_H_霸王龙大佬_250110-thumb.jpg', fullSrc: 'assets/ua-creatives/sliced/horizontal/ZCXZK80_H_霸王龙大佬_250110.jpg' },
+      { label: '横图 076', src: 'assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK45_H_人宠雨中撑伞_241206-thumb.jpg', fullSrc: 'assets/ua-creatives/sliced/horizontal/ZCXZK45_H_人宠雨中撑伞_241206.jpg' },
+      { label: '横图 077', src: 'assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK56_H_机甲霸王龙展示_241219-thumb.jpg', fullSrc: 'assets/ua-creatives/sliced/horizontal/ZCXZK56_H_机甲霸王龙展示_241219.jpg' },
+      { label: '横图 078', src: 'assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK57_H_水中人宠大作战_241219-thumb.jpg', fullSrc: 'assets/ua-creatives/sliced/horizontal/ZCXZK57_H_水中人宠大作战_241219.jpg' },
+      { label: '横图 079', src: 'assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK73_H_勇者斗恶龙_241231-thumb.jpg', fullSrc: 'assets/ua-creatives/sliced/horizontal/ZCXZK73_H_勇者斗恶龙_241231.jpg' },
+      { label: '横图 080', src: 'assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK74_H_iPhone商店人宠_241231-thumb.jpg', fullSrc: 'assets/ua-creatives/sliced/horizontal/ZCXZK74_H_iPhone商店人宠_241231.jpg' },
     ],
   },
   vertical: {
