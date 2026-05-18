@@ -464,3 +464,21 @@ if (resumeOverlay) {
   }, true);
 })();
 
+/* ── Video Playback ── */
+const videoStage = document.getElementById("videoStage");
+const heroVideo = document.getElementById("heroVideo");
+const playBtn = document.getElementById("playBtn");
+
+if (playBtn && heroVideo) {
+  playBtn.addEventListener("click", () => {
+    if (!heroVideo.src) {
+      heroVideo.src = "assets/video/买量视频混剪.mp4";
+      heroVideo.load();
+    }
+
+    heroVideo.classList.add("is-loaded");
+    playBtn.classList.add("is-hidden");
+    heroVideo.play().catch(() => {});
+  });
+}
+

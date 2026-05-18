@@ -16,6 +16,7 @@
           <a class="nav-pill active" href="#home">首页</a>
           <a class="nav-pill" href="#contents">目录</a>
           <a class="nav-pill" href="#data">数据</a>
+          <a class="nav-pill" href="#video">视频</a>
         </nav>
       </header>
 
@@ -219,6 +220,38 @@
               <strong>位于前三</strong>
             </div>
           </div>
+          </div>
+        </section>
+
+        <section id="video" class="video-showcase section-panel">
+          <div class="battle-board" data-reveal="battle-board">
+            <div class="battle-header comic-card halftone">
+              <span>VIDEO</span>
+              <strong>买量视频混剪</strong>
+            </div>
+
+            <div class="video-player-wrapper">
+              <div class="video-stage comic-card halftone" id="videoStage">
+                <video
+                  id="heroVideo"
+                  class="hero-video"
+                  preload="none"
+                  playsinline
+                  controls
+                ></video>
+                <button class="play-btn" id="playBtn" type="button" aria-label="播放视频">
+                  <span class="play-btn-ring"></span>
+                  <svg class="play-icon" viewBox="0 0 48 56" aria-hidden="true">
+                    <path d="M6 2.5L44 28L6 53.5Z" fill="currentColor" stroke="none"/>
+                  </svg>
+                  <span class="play-btn-label">点击播放</span>
+                </button>
+              </div>
+              <div class="video-meta">
+                <span class="video-badge">VIDEO SHOWCASE</span>
+                <p>买量视频混剪作品集</p>
+              </div>
+            </div>
           </div>
         </section>
       </main>
