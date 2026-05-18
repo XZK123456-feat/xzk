@@ -468,17 +468,28 @@ if (resumeOverlay) {
 const videoStage = document.getElementById("videoStage");
 const heroVideo = document.getElementById("heroVideo");
 const playBtn = document.getElementById("playBtn");
+const videoLoading = document.getElementById("videoLoading");
 
 if (playBtn && heroVideo) {
   playBtn.addEventListener("click", () => {
+    playBtn.classList.add("is-hidden");
+    if (videoLoading) videoLoading.classList.add("is-active");
+
     if (!heroVideo.src) {
       heroVideo.src = "assets/video/买量视频混剪.mp4";
       heroVideo.load();
     }
 
     heroVideo.classList.add("is-loaded");
-    playBtn.classList.add("is-hidden");
-    heroVideo.play().catch(() => {});
+
+    heroVideo.addEventListener("playing", function onPlay() {
+      if (videoLoading) videoLoading.classList.remove("is-active");
+      heroVideo.removeEventListener("playing", onPlay);
+    });
+
+    heroVideo.play().catch(() => {
+      if (videoLoading) videoLoading.classList.remove("is-active");
+    });
   });
 }
 

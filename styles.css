@@ -2900,6 +2900,41 @@ body.is-previewing {
   display: block;
 }
 
+.video-loading {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 28px;
+}
+
+.video-loading.is-active {
+  display: flex;
+}
+
+.loading-spinner {
+  width: 52px;
+  height: 52px;
+  border: 5px solid rgba(255, 255, 255, 0.2);
+  border-top-color: var(--yellow);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.loading-text {
+  color: var(--yellow);
+  font-size: clamp(16px, 1.4vw, 22px);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .play-btn {
   position: relative;
   z-index: 2;
