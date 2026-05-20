@@ -71,6 +71,8 @@ const sourceGroups = [
       { label: '不休的乌拉拉 020', src: 'assets/community-creatives/sliced/ulala-all/thumbnails/20-thumb.webp', fullSrc: 'assets/community-creatives/sliced/ulala-all/20.png' },
       { label: '不休的乌拉拉 021', src: 'assets/community-creatives/sliced/ulala-all/thumbnails/21-thumb.webp', fullSrc: 'assets/community-creatives/sliced/ulala-all/21.png' },
       { label: '不休的乌拉拉 022', src: 'assets/community-creatives/sliced/ulala-all/thumbnails/22-thumb.webp', fullSrc: 'assets/community-creatives/sliced/ulala-all/22.png' },
+      { label: '不休的乌拉拉 023', src: 'assets/community-creatives/sliced/ulala-all/thumbnails/023-thumb.webp', fullSrc: 'assets/community-creatives/sliced/ulala-all/023.png' },
+      { label: '不休的乌拉拉 024', src: 'assets/community-creatives/sliced/ulala-all/thumbnails/024-thumb.webp', fullSrc: 'assets/community-creatives/sliced/ulala-all/024.png' },
     ],
   },
   {
