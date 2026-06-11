@@ -14,6 +14,14 @@ assert.ok(css.includes(".detail-ticket {\n    justify-self: center;"), "mobile d
 assert.ok(css.includes("width: calc(100% - 8px);"), "mobile detail tickets should reserve room for their comic shadow");
 assert.ok(css.includes("content-visibility: auto;"), "offscreen detail sections should avoid eager rendering work");
 assert.ok(css.includes(".detail-gallery.is-gallery-loading::after"), "lazy galleries should show a lightweight loading state");
+assert.ok(css.includes(".website-lightbox .lightbox-image-row {\n    display: grid;"), "mobile lightbox should stop using a horizontal arrow/image row");
+assert.ok(css.includes(".lightbox-image-row > img {\n    max-width: 100%;"), "mobile lightbox image should use the full available width");
+assert.ok(css.includes(".website-lightbox .lightbox-arrow {\n    position: fixed;"), "mobile lightbox arrows should float instead of shrinking the image");
+assert.ok(css.includes("min-height: 44px;"), "mobile lightbox arrows should override global button minimum height");
+assert.ok(css.includes("padding: 0;"), "mobile lightbox controls should not inherit wide button padding");
+assert.ok(css.includes(".lightbox-strip {\n    max-width: calc(100vw - 24px);"), "mobile lightbox thumbnail strip should fit within the viewport");
+assert.ok(css.includes(".lightbox-meta {\n    max-width: calc(100vw - 24px);"), "mobile lightbox metadata should fit within the viewport");
+assert.ok(css.includes(".website-lightbox .lightbox-close {\n    right: 12px;"), "mobile lightbox close button should stay inside the viewport");
 
 assert.ok(uaJs.includes("IntersectionObserver"), "NO.2 should defer gallery rendering until near viewport");
 assert.ok(uaJs.includes("RENDER_BATCH_SIZE"), "NO.2 should batch large gallery rendering");

@@ -5,6 +5,126 @@ const prefersReducedMotion = reduceMotionQuery.matches;
 
 document.body.classList.add("motion-ready");
 
+const scrollProgress = document.querySelector(".scroll-progress span");
+const backToTopButton = document.querySelector(".back-to-top");
+
+function updateScrollProgress() {
+  const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+  const progress = scrollable > 0 ? window.scrollY / scrollable : 0;
+
+  if (scrollProgress) {
+    scrollProgress.style.transform = `scaleX(${Math.min(1, Math.max(0, progress))})`;
+  }
+
+  document.body.classList.toggle("is-scrolled-deep", window.scrollY > window.innerHeight * 0.72);
+}
+
+let previewScrollLockCount = 0;
+let previewScrollY = 0;
+
+function lockPreviewScroll() {
+  if (previewScrollLockCount === 0) {
+    previewScrollY = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+    document.documentElement.classList.add("is-previewing");
+    document.body.classList.add("is-previewing");
+    document.body.style.top = `-${previewScrollY}px`;
+  }
+
+  previewScrollLockCount += 1;
+}
+
+function unlockPreviewScroll() {
+  if (previewScrollLockCount === 0) {
+    return;
+  }
+
+  previewScrollLockCount -= 1;
+
+  if (previewScrollLockCount > 0) {
+    return;
+  }
+
+  const previousScrollBehavior = document.documentElement.style.scrollBehavior;
+  document.documentElement.style.scrollBehavior = "auto";
+  document.documentElement.classList.remove("is-previewing");
+  document.body.classList.remove("is-previewing");
+  document.body.style.top = "";
+  window.scrollTo(0, previewScrollY);
+  requestAnimationFrame(() => {
+    document.documentElement.style.scrollBehavior = previousScrollBehavior;
+  });
+  previewScrollY = 0;
+}
+
+window.lockPreviewScroll = lockPreviewScroll;
+window.unlockPreviewScroll = unlockPreviewScroll;
+
+function initBackToTop() {
+  if (!backToTopButton) {
+    return;
+  }
+
+  backToTopButton.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: prefersReducedMotion ? "auto" : "smooth" });
+  });
+}
+
+function setActiveDetailDirectory() {
+  const currentPage = window.location.pathname.split("/").pop() || "index.html";
+  document.querySelectorAll(".detail-directory .directory-item").forEach((item) => {
+    const itemPage = item.getAttribute("href")?.split("#")[0];
+    item.classList.toggle("active", itemPage === currentPage);
+  });
+}
+
+function initTiltCards() {
+  if (prefersReducedMotion) {
+    return;
+  }
+
+  document.querySelectorAll("[data-tilt-card]").forEach((card) => {
+    card.addEventListener("pointermove", (event) => {
+      const rect = card.getBoundingClientRect();
+      const x = (event.clientX - rect.left) / rect.width - 0.5;
+      const y = (event.clientY - rect.top) / rect.height - 0.5;
+      card.style.setProperty("--tilt-x", `${(-y * 5).toFixed(2)}deg`);
+      card.style.setProperty("--tilt-y", `${(x * 5).toFixed(2)}deg`);
+      card.style.setProperty("--shine-x", `${event.clientX - rect.left}px`);
+      card.style.setProperty("--shine-y", `${event.clientY - rect.top}px`);
+    });
+
+    card.addEventListener("pointerleave", () => {
+      card.style.removeProperty("--tilt-x");
+      card.style.removeProperty("--tilt-y");
+      card.style.removeProperty("--shine-x");
+      card.style.removeProperty("--shine-y");
+    });
+  });
+}
+
+function markLoadedImage(image) {
+  image.closest(".detail-shot")?.classList.add("is-loaded");
+}
+
+function initImageLoadStates(root = document) {
+  root.querySelectorAll(".detail-shot img").forEach((image) => {
+    if (image.complete) {
+      markLoadedImage(image);
+      return;
+    }
+
+    image.addEventListener("load", () => markLoadedImage(image), { once: true });
+  });
+}
+
+window.initImageLoadStates = initImageLoadStates;
+
+initBackToTop();
+setActiveDetailDirectory();
+initTiltCards();
+initImageLoadStates();
+updateScrollProgress();
+
 const revealItems = Array.from(document.querySelectorAll("[data-reveal]"));
 
 function revealElement(element) {
@@ -108,13 +228,16 @@ function syncHashTarget() {
 
 window.addEventListener("load", () => {
   syncHashTarget();
+  updateScrollProgress();
   window.setTimeout(syncHashTarget, 120);
   window.setTimeout(syncHashTarget, 420);
 });
 window.addEventListener("scroll", () => {
   setActiveFromScroll();
   revealVisibleItems();
+  updateScrollProgress();
 }, { passive: true });
+window.addEventListener("resize", updateScrollProgress);
 window.addEventListener("hashchange", syncHashTarget);
 
 navLinks.forEach((link) => {
@@ -234,17 +357,23 @@ const resumeCloseBtn = document.querySelector(".resume-overlay-close");
 function openResume(e) {
   e.preventDefault();
   if (!resumeOverlay) return;
+  const wasOpen = resumeOverlay.classList.contains("is-open");
   resumeOverlay.classList.add("is-open");
   resumeOverlay.setAttribute("aria-hidden", "false");
-  document.body.classList.add("is-previewing");
+  if (!wasOpen) {
+    lockPreviewScroll();
+  }
   resumeOverlay.querySelector(".resume-modal").scrollTop = 0;
 }
 
 function closeResume() {
   if (!resumeOverlay) return;
+  const wasOpen = resumeOverlay.classList.contains("is-open");
   resumeOverlay.classList.remove("is-open");
   resumeOverlay.setAttribute("aria-hidden", "true");
-  document.body.classList.remove("is-previewing");
+  if (wasOpen) {
+    unlockPreviewScroll();
+  }
 }
 
 if (resumeOpenBtn) {
@@ -298,6 +427,9 @@ if (resumeOverlay) {
     lbImg.addEventListener("load", function() {
       this.style.opacity = "1";
     });
+    lbImg.addEventListener("error", function() {
+      this.style.opacity = "1";
+    });
   }
 
   function getAllPreviews() {
@@ -307,12 +439,8 @@ if (resumeOverlay) {
     return Array.from(gallery.querySelectorAll("[data-detail-preview]"));
   }
 
-  let navigateCooldown = false;
-  const NAV_COOLDOWN_MS = 800;
-
   function navigate(direction) {
     if (!lightbox.classList.contains("is-open")) return;
-    if (navigateCooldown) return;
     const all = getAllPreviews();
     if (all.length === 0) return;
     const idx = all.indexOf(currentButton);
@@ -320,13 +448,8 @@ if (resumeOverlay) {
     const nextIdx = idx + direction;
     if (nextIdx < 0 || nextIdx >= all.length) return;
 
-    navigateCooldown = true;
     currentButton = all[nextIdx];
     currentButton.click();
-
-    setTimeout(function () {
-      navigateCooldown = false;
-    }, NAV_COOLDOWN_MS);
   }
 
   prevBtn.addEventListener("click", function(e) {
@@ -492,4 +615,3 @@ if (playBtn && heroVideo) {
     });
   });
 }
-

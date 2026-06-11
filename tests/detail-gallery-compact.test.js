@@ -8,8 +8,8 @@ const css = normalize(fs.readFileSync(path.join(root, "styles.css"), "utf8"));
 const js = normalize(fs.readFileSync(path.join(root, "website-design.js"), "utf8"));
 
 assert.ok(
-  css.includes(".detail-shot-label {\n  position: absolute;\n  width: 1px;\n  height: 1px;"),
-  "thumbnail labels should be visually hidden to remove per-image titles",
+  css.includes(".detail-shot:hover .detail-shot-label") && css.includes(".detail-shot:focus-visible .detail-shot-label"),
+  "thumbnail labels should appear as a hover/focus overlay",
 );
 assert.ok(
   css.includes(".detail-gallery {\n  position: relative;\n  z-index: 1;\n  display: grid;\n  gap: 14px;"),
@@ -24,4 +24,4 @@ assert.ok(
   css.includes(".detail-board .section-ribbon {\n  min-height: 88px;\n  margin-bottom: 34px;"),
   "detail gallery ribbon should sit closer to the thumbnails",
 );
-assert.ok(js.includes(".detail-shot-label"), "hidden labels should still power lightbox captions");
+assert.ok(js.includes(".detail-shot-label"), "thumbnail labels should still power lightbox captions");

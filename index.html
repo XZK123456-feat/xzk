@@ -5,9 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ZK.PORTFOLIO - 肖子康作品集</title>
     <link rel="preload" href="assets/fonts/ZHYuwanPortfolio.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=lightbox-arrow-4" />
   </head>
   <body>
+    <div class="scroll-progress" aria-hidden="true"><span></span></div>
+    <button class="back-to-top" type="button" aria-label="返回顶部"><span>↑</span></button>
     <div class="page-shell">
       <header class="topbar fixed-nav">
         <a class="brand-pill" href="#home" aria-label="返回首页">ZK.PORTFOLIO</a>
@@ -29,6 +31,7 @@
             <div class="hero-mainline">
               <div>
                 <h1>肖子康作品集</h1>
+                <p class="hero-positioning">AIGC 买量视觉 / 运营与品宣素材设计</p>
               </div>
               <p class="date-range">2024.08 - 至今</p>
             </div>
@@ -68,7 +71,7 @@
 
             <div class="timeline">
               <div class="mission-list">
-              <article class="work-item mission-card mission-website" data-reveal="mission-card">
+              <article class="work-item mission-card mission-website" data-reveal="mission-card" data-tilt-card>
                 <a class="mission-hit-area" href="website-design.html" aria-label="进入官网视觉设计详情页"></a>
                 <div class="ticket">NO.<strong>01</strong></div>
                 <div class="work-card comic-card halftone">
@@ -83,7 +86,7 @@
                 </div>
               </article>
 
-              <article class="work-item mission-card mission-ua" data-reveal="mission-card">
+              <article class="work-item mission-card mission-ua" data-reveal="mission-card" data-tilt-card>
                 <a class="mission-hit-area" href="ua-creatives.html" aria-label="进入买量图片设计详情页"></a>
                 <div class="ticket">NO.<strong>02</strong></div>
                 <div class="work-card comic-card halftone">
@@ -98,7 +101,7 @@
                 </div>
               </article>
 
-              <article class="work-item mission-card mission-community" data-reveal="mission-card">
+              <article class="work-item mission-card mission-community" data-reveal="mission-card" data-tilt-card>
                 <a class="mission-hit-area" href="community-creatives.html" aria-label="进入运营图片设计详情页"></a>
                 <div class="ticket">NO.<strong>03</strong></div>
                 <div class="work-card comic-card halftone">

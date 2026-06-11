@@ -142,10 +142,10 @@ assert.ok(websiteDetailHtml.includes("官网视觉设计"), "website detail shou
 assert.ok(websiteDetailHtml.includes("移动端"), "website detail should include a mobile section");
 assert.ok(websiteDetailHtml.includes("PC端"), "website detail should include a PC section");
 assert.ok(websiteDetailHtml.includes('href="index.html#contents"'), "website detail should link back to the portfolio contents");
-assert.strictEqual((websiteDetailHtml.match(/assets\/website-design\/mobile\/移动端%20\(\d+\)\.png/g) || []).length, 7, "website detail should render 7 mobile images");
-assert.strictEqual((websiteDetailHtml.match(/assets\/website-design\/pc\/PC端%20\(\d+\)\.png/g) || []).length, 17, "website detail should render 17 PC images");
-assert.ok(websiteDetailHtml.indexOf("移动端%20(1).png") < websiteDetailHtml.indexOf("移动端%20(7).png"), "mobile images should follow the naming order");
-assert.ok(websiteDetailHtml.indexOf("PC端%20(1).png") < websiteDetailHtml.indexOf("PC端%20(17).png"), "PC images should follow the naming order");
+assert.strictEqual((websiteDetailHtml.match(/data-full="assets\/website-design\/mobile\//g) || []).length, 7, "website detail should render 7 mobile images");
+assert.strictEqual((websiteDetailHtml.match(/data-full="assets\/website-design\/pc\//g) || []).length, 17, "website detail should render 17 PC images");
+assert.ok(websiteDetailHtml.indexOf("移动端 01") < websiteDetailHtml.indexOf("移动端 07"), "mobile images should follow the display order");
+assert.ok(websiteDetailHtml.indexOf("预览PC端 01") < websiteDetailHtml.indexOf("预览PC端 17"), "PC images should follow the display order");
 assert.ok(websiteDetailHtml.includes("website-lightbox"), "website detail should include an image preview lightbox");
 assert.ok(detailJs.includes("detail-preview"), "website detail script should wire preview buttons");
 assert.ok(detailJs.includes("Escape"), "website detail script should close previews with Escape");
