@@ -355,6 +355,8 @@ const resumeOpenBtn = document.querySelector(".floating-resume");
 const resumeCloseBtn = document.querySelector(".resume-overlay-close");
 
 function openResume(e) {
+  const href = resumeOpenBtn?.getAttribute("href");
+  if (href && href !== "#") return;
   e.preventDefault();
   if (!resumeOverlay) return;
   const wasOpen = resumeOverlay.classList.contains("is-open");
@@ -593,6 +595,15 @@ const heroVideo = document.getElementById("heroVideo");
 const playBtn = document.getElementById("playBtn");
 const videoLoading = document.getElementById("videoLoading");
 
+function pauseOtherVideos(activeVideo) {
+  document.querySelectorAll("video").forEach((video) => {
+    if (video !== activeVideo) {
+      video.pause();
+      video.closest(".community-video-card")?.classList.remove("is-playing");
+    }
+  });
+}
+
 if (playBtn && heroVideo) {
   playBtn.addEventListener("click", () => {
     playBtn.classList.add("is-hidden");
@@ -604,6 +615,7 @@ if (playBtn && heroVideo) {
     }
 
     heroVideo.classList.add("is-loaded");
+    pauseOtherVideos(heroVideo);
 
     heroVideo.addEventListener("playing", function onPlay() {
       if (videoLoading) videoLoading.classList.remove("is-active");
@@ -614,4 +626,37 @@ if (playBtn && heroVideo) {
       if (videoLoading) videoLoading.classList.remove("is-active");
     });
   });
+
+  heroVideo.addEventListener("play", () => pauseOtherVideos(heroVideo));
 }
+
+function initCommunityVideoCards() {
+  document.querySelectorAll(".community-video-card").forEach((card) => {
+    const video = card.querySelector("video[data-src]");
+    const playButton = card.querySelector(".community-play-btn");
+
+    if (!video || !playButton) return;
+
+    const loadAndPlay = () => {
+      if (!video.src) {
+        video.src = video.dataset.src;
+        video.load();
+      }
+
+      card.classList.add("is-playing");
+      pauseOtherVideos(video);
+
+      video.play().catch(() => {});
+    };
+
+    playButton.addEventListener("click", loadAndPlay);
+    video.addEventListener("play", () => {
+      pauseOtherVideos(video);
+      card.classList.add("is-playing");
+    });
+    video.addEventListener("pause", () => card.classList.remove("is-playing"));
+    video.addEventListener("ended", () => card.classList.remove("is-playing"));
+  });
+}
+
+initCommunityVideoCards();

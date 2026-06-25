@@ -5,6 +5,10 @@ const assert = require("assert");
 const root = path.resolve(__dirname, "..");
 const htmlPath = path.join(root, "index.html");
 const websiteDetailPath = path.join(root, "website-design.html");
+const videoDetailPath = path.join(root, "video-design.html");
+const uaDetailPath = path.join(root, "ua-creatives.html");
+const communityDetailPath = path.join(root, "community-creatives.html");
+const resumePdfPath = path.join(root, "assets", "resume", "xiao-zikang-ai-gicg-marketing-operations.pdf");
 const cssPath = path.join(root, "styles.css");
 const jsPath = path.join(root, "script.js");
 const detailJsPath = path.join(root, "website-design.js");
@@ -12,15 +16,23 @@ const normalize = (content) => content.replace(/\r\n/g, "\n");
 
 assert.ok(fs.existsSync(htmlPath), "index.html should exist");
 assert.ok(fs.existsSync(websiteDetailPath), "website-design.html should exist");
+assert.ok(fs.existsSync(videoDetailPath), "video-design.html should exist");
+assert.ok(fs.existsSync(uaDetailPath), "ua-creatives.html should exist");
+assert.ok(fs.existsSync(communityDetailPath), "community-creatives.html should exist");
+assert.ok(fs.existsSync(resumePdfPath), "updated resume PDF should exist");
 assert.ok(fs.existsSync(cssPath), "styles.css should exist");
 assert.ok(fs.existsSync(jsPath), "script.js should exist");
 assert.ok(fs.existsSync(detailJsPath), "website-design.js should exist");
 
 const html = normalize(fs.readFileSync(htmlPath, "utf8"));
 const websiteDetailHtml = normalize(fs.readFileSync(websiteDetailPath, "utf8"));
+const videoDetailHtml = normalize(fs.readFileSync(videoDetailPath, "utf8"));
+const uaDetailHtml = normalize(fs.readFileSync(uaDetailPath, "utf8"));
+const communityDetailHtml = normalize(fs.readFileSync(communityDetailPath, "utf8"));
 const css = normalize(fs.readFileSync(cssPath, "utf8"));
 const js = normalize(fs.readFileSync(jsPath, "utf8"));
 const detailJs = normalize(fs.readFileSync(detailJsPath, "utf8"));
+const resumeHref = "assets/resume/xiao-zikang-ai-gicg-marketing-operations.pdf";
 
 [
   "ZK.PORTFOLIO",
@@ -29,6 +41,7 @@ const detailJs = normalize(fs.readFileSync(detailJsPath, "utf8"));
   "官网视觉设计",
   "买量图片设计",
   "运营图片设计",
+  "AI视频设计",
   "项目素材产出概览",
   "分阶段全渠道广告素材投放数据",
 ].forEach((text) => {
@@ -38,6 +51,10 @@ const detailJs = normalize(fs.readFileSync(detailJsPath, "utf8"));
 ["#home", "#contents", "#data"].forEach((href) => {
   assert.ok(html.includes(`href="${href}"`), `nav should link to ${href}`);
 });
+
+assert.ok(!html.includes('href="#video"'), "home page nav should not keep the duplicate video entry");
+assert.ok(!html.includes('id="video" class="video-showcase'), "home page should not keep the duplicate video showcase section");
+assert.ok(!html.includes('id="heroVideo"'), "home page should not keep the video player after moving it to NO.4 detail");
 
 ["halftone", "ticket", "comic-card", "fixed-nav"].forEach((className) => {
   assert.ok(html.includes(className) || css.includes(className), `should define ${className}`);
@@ -68,8 +85,12 @@ assert.ok(html.includes("AIGC / 买量 / 运营 / 品宣"), "hero category shoul
 assert.ok(html.includes("2024.08 - 至今"), "hero date should start at 2024.08");
 assert.ok(html.includes("hero-dashboard"), "hero should include an outcome dashboard");
 assert.ok(html.includes("AIGC 买量视觉 / 运营与品宣素材设计"), "hero should state the portfolio positioning");
-assert.ok(html.includes("600+ 图片素材"), "hero dashboard should preview image output");
-assert.ok(html.includes("50+ 视频素材"), "hero dashboard should preview video output");
+assert.ok(html.includes("1000+ 图片素材"), "hero dashboard should preview image output");
+assert.ok(html.includes("100+ 视频素材"), "hero dashboard should preview video output");
+[html, websiteDetailHtml, videoDetailHtml, uaDetailHtml, communityDetailHtml].forEach((pageHtml, index) => {
+  assert.ok(pageHtml.includes(`class="floating-resume" href="${resumeHref}"`), `page ${index + 1} should link to the updated resume PDF`);
+});
+assert.ok(js.includes('if (href && href !== "#") return;'), "resume click handler should let PDF links open normally");
 assert.ok(!html.includes("ticket-zero"), "NO.00 ticket should be removed");
 assert.ok(!html.includes("NO.<strong>00"), "NO.00 label should be removed");
 assert.ok(html.includes("mission-list"), "contents should use a high-density mission list");
@@ -78,6 +99,9 @@ assert.ok(html.includes('href="website-design.html"'), "website mission card sho
 assert.ok(html.includes("进入详情"), "website mission card should expose an entry call-to-action");
 assert.ok(html.includes("mission-card mission-ua"), "UA work should be a mission card");
 assert.ok(html.includes("mission-card mission-community"), "community work should be a mission card");
+assert.ok(html.includes("mission-card mission-video"), "AI video work should be a mission card");
+assert.ok(html.includes("NO.<strong>04</strong>"), "AI video work should use the NO.04 ticket");
+assert.ok(html.includes('href="video-design.html"'), "AI video mission card should link to its detail page");
 assert.ok(html.includes("battle-board"), "data section should use a battle/result board");
 assert.ok(html.includes("战绩结算面板"), "data section should frame metrics as results");
 assert.ok(!html.includes("result-callout"), "data section should not include the removed conclusion callout");
@@ -150,5 +174,68 @@ assert.ok(websiteDetailHtml.includes("website-lightbox"), "website detail should
 assert.ok(detailJs.includes("detail-preview"), "website detail script should wire preview buttons");
 assert.ok(detailJs.includes("Escape"), "website detail script should close previews with Escape");
 assert.ok(css.includes(".mobile-shot img {\n  aspect-ratio: 9 / 16;\n  object-fit: contain;"), "mobile thumbnails should show the full image without cropping");
+assert.ok(videoDetailHtml.includes("NO.<strong>04</strong>"), "video detail should keep the NO.04 ticket");
+assert.ok(videoDetailHtml.includes("AI视频设计"), "video detail should title the project");
+assert.ok(videoDetailHtml.includes("买量视频混剪"), "video detail should include the buying video montage");
+assert.ok(videoDetailHtml.includes("运营社群视频设计"), "video detail should include a community operation video section");
+assert.ok(videoDetailHtml.includes('id="heroVideo"'), "video detail should include the playable video element");
+assert.ok(videoDetailHtml.includes('id="playBtn"'), "video detail should include the video play button");
+assert.ok(videoDetailHtml.includes("assets/video/买量视频混剪.mp4") || js.includes("assets/video/买量视频混剪.mp4"), "video detail should use the existing montage asset");
+assert.ok(videoDetailHtml.includes('href="index.html#contents"'), "video detail should link back to the portfolio contents");
+assert.ok(videoDetailHtml.includes('href="#community-video"'), "video detail nav should link to the community video section");
+assert.ok(videoDetailHtml.indexOf('id="community-video"') < videoDetailHtml.indexOf('id="video"'), "community videos should appear before the buying video montage");
+assert.ok(/\.play-btn\s*\{[^}]*box-shadow:\s*none;/s.test(css), "video play button should not inherit the generic button shadow in its default state");
+assert.ok(videoDetailHtml.includes("community-video-grid"), "video detail should render community videos in a dedicated grid");
+assert.strictEqual(
+  (videoDetailHtml.match(/assets\/video\/community\/community-video-\d{2}\.mp4/g) || []).length,
+  6,
+  "video detail should render all 6 supplemental community videos",
+);
+assert.strictEqual(
+  (videoDetailHtml.match(/<video data-src="assets\/video\/community\/community-video-\d{2}\.mp4" preload="none" playsinline controls><\/video>/g) || []).length,
+  6,
+  "supplemental community videos should only receive a source after the user presses play",
+);
+assert.strictEqual(
+  (videoDetailHtml.match(/assets\/video\/community\/posters\/community-video-\d{2}\.jpg/g) || []).length,
+  6,
+  "community videos should include still-frame poster images",
+);
+assert.strictEqual(
+  (videoDetailHtml.match(/class="play-btn community-play-btn"/g) || []).length,
+  6,
+  "community videos should reuse the same play UI treatment as the montage player",
+);
+const communityPlayButtons = videoDetailHtml.match(/<button class="play-btn community-play-btn"[\s\S]*?<\/button>/g) || [];
+assert.strictEqual(communityPlayButtons.length, 6, "community videos should render 6 compact icon-only play buttons");
+communityPlayButtons.forEach((buttonMarkup, index) => {
+  assert.ok(!buttonMarkup.includes("play-btn-label"), `community play button ${index + 1} should not show a play label`);
+});
+assert.strictEqual(
+  (videoDetailHtml.match(/<span class="play-btn-label">点击播放<\/span>/g) || []).length,
+  1,
+  "only the main montage player should keep the play label",
+);
+assert.ok(css.includes(".community-video-grid"), "styles should define the community video grid");
+assert.ok(/\.community-video-grid\s*\{[^}]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\);/s.test(css), "desktop community video grid should render as 3 columns for a 3+3 layout");
+assert.ok(/@media \(max-width:\s*1100px\)\s*\{[\s\S]*?\.community-video-grid\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\);/s.test(css), "tablet community video grid should fall back to 2 columns");
+assert.ok(css.includes(".community-video-stage"), "styles should frame community video stages");
+assert.ok(/\.community-video-stage\s*\{[^}]*aspect-ratio:\s*16\s*\/\s*9;/s.test(css), "community video cards should use horizontal 16:9 video frames");
+assert.ok(css.includes(".community-play-btn"), "styles should define the community play overlay");
+assert.ok(/\.community-play-btn\s*\{[^}]*place-content:\s*center;/s.test(css), "community play icon should sit in the visual center of each card");
+assert.ok(css.includes(".community-play-btn .play-btn-ring::before"), "community play UI should draw the yellow inner ring from the reference");
+assert.ok(css.includes("width: clamp(52px, 5vw, 70px);"), "community play button should be compact enough for small horizontal cards");
+assert.ok(/\.community-play-btn \.play-btn-ring\s*\{[^}]*animation:\s*none;/s.test(css), "community play ring should not inherit the large pulsing black outline");
+assert.ok(!css.includes("border: 12px solid #050505;"), "community play button should not render the oversized black outer border");
+assert.ok(!css.includes("0 5px 0 rgba(0, 0, 0, 0.14)"), "community play button should not render lower arc shadow artifacts");
+assert.ok(!css.includes("0 10px 20px rgba(0, 0, 0, 0.24)"), "community play button should not render lower arc shadow artifacts");
+assert.ok(/\.community-play-btn \.play-icon\s*\{[^}]*transform:\s*none;/s.test(css), "community play triangle should be centered inside the circle");
+assert.ok(js.includes("initCommunityVideoCards"), "script should initialize lazy community video playback");
+assert.ok(js.includes("video.dataset.src"), "script should load community video sources only on play");
+assert.ok(js.includes("pauseOtherVideos"), "script should pause any other active video before a new one plays");
+assert.ok(js.includes("document.querySelectorAll(\"video\")"), "video pause logic should cover both montage and community video players");
+assert.ok(js.includes("pauseOtherVideos(heroVideo)"), "montage playback should pause community videos first");
+assert.ok(js.includes("pauseOtherVideos(video)"), "community playback should pause other videos first");
+assert.ok(js.includes("closest(\".community-video-card\")"), "pausing another community video should also clear its playing UI state");
 
 console.log("structure checks passed");
