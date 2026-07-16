@@ -254,6 +254,7 @@ function initPageLoader() {
 
 window.addEventListener("pageshow", (event) => {
   if (event.persisted) {
+    cancelPageLoaderWatchdog();
     window.__pageLoaderWatchdogFired = false;
     cancelPageLoaderUnlockTimer();
     const loader = document.querySelector(".page-loader");

@@ -577,6 +577,29 @@ async function testPersistedWatchdogRestoresLoader() {
   assert.equal(harness.documentElement.classList.contains("is-page-loading"), false, "restored loader should unlock html after the fade");
 }
 
+async function testPersistedReturnCancelsPendingWatchdog() {
+  const harness = createLoaderHarness({
+    fonts: { ready: deferred().promise },
+    images: [createResource({ complete: false, loading: "eager" })],
+    runWatchdog: true,
+    stylesheets: [createResource({ sheet: null })],
+  });
+
+  assert.ok([...harness.clock.timers.values()].some((timer) => timer.dueAt === 5250), "initial load should have a pending watchdog");
+  harness.stylesheets.splice(0, harness.stylesheets.length, createResource({ sheet: {} }));
+  harness.document.images = [createResource({ complete: true, loading: "eager" })];
+  harness.document.fonts = { ready: Promise.resolve() };
+  harness.window.dispatch("pageshow", { persisted: true });
+  await flushMicrotasks();
+
+  assert.equal(
+    [...harness.clock.timers.values()].some((timer) => timer.dueAt === 5250),
+    false,
+    "persisted return should cancel the old watchdog before it can affect the new run",
+  );
+  assert.equal(harness.loader.getAttribute("aria-hidden"), null, "new persisted run should keep the loader visible during its minimum duration");
+}
+
 async function testPersistedRearmCancelsPendingUnlock() {
   const harness = createLoaderHarness({
     fonts: { ready: Promise.resolve() },
@@ -658,6 +681,7 @@ async function testRearmCleansPriorRunListeners() {
   await testControllerCancelsWatchdog();
   await testFiredWatchdogPreventsRelock();
   await testPersistedWatchdogRestoresLoader();
+  await testPersistedReturnCancelsPendingWatchdog();
   await testPersistedRearmCancelsPendingUnlock();
   await testWatchdogCleansPartiallyStartedController();
   await testRearmCleansPriorRunListeners();
