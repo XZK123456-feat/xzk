@@ -1,3 +1,146 @@
+const PAGE_LOADER_MIN_MS = 350;
+const PAGE_LOADER_TIMEOUT_MS = 5000;
+
+let pageLoaderRunId = 0;
+let pageLoaderTimeoutId = null;
+let pageLoaderMinimumTimerId = null;
+
+function waitForStylesheets() {
+  const stylesheets = Array.from(document.querySelectorAll('link[rel="stylesheet"]'));
+
+  return Promise.allSettled(stylesheets.map((link) => {
+    if (link.sheet) {
+      return Promise.resolve();
+    }
+
+    return new Promise((resolve) => {
+      link.addEventListener("load", resolve, { once: true });
+      link.addEventListener("error", resolve, { once: true });
+    });
+  }));
+}
+
+function waitForFirstViewImages() {
+  const firstViewLimit = window.innerHeight * 1.25;
+  const images = Array.from(document.images).filter((image) => {
+    if (image.loading === "lazy") {
+      return false;
+    }
+
+    const rect = image.getBoundingClientRect();
+    return rect.top < firstViewLimit && rect.bottom > 0;
+  });
+
+  return Promise.allSettled(images.map((image) => {
+    if (image.complete) {
+      return Promise.resolve();
+    }
+
+    return new Promise((resolve) => {
+      image.addEventListener("load", resolve, { once: true });
+      image.addEventListener("error", resolve, { once: true });
+    });
+  }));
+}
+
+function initPageLoader() {
+  const loader = document.querySelector(".page-loader");
+  const runId = ++pageLoaderRunId;
+
+  if (pageLoaderTimeoutId !== null) {
+    clearTimeout(pageLoaderTimeoutId);
+    pageLoaderTimeoutId = null;
+  }
+
+  if (pageLoaderMinimumTimerId !== null) {
+    clearTimeout(pageLoaderMinimumTimerId);
+    pageLoaderMinimumTimerId = null;
+  }
+
+  if (!loader) {
+    document.documentElement.classList.remove("is-page-loading");
+    document.body.classList.remove("is-page-loading");
+    return;
+  }
+
+  const startedAt = performance.now();
+  const fill = loader.querySelector(".page-loader__fill");
+  const percent = loader.querySelector("[data-loading-percent]");
+  let currentProgress = 8;
+
+  const isCurrentRun = () => runId === pageLoaderRunId;
+  const setProgress = (nextProgress) => {
+    if (!isCurrentRun()) {
+      return;
+    }
+
+    currentProgress = Math.max(currentProgress, Math.min(100, nextProgress));
+    const normalizedProgress = currentProgress / 100;
+
+    if (fill) {
+      fill.style.transform = `scaleX(${normalizedProgress})`;
+    }
+
+    if (percent) {
+      percent.textContent = `${String(Math.round(currentProgress)).padStart(2, "0")}%`;
+    }
+  };
+
+  document.documentElement.classList.add("is-page-loading");
+  document.body.classList.add("is-page-loading");
+  loader.removeAttribute("aria-hidden");
+  setProgress(8);
+
+  const stylesReady = waitForStylesheets().then(() => setProgress(38));
+  const fontsReady = (document.fonts
+    ? document.fonts.ready.catch(() => undefined)
+    : Promise.resolve())
+    .then(() => setProgress(68));
+  const imagesReady = waitForFirstViewImages().then(() => setProgress(92));
+  const combinedReadiness = Promise.allSettled([stylesReady, fontsReady, imagesReady]);
+  const hardTimeout = new Promise((resolve) => {
+    pageLoaderTimeoutId = window.setTimeout(resolve, PAGE_LOADER_TIMEOUT_MS);
+  });
+
+  Promise.race([combinedReadiness, hardTimeout])
+    .then(() => {
+      if (!isCurrentRun()) {
+        return false;
+      }
+
+      if (pageLoaderTimeoutId !== null) {
+        clearTimeout(pageLoaderTimeoutId);
+        pageLoaderTimeoutId = null;
+      }
+
+      setProgress(100);
+      const elapsed = performance.now() - startedAt;
+      const remaining = Math.max(0, PAGE_LOADER_MIN_MS - elapsed);
+
+      return new Promise((resolve) => {
+        pageLoaderMinimumTimerId = window.setTimeout(() => resolve(true), remaining);
+      });
+    })
+    .then((shouldDismiss) => {
+      if (!shouldDismiss || !isCurrentRun()) {
+        return;
+      }
+
+      pageLoaderMinimumTimerId = null;
+      loader.setAttribute("aria-hidden", "true");
+      document.documentElement.classList.remove("is-page-loading");
+      document.body.classList.remove("is-page-loading");
+    });
+}
+
+window.addEventListener("pageshow", (event) => {
+  if (event.persisted) {
+    initPageLoader();
+  }
+});
+
+initPageLoader();
+
 const navLinks = Array.from(document.querySelectorAll(".nav-pill"));
 const sections = Array.from(document.querySelectorAll("main section"));
 const reduceMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");

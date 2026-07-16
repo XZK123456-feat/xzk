@@ -1,13 +1,33 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="is-page-loading">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NO.03 运营图片设计 - 肖子康作品集</title>
     <link rel="preload" href="assets/fonts/ZHYuwanPortfolio.woff2" as="font" type="font/woff2" crossorigin />
+    <style data-loader-critical>
+      html.is-page-loading,
+      body.is-page-loading { overflow: hidden; }
+      .page-loader {
+        position: fixed;
+        inset: 0;
+        z-index: 10000;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        background: #111;
+      }
+    </style>
     <link rel="stylesheet" href="styles.css?v=lightbox-arrow-4" />
   </head>
-  <body class="detail-page">
+  <body class="detail-page is-page-loading">
+    <div class="page-loader" role="status" aria-label="页面正在加载">
+      <div class="page-loader__inner">
+        <strong class="page-loader__brand">ZK.PORTFOLIO</strong>
+        <div class="page-loader__track" aria-hidden="true"><span class="page-loader__fill"></span></div>
+        <div class="page-loader__meta" aria-hidden="true"><span>LOADING</span><span data-loading-percent>08%</span></div>
+      </div>
+    </div>
     <div class="scroll-progress" aria-hidden="true"><span></span></div>
     <button class="back-to-top" type="button" aria-label="返回顶部"><span>↑</span></button>
     <div class="page-shell">
