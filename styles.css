@@ -62,13 +62,14 @@ body.is-page-loading {
   background: #111;
   opacity: 1;
   visibility: visible;
-  transition: opacity 400ms ease, visibility 0s linear 400ms;
+  transition: opacity 400ms ease;
 }
 
 .page-loader[aria-hidden="true"] {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
+  transition: opacity 400ms ease, visibility 0s linear 400ms;
 }
 
 .page-loader__inner {
@@ -2656,7 +2657,8 @@ body.is-previewing {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .page-loader {
+  .page-loader,
+  .page-loader[aria-hidden="true"] {
     transition: none;
   }
 
