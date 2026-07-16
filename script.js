@@ -1,6 +1,6 @@
 // PAGE_LOADER_CONTROLLER_START
 const PAGE_LOADER_MIN_MS = 350;
-const PAGE_LOADER_TIMEOUT_MS = 5000;
+const PAGE_LOADER_TIMEOUT_MS = 12000;
 const PAGE_LOADER_EXIT_MS = 400;
 
 let activePageLoaderRun = null;
@@ -101,23 +101,41 @@ function waitForStylesheets(run) {
   }));
 }
 
+function waitForPortfolioFonts() {
+  if (!document.fonts || typeof document.fonts.load !== "function") {
+    return Promise.resolve();
+  }
+
+  const request = Promise.resolve()
+    .then(() => document.fonts.load('800 16px "ZHYuwanPortfolio"', "肖子康作品集 目录 数据"))
+    .catch(() => undefined);
+
+  return request.then(() => document.fonts.ready.catch(() => undefined));
+}
+
 function waitForFirstViewImages(run) {
   const firstViewLimit = window.innerHeight * 1.25;
   const images = Array.from(document.images).filter((image) => {
-    if (image.loading === "lazy") {
-      return false;
-    }
-
     const rect = image.getBoundingClientRect();
     return rect.top < firstViewLimit && rect.bottom > 0;
   });
 
   return Promise.allSettled(images.map((image) => {
-    if (image.complete) {
-      return Promise.resolve();
+    if (image.loading === "lazy") {
+      image.loading = "eager";
     }
 
-    return waitForResourceSettlement(image, run);
+    const loaded = image.complete
+      ? Promise.resolve()
+      : waitForResourceSettlement(image, run);
+
+    return loaded.then(() => {
+      if (typeof image.decode !== "function") {
+        return undefined;
+      }
+
+      return image.decode().catch(() => undefined);
+    });
   }));
 }
 
@@ -216,10 +234,7 @@ function initPageLoader() {
   setProgress(8);
 
   const stylesReady = waitForStylesheets(run).then(() => setProgress(38));
-  const fontsReady = (document.fonts
-    ? document.fonts.ready.catch(() => undefined)
-    : Promise.resolve())
-    .then(() => setProgress(68));
+  const fontsReady = waitForPortfolioFonts().then(() => setProgress(68));
   const imagesReady = waitForFirstViewImages(run).then(() => setProgress(92));
   const combinedReadiness = Promise.allSettled([stylesReady, fontsReady, imagesReady]);
   let hardTimeoutId = null;

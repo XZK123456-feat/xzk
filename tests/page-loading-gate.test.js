@@ -96,7 +96,6 @@ const controllerEnd = script.indexOf(controllerEndMarker);
 assert.ok(controllerStart >= 0 && controllerEnd > controllerStart, "loader controller should expose explicit test boundaries");
 const loaderController = script.slice(controllerStart + controllerStartMarker.length, controllerEnd);
 const watchdogSource = watchdogBlocks[0];
-assert.match(script, /document\.fonts\s*\?[\s\S]*?document\.fonts\.ready\.catch\([\s\S]*?:\s*Promise\.resolve\(\)/, "font readiness should have failure and unsupported-browser fallbacks");
 
 for (const page of ["website-design.html", "video-design.html"]) {
   assert.ok(read(page).includes('loading="lazy"'), `${page} should preserve lazy gallery media`);
@@ -235,6 +234,10 @@ function deferred() {
   return { promise, reject, resolve };
 }
 
+function createFonts(ready = Promise.resolve(), load = () => Promise.resolve()) {
+  return { load, ready };
+}
+
 function createResource(options = {}) {
   const resource = new FakeEventTarget();
   Object.assign(resource, options);
@@ -340,11 +343,11 @@ async function testSettledResourcesAndMinimumDuration() {
   const stylesheet = createResource({ sheet: null });
   const loadedImage = createResource({ complete: false, loading: "eager" });
   const failedImage = createResource({ complete: false, loading: "eager" });
-  const lazyImage = createResource({ complete: false, loading: "lazy" });
+  const lazyImage = createResource({ complete: false, loading: "lazy", rect: { top: 1400, bottom: 1500 } });
   const farImage = createResource({ complete: false, loading: "eager", rect: { top: 1200, bottom: 1300 } });
   const fonts = deferred();
   const harness = createLoaderHarness({
-    fonts: { ready: fonts.promise },
+    fonts: createFonts(fonts.promise),
     images: [loadedImage, failedImage, lazyImage, farImage],
     stylesheets: [stylesheet],
   });
@@ -387,17 +390,121 @@ async function testSettledResourcesAndMinimumDuration() {
   assert.equal(harness.scrollState.scrollToCalls, 0, "loader should not mutate scroll position");
 }
 
+async function testExplicitFontAndVisibleImageDecode() {
+  const fontLoad = deferred();
+  const fontsReady = deferred();
+  const imageDecode = deferred();
+  const fontCalls = [];
+  let fontsReadyReads = 0;
+  let visibleDecodeCalls = 0;
+  let farDecodeCalls = 0;
+  const fonts = {
+    load: (descriptor, sample) => {
+      fontCalls.push({ descriptor, sample });
+      return fontLoad.promise;
+    },
+  };
+  Object.defineProperty(fonts, "ready", {
+    get() {
+      fontsReadyReads += 1;
+      return fontsReady.promise;
+    },
+  });
+  const visibleLazyImage = createResource({
+    complete: true,
+    loading: "lazy",
+    rect: { top: 40, bottom: 340 },
+    decode: () => {
+      visibleDecodeCalls += 1;
+      return imageDecode.promise;
+    },
+  });
+  const farLazyImage = createResource({
+    complete: true,
+    loading: "lazy",
+    rect: { top: 2200, bottom: 2500 },
+    decode: () => {
+      farDecodeCalls += 1;
+      return Promise.resolve();
+    },
+  });
+  const harness = createLoaderHarness({
+    fonts,
+    images: [visibleLazyImage, farLazyImage],
+    stylesheets: [createResource({ sheet: {} })],
+  });
+
+  await flushMicrotasks();
+  assert.equal(fontCalls.length, 1, "loader should explicitly request the portfolio font");
+  assert.equal(fontCalls[0].descriptor, '800 16px "ZHYuwanPortfolio"', "loader should request the visible body font at its interface weight");
+  assert.ok(fontCalls[0].sample.includes("肖子康"), "font request should include representative Chinese glyphs");
+  assert.equal(fontsReadyReads, 0, "loader should wait for the explicit font request before reading fonts.ready");
+  assert.equal(visibleLazyImage.loading, "eager", "visible lazy image should be promoted for the current entry");
+  assert.equal(visibleDecodeCalls, 1, "visible image should be decoded before reveal");
+  assert.equal(farLazyImage.loading, "lazy", "offscreen image should stay lazy");
+  assert.equal(farDecodeCalls, 0, "offscreen image should not block reveal");
+
+  fontLoad.resolve();
+  await flushMicrotasks();
+  assert.equal(fontsReadyReads, 1, "loader should await fonts.ready after the explicit request settles");
+  fontsReady.resolve();
+  await flushMicrotasks();
+  await advance(harness, 350);
+  assert.equal(harness.loader.getAttribute("aria-hidden"), null, "pending image decode should block dismissal");
+  imageDecode.resolve();
+  await flushMicrotasks();
+  assert.equal(harness.percent.textContent, "100%", "decoded first view should complete progress");
+  await advance(harness, 0);
+  assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "loader should dismiss after visible image decode settles");
+}
+
+async function testDecodeAndFontFailuresSettleSafely() {
+  let decodeCalls = 0;
+  const image = createResource({
+    complete: true,
+    loading: "lazy",
+    rect: { top: 20, bottom: 220 },
+    decode: () => {
+      decodeCalls += 1;
+      return Promise.reject(new Error("decode failed"));
+    },
+  });
+  const fonts = createFonts(
+    Promise.reject(new Error("fonts ready failed")),
+    () => Promise.reject(new Error("font load failed")),
+  );
+  const harness = createLoaderHarness({
+    fonts,
+    images: [image],
+    stylesheets: [createResource({ sheet: {} })],
+  });
+
+  await flushMicrotasks();
+  assert.equal(image.loading, "eager", "visible image should still be promoted when decode fails");
+  assert.equal(decodeCalls, 1, "visible image decode should be attempted once");
+  await advance(harness, 350);
+  assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "font and decode rejection should fail open safely");
+  assert.equal(harness.percent.textContent, "100%", "resource rejection should still settle progress");
+}
+
+function testUpdatedTimeouts() {
+  assert.match(loaderController, /const PAGE_LOADER_TIMEOUT_MS = 12000;/, "controller timeout should allow critical assets twelve seconds");
+  watchdogBlocks.forEach((block, index) => {
+    assert.match(block, /window\.setTimeout\(failOpen, 12250\)/, `${pages[index]} watchdog should remain after the controller timeout`);
+  });
+}
+
 async function testHardTimeoutRelease() {
   const stylesheet = createResource({ sheet: null });
   const image = createResource({ complete: false, loading: "eager" });
   const fonts = deferred();
   const harness = createLoaderHarness({
-    fonts: { ready: fonts.promise },
+    fonts: createFonts(fonts.promise),
     images: [image],
     stylesheets: [stylesheet],
   });
 
-  await advance(harness, 4999);
+  await advance(harness, 11999);
   assert.equal(harness.loader.getAttribute("aria-hidden"), null, "loader should remain before the hard timeout");
   await advance(harness, 1);
   assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "hard timeout should release unresolved resources");
@@ -413,7 +520,7 @@ async function testHardTimeoutRelease() {
 
 async function testPersistedRearmInvalidatesPriorCompletion() {
   const harness = createLoaderHarness({
-    fonts: { ready: Promise.resolve() },
+    fonts: createFonts(),
     images: [createResource({ complete: true, loading: "eager" })],
     stylesheets: [createResource({ sheet: {} })],
   });
@@ -455,7 +562,7 @@ async function testPersistedRearmInvalidatesPriorCompletion() {
 async function testAlreadySettledStylesheetError() {
   const stylesheet = createResource({ dataset: { loaderState: "error" }, sheet: null });
   const harness = createLoaderHarness({
-    fonts: { ready: Promise.resolve() },
+    fonts: createFonts(),
     images: [createResource({ complete: true, loading: "eager" })],
     stylesheets: [stylesheet],
   });
@@ -469,7 +576,7 @@ async function testAlreadySettledStylesheetError() {
 async function testReducedMotionReleasesImmediately() {
   const harness = createLoaderHarness({
     reduceMotion: true,
-    fonts: { ready: Promise.resolve() },
+    fonts: createFonts(),
     images: [createResource({ complete: true, loading: "eager" })],
     stylesheets: [createResource({ sheet: {} })],
   });
@@ -487,7 +594,7 @@ async function testIndependentWatchdogFailOpen() {
   const harness = createLoaderHarness({ runWatchdog: true, startController: false });
   const watchdogDueAt = harness.clock.nextDueAt();
 
-  assert.ok(watchdogDueAt >= 5000 && watchdogDueAt <= 6000, "watchdog should independently start at approximately five seconds");
+  assert.equal(watchdogDueAt, 12250, "watchdog should independently start after the twelve-second controller timeout");
   assert.equal(harness.documentElement.getAttribute("aria-busy"), "true", "watchdog should mark the initial document busy");
   await advance(harness, watchdogDueAt - 1);
   assert.equal(harness.window.__pageLoaderWatchdogFired, false, "watchdog should not fail open early");
@@ -506,7 +613,7 @@ async function testIndependentWatchdogFailOpen() {
 
 async function testControllerCancelsWatchdog() {
   const harness = createLoaderHarness({
-    fonts: { ready: Promise.resolve() },
+    fonts: createFonts(),
     images: [createResource({ complete: true, loading: "eager" })],
     runWatchdog: true,
     stylesheets: [createResource({ sheet: {} })],
@@ -516,7 +623,7 @@ async function testControllerCancelsWatchdog() {
 
   assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "controller should dismiss normally before the watchdog");
   assert.equal(harness.clock.timerCount(), 1, "normal dismissal should retain only the fade unlock timer");
-  await advance(harness, 6000);
+  await advance(harness, 13000);
   assert.equal(harness.window.__pageLoaderWatchdogFired, false, "canceled watchdog should never fire later");
   assert.equal(harness.clock.timerCount(), 0, "normal dismissal should clean the fade unlock timer");
 }
@@ -525,7 +632,7 @@ async function testFiredWatchdogPreventsRelock() {
   const stylesheet = createResource({ sheet: null });
   const image = createResource({ complete: false, loading: "eager" });
   const harness = createLoaderHarness({
-    fonts: { ready: deferred().promise },
+    fonts: createFonts(deferred().promise),
     images: [image],
     runWatchdog: true,
     startController: false,
@@ -545,7 +652,7 @@ async function testFiredWatchdogPreventsRelock() {
 
 async function testPersistedWatchdogRestoresLoader() {
   const harness = createLoaderHarness({
-    fonts: { ready: deferred().promise },
+    fonts: createFonts(deferred().promise),
     images: [createResource({ complete: false, loading: "eager" })],
     runWatchdog: true,
     startController: false,
@@ -559,7 +666,7 @@ async function testPersistedWatchdogRestoresLoader() {
 
   harness.stylesheets.splice(0, harness.stylesheets.length, createResource({ sheet: {} }));
   harness.document.images = [createResource({ complete: true, loading: "eager" })];
-  harness.document.fonts = { ready: Promise.resolve() };
+  harness.document.fonts = createFonts();
   harness.window.dispatch("pageshow", { persisted: true });
   await flushMicrotasks();
 
@@ -579,21 +686,21 @@ async function testPersistedWatchdogRestoresLoader() {
 
 async function testPersistedReturnCancelsPendingWatchdog() {
   const harness = createLoaderHarness({
-    fonts: { ready: deferred().promise },
+    fonts: createFonts(deferred().promise),
     images: [createResource({ complete: false, loading: "eager" })],
     runWatchdog: true,
     stylesheets: [createResource({ sheet: null })],
   });
 
-  assert.ok([...harness.clock.timers.values()].some((timer) => timer.dueAt === 5250), "initial load should have a pending watchdog");
+  assert.ok([...harness.clock.timers.values()].some((timer) => timer.dueAt === 12250), "initial load should have a pending watchdog");
   harness.stylesheets.splice(0, harness.stylesheets.length, createResource({ sheet: {} }));
   harness.document.images = [createResource({ complete: true, loading: "eager" })];
-  harness.document.fonts = { ready: Promise.resolve() };
+  harness.document.fonts = createFonts();
   harness.window.dispatch("pageshow", { persisted: true });
   await flushMicrotasks();
 
   assert.equal(
-    [...harness.clock.timers.values()].some((timer) => timer.dueAt === 5250),
+    [...harness.clock.timers.values()].some((timer) => timer.dueAt === 12250),
     false,
     "persisted return should cancel the old watchdog before it can affect the new run",
   );
@@ -602,7 +709,7 @@ async function testPersistedReturnCancelsPendingWatchdog() {
 
 async function testPersistedRearmCancelsPendingUnlock() {
   const harness = createLoaderHarness({
-    fonts: { ready: Promise.resolve() },
+    fonts: createFonts(),
     images: [createResource({ complete: true, loading: "eager" })],
     stylesheets: [createResource({ sheet: {} })],
   });
@@ -612,7 +719,7 @@ async function testPersistedRearmCancelsPendingUnlock() {
   assert.equal(harness.documentElement.classList.contains("is-page-loading"), true, "fade should leave html locked before persisted rearm");
   harness.stylesheets.splice(0, harness.stylesheets.length, createResource({ sheet: null }));
   harness.document.images = [createResource({ complete: false, loading: "eager" })];
-  harness.document.fonts = { ready: deferred().promise };
+  harness.document.fonts = createFonts(deferred().promise);
   harness.window.dispatch("pageshow", { persisted: true });
   await flushMicrotasks();
 
@@ -628,13 +735,13 @@ async function testWatchdogCleansPartiallyStartedController() {
   const stylesheet = createResource({ sheet: null });
   const image = createResource({ complete: false, loading: "eager" });
   const harness = createLoaderHarness({
-    fonts: { ready: deferred().promise },
+    fonts: createFonts(deferred().promise),
     images: [image],
     runWatchdog: true,
     stylesheets: [stylesheet],
   });
   const controllerTimer = [...harness.clock.timers.entries()]
-    .find(([, timer]) => timer.dueAt === 5000)?.[0];
+    .find(([, timer]) => timer.dueAt === 12000)?.[0];
   harness.clock.clearTimeout(controllerTimer);
 
   assert.equal(stylesheet.totalListenerCount(), 2, "partially started controller should have stylesheet listeners before fail-open");
@@ -651,7 +758,7 @@ async function testRearmCleansPriorRunListeners() {
   const oldStylesheet = createResource({ sheet: null });
   const oldImage = createResource({ complete: false, loading: "eager" });
   const harness = createLoaderHarness({
-    fonts: { ready: deferred().promise },
+    fonts: createFonts(deferred().promise),
     images: [oldImage],
     stylesheets: [oldStylesheet],
   });
@@ -660,7 +767,7 @@ async function testRearmCleansPriorRunListeners() {
   assert.equal(oldImage.totalListenerCount(), 2, "initial run should observe image load and error");
   harness.stylesheets.splice(0, harness.stylesheets.length, createResource({ sheet: {} }));
   harness.document.images = [createResource({ complete: true, loading: "eager" })];
-  harness.document.fonts = { ready: Promise.resolve() };
+  harness.document.fonts = createFonts();
   harness.window.dispatch("pageshow", { persisted: true });
   await flushMicrotasks();
 
@@ -672,6 +779,9 @@ async function testRearmCleansPriorRunListeners() {
 }
 
 (async () => {
+  await testExplicitFontAndVisibleImageDecode();
+  await testDecodeAndFontFailuresSettleSafely();
+  testUpdatedTimeouts();
   await testSettledResourcesAndMinimumDuration();
   await testHardTimeoutRelease();
   await testPersistedRearmInvalidatesPriorCompletion();
