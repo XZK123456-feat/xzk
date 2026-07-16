@@ -17,8 +17,52 @@
         color: #fff;
         background: #111;
       }
+      html.is-page-loading .page-shell,
+      body.is-page-loading .page-shell { visibility: hidden; }
     </style>
-    <link rel="stylesheet" href="styles.css?v=lightbox-arrow-4" />
+    <script data-loader-watchdog>
+      (() => {
+        const failOpen = () => {
+          window.__pageLoaderWatchdogFired = true;
+          window.__pageLoaderWatchdogTimer = null;
+          if (typeof window.__pageLoaderControllerCleanup === "function") {
+            window.__pageLoaderControllerCleanup();
+          }
+          const root = document.documentElement;
+          const body = document.body;
+          root.classList.remove("is-page-loading");
+          root.removeAttribute("aria-busy");
+          if (body) {
+            body.classList.remove("is-page-loading");
+            body.removeAttribute("aria-busy");
+          }
+          const loader = document.querySelector(".page-loader");
+          if (loader) {
+            loader.setAttribute("aria-hidden", "true");
+            loader.style.display = "none";
+          }
+          const shell = document.querySelector(".page-shell");
+          if (shell) {
+            shell.removeAttribute("aria-hidden");
+            shell.style.visibility = "visible";
+          }
+        };
+        window.__pageLoaderWatchdogFired = false;
+        window.__pageLoaderFailOpen = failOpen;
+        document.documentElement.setAttribute("aria-busy", "true");
+        window.__pageLoaderWatchdogTimer = window.setTimeout(failOpen, 5250);
+      })();
+    </script>
+    <noscript>
+      <style>
+        html.is-page-loading,
+        body.is-page-loading { overflow: auto !important; }
+        .page-loader { display: none !important; }
+        html.is-page-loading .page-shell,
+        body.is-page-loading .page-shell { visibility: visible !important; }
+      </style>
+    </noscript>
+    <link rel="stylesheet" href="styles.css?v=lightbox-arrow-4" onload="this.dataset.loaderState='loaded'" onerror="this.dataset.loaderState='error'" />
   </head>
   <body class="is-page-loading">
     <div class="page-loader" role="status" aria-label="页面正在加载">

@@ -52,6 +52,11 @@ body.is-page-loading {
   overflow: hidden;
 }
 
+html.is-page-loading .page-shell,
+body.is-page-loading .page-shell {
+  visibility: hidden;
+}
+
 .page-loader {
   position: fixed;
   inset: 0;

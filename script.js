@@ -1,26 +1,97 @@
+// PAGE_LOADER_CONTROLLER_START
 const PAGE_LOADER_MIN_MS = 350;
 const PAGE_LOADER_TIMEOUT_MS = 5000;
 
-let pageLoaderRunId = 0;
-let pageLoaderTimeoutId = null;
-let pageLoaderMinimumTimerId = null;
+let activePageLoaderRun = null;
 
-function waitForStylesheets() {
+function createPageLoaderRun() {
+  return {
+    active: true,
+    resourceSettlers: new Set(),
+    timerIds: new Set(),
+  };
+}
+
+function isCurrentPageLoaderRun(run) {
+  return run.active && activePageLoaderRun === run;
+}
+
+function schedulePageLoaderTimer(run, callback, delay) {
+  const timerId = window.setTimeout(() => {
+    run.timerIds.delete(timerId);
+    callback();
+  }, delay);
+  run.timerIds.add(timerId);
+  return timerId;
+}
+
+function clearPageLoaderTimer(run, timerId) {
+  if (timerId === null || !run.timerIds.has(timerId)) {
+    return;
+  }
+
+  window.clearTimeout(timerId);
+  run.timerIds.delete(timerId);
+}
+
+function settlePageLoaderResources(run) {
+  [...run.resourceSettlers].forEach((settle) => settle());
+}
+
+function invalidatePageLoaderRun(run) {
+  if (!run || !run.active) {
+    return;
+  }
+
+  run.active = false;
+  run.timerIds.forEach((timerId) => window.clearTimeout(timerId));
+  run.timerIds.clear();
+  settlePageLoaderResources(run);
+}
+
+function cleanupActivePageLoaderRun() {
+  if (!activePageLoaderRun) {
+    return;
+  }
+
+  invalidatePageLoaderRun(activePageLoaderRun);
+  activePageLoaderRun = null;
+}
+
+function waitForResourceSettlement(resource, run) {
+  return new Promise((resolve) => {
+    let settled = false;
+    const settle = () => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      resource.removeEventListener("load", settle);
+      resource.removeEventListener("error", settle);
+      run.resourceSettlers.delete(settle);
+      resolve();
+    };
+
+    resource.addEventListener("load", settle);
+    resource.addEventListener("error", settle);
+    run.resourceSettlers.add(settle);
+  });
+}
+
+function waitForStylesheets(run) {
   const stylesheets = Array.from(document.querySelectorAll('link[rel="stylesheet"]'));
 
   return Promise.allSettled(stylesheets.map((link) => {
-    if (link.sheet) {
+    if (link.sheet || link.dataset.loaderState === "loaded" || link.dataset.loaderState === "error") {
       return Promise.resolve();
     }
 
-    return new Promise((resolve) => {
-      link.addEventListener("load", resolve, { once: true });
-      link.addEventListener("error", resolve, { once: true });
-    });
+    return waitForResourceSettlement(link, run);
   }));
 }
 
-function waitForFirstViewImages() {
+function waitForFirstViewImages(run) {
   const firstViewLimit = window.innerHeight * 1.25;
   const images = Array.from(document.images).filter((image) => {
     if (image.loading === "lazy") {
@@ -36,41 +107,62 @@ function waitForFirstViewImages() {
       return Promise.resolve();
     }
 
-    return new Promise((resolve) => {
-      image.addEventListener("load", resolve, { once: true });
-      image.addEventListener("error", resolve, { once: true });
-    });
+    return waitForResourceSettlement(image, run);
   }));
+}
+
+function cancelPageLoaderWatchdog() {
+  const watchdogTimer = window.__pageLoaderWatchdogTimer;
+  if (watchdogTimer !== null && watchdogTimer !== undefined) {
+    window.clearTimeout(watchdogTimer);
+  }
+  window.__pageLoaderWatchdogTimer = null;
+}
+
+function releasePageLoadingState(loader) {
+  if (loader) {
+    loader.setAttribute("aria-hidden", "true");
+  }
+  document.documentElement.classList.remove("is-page-loading");
+  document.documentElement.removeAttribute("aria-busy");
+  document.body.classList.remove("is-page-loading");
+  document.body.removeAttribute("aria-busy");
+}
+
+function dismissPageLoader(run, loader) {
+  if (!isCurrentPageLoaderRun(run)) {
+    return;
+  }
+
+  releasePageLoadingState(loader);
+  cancelPageLoaderWatchdog();
+  invalidatePageLoaderRun(run);
+  if (activePageLoaderRun === run) {
+    activePageLoaderRun = null;
+  }
 }
 
 function initPageLoader() {
   const loader = document.querySelector(".page-loader");
-  const runId = ++pageLoaderRunId;
+  cleanupActivePageLoaderRun();
 
-  if (pageLoaderTimeoutId !== null) {
-    clearTimeout(pageLoaderTimeoutId);
-    pageLoaderTimeoutId = null;
-  }
-
-  if (pageLoaderMinimumTimerId !== null) {
-    clearTimeout(pageLoaderMinimumTimerId);
-    pageLoaderMinimumTimerId = null;
-  }
-
-  if (!loader) {
-    document.documentElement.classList.remove("is-page-loading");
-    document.body.classList.remove("is-page-loading");
+  if (window.__pageLoaderWatchdogFired || !loader) {
+    releasePageLoadingState(loader);
+    if (!window.__pageLoaderWatchdogFired) {
+      cancelPageLoaderWatchdog();
+    }
     return;
   }
 
+  const run = createPageLoaderRun();
+  activePageLoaderRun = run;
   const startedAt = performance.now();
   const fill = loader.querySelector(".page-loader__fill");
   const percent = loader.querySelector("[data-loading-percent]");
   let currentProgress = 8;
 
-  const isCurrentRun = () => runId === pageLoaderRunId;
   const setProgress = (nextProgress) => {
-    if (!isCurrentRun()) {
+    if (!isCurrentPageLoaderRun(run)) {
       return;
     }
 
@@ -88,48 +180,45 @@ function initPageLoader() {
 
   document.documentElement.classList.add("is-page-loading");
   document.body.classList.add("is-page-loading");
+  document.documentElement.setAttribute("aria-busy", "true");
+  document.body.setAttribute("aria-busy", "true");
   loader.removeAttribute("aria-hidden");
   setProgress(8);
 
-  const stylesReady = waitForStylesheets().then(() => setProgress(38));
+  const stylesReady = waitForStylesheets(run).then(() => setProgress(38));
   const fontsReady = (document.fonts
     ? document.fonts.ready.catch(() => undefined)
     : Promise.resolve())
     .then(() => setProgress(68));
-  const imagesReady = waitForFirstViewImages().then(() => setProgress(92));
+  const imagesReady = waitForFirstViewImages(run).then(() => setProgress(92));
   const combinedReadiness = Promise.allSettled([stylesReady, fontsReady, imagesReady]);
+  let hardTimeoutId = null;
   const hardTimeout = new Promise((resolve) => {
-    pageLoaderTimeoutId = window.setTimeout(resolve, PAGE_LOADER_TIMEOUT_MS);
+    hardTimeoutId = schedulePageLoaderTimer(run, resolve, PAGE_LOADER_TIMEOUT_MS);
   });
 
   Promise.race([combinedReadiness, hardTimeout])
     .then(() => {
-      if (!isCurrentRun()) {
+      if (!isCurrentPageLoaderRun(run)) {
         return false;
       }
 
-      if (pageLoaderTimeoutId !== null) {
-        clearTimeout(pageLoaderTimeoutId);
-        pageLoaderTimeoutId = null;
-      }
-
+      clearPageLoaderTimer(run, hardTimeoutId);
+      settlePageLoaderResources(run);
       setProgress(100);
       const elapsed = performance.now() - startedAt;
       const remaining = Math.max(0, PAGE_LOADER_MIN_MS - elapsed);
 
       return new Promise((resolve) => {
-        pageLoaderMinimumTimerId = window.setTimeout(() => resolve(true), remaining);
+        schedulePageLoaderTimer(run, () => resolve(true), remaining);
       });
     })
     .then((shouldDismiss) => {
-      if (!shouldDismiss || !isCurrentRun()) {
+      if (!shouldDismiss || !isCurrentPageLoaderRun(run)) {
         return;
       }
 
-      pageLoaderMinimumTimerId = null;
-      loader.setAttribute("aria-hidden", "true");
-      document.documentElement.classList.remove("is-page-loading");
-      document.body.classList.remove("is-page-loading");
+      dismissPageLoader(run, loader);
     });
 }
 
@@ -139,7 +228,9 @@ window.addEventListener("pageshow", (event) => {
   }
 });
 
+window.__pageLoaderControllerCleanup = cleanupActivePageLoaderRun;
 initPageLoader();
+// PAGE_LOADER_CONTROLLER_END
 
 const navLinks = Array.from(document.querySelectorAll(".nav-pill"));
 const sections = Array.from(document.querySelectorAll("main section"));

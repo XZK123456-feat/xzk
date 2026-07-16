@@ -16,6 +16,7 @@ const read = (file) => fs.readFileSync(path.join(root, file), "utf8").replace(/\
 const css = read("styles.css");
 const script = read("script.js");
 const loaderBlocks = [];
+const watchdogBlocks = [];
 
 for (const page of pages) {
   const html = read(page);
@@ -25,13 +26,18 @@ for (const page of pages) {
     ? 'class="detail-page is-page-loading"'
     : 'class="is-page-loading"';
   const criticalStyleIndex = html.indexOf("<style data-loader-critical>");
+  const watchdogIndex = html.indexOf("<script data-loader-watchdog>");
   const stylesheetIndex = html.indexOf('<link rel="stylesheet"');
 
   assert.ok(htmlTag.includes('class="is-page-loading"'), `${page} html should start in the loading state`);
   assert.ok(bodyTag.includes(expectedBodyClass), `${page} body should preserve its page class and start loading`);
   assert.ok(criticalStyleIndex >= 0, `${page} should include marked critical loader CSS`);
   assert.ok(criticalStyleIndex < stylesheetIndex, `${page} critical loader CSS should precede the external stylesheet`);
+  assert.ok(watchdogIndex > criticalStyleIndex && watchdogIndex < stylesheetIndex, `${page} watchdog should start before the external stylesheet`);
   assert.match(html, /<style data-loader-critical>[\s\S]*?overflow:\s*hidden;[\s\S]*?position:\s*fixed;[\s\S]*?z-index:\s*10000;[\s\S]*?background:\s*#111;[\s\S]*?<\/style>/, `${page} critical CSS should lock scrolling behind a dark fixed cover`);
+  assert.match(html, /<style data-loader-critical>[\s\S]*?\.is-page-loading\s+\.page-shell[\s\S]*?visibility:\s*hidden;/, `${page} critical CSS should hide page content from focus and assistive technology`);
+  assert.match(html, /<noscript>[\s\S]*?\.page-loader[\s\S]*?display:\s*none\s*!important;[\s\S]*?\.page-shell[\s\S]*?visibility:\s*visible\s*!important;[\s\S]*?<\/noscript>/, `${page} should fail open when JavaScript is disabled`);
+  assert.match(html, /<link rel="stylesheet"[^>]*onload="this\.dataset\.loaderState='loaded'"[^>]*onerror="this\.dataset\.loaderState='error'"/, `${page} stylesheet should record load and error settlement on the link`);
 
   const firstBodyChild = html.slice(html.indexOf(bodyTag) + bodyTag.length).match(/^\s*(<[^>]+>)/)?.[1];
   assert.equal(firstBodyChild, '<div class="page-loader" role="status" aria-label="页面正在加载">', `${page} loader should be the first body child`);
@@ -42,12 +48,18 @@ for (const page of pages) {
   const loaderBlock = html.match(/<div class="page-loader"[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/)?.[0];
   assert.ok(loaderBlock, `${page} should include the complete loader markup`);
   loaderBlocks.push(loaderBlock.replace(/\s+/g, " "));
+  const watchdogBlock = html.match(/<script data-loader-watchdog>([\s\S]*?)<\/script>/)?.[1];
+  assert.ok(watchdogBlock, `${page} should include the independent watchdog`);
+  watchdogBlocks.push(watchdogBlock);
 
   assert.doesNotMatch(html, /<link\b[^>]*rel="preload"[^>]*as="(?:image|video)"/i, `${page} should not preload galleries or videos`);
 }
 
 loaderBlocks.slice(1).forEach((block) => {
   assert.equal(block, loaderBlocks[0], "all pages should use identical loader markup");
+});
+watchdogBlocks.slice(1).forEach((block) => {
+  assert.equal(block.replace(/\s+/g, " "), watchdogBlocks[0].replace(/\s+/g, " "), "all pages should use identical watchdog logic");
 });
 
 [
@@ -63,6 +75,7 @@ loaderBlocks.slice(1).forEach((block) => {
   ["transform: scaleX(0.08);", "initial progress scale"],
   ["font-size: 11px;", "loader metadata size"],
   ["transition: opacity 400ms", "exit fade"],
+  [".is-page-loading .page-shell", "loading content visibility gate"],
   ['.page-loader[aria-hidden="true"]', "dismissed loader state"],
   ["@media (max-width: 620px)", "mobile breakpoint"],
   ["font-size: 21px;", "mobile brand size"],
@@ -76,32 +89,13 @@ assert.match(css, /@media \(max-width: 620px\)[\s\S]*?\.page-loader__inner\s*{[\
 assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.page-loader[\s\S]*?transition:\s*none;[\s\S]*?\.page-loader__fill[\s\S]*?transition:\s*none;/, "reduced motion should disable loader exit and fill transitions");
 assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.page-loader,\s*\.page-loader\[aria-hidden="true"\]\s*{\s*transition:\s*none;/, "reduced motion should override the more-specific dismissed loader transition");
 
-[
-  "const PAGE_LOADER_MIN_MS = 350",
-  "const PAGE_LOADER_TIMEOUT_MS = 5000",
-  "function waitForStylesheets",
-  "document.fonts.ready",
-  "function waitForFirstViewImages",
-  'image.loading === "lazy"',
-  "window.innerHeight * 1.25",
-  'image.addEventListener("load"',
-  'image.addEventListener("error"',
-  "Promise.allSettled",
-  "Promise.race",
-  "Math.max(currentProgress",
-  'loader.setAttribute("aria-hidden", "true")',
-  'document.documentElement.classList.remove("is-page-loading")',
-  'document.body.classList.remove("is-page-loading")',
-  'window.addEventListener("pageshow"',
-  "event.persisted",
-  "clearTimeout",
-].forEach((token) => assert.ok(script.includes(token), `loader controller should include ${token}`));
-
-const loaderController = script.slice(0, script.indexOf('const navLinks ='));
-assert.ok(loaderController.includes("function initPageLoader"), "loader controller should precede unrelated interactions");
-assert.ok(loaderController.includes("currentProgress"), "loader initialization should own progress state");
-assert.ok(loaderController.includes("PAGE_LOADER_MIN_MS"), "loader initialization should enforce its minimum duration");
-assert.ok(loaderController.includes("PAGE_LOADER_TIMEOUT_MS"), "loader initialization should enforce its hard timeout");
+const controllerStartMarker = "// PAGE_LOADER_CONTROLLER_START";
+const controllerEndMarker = "// PAGE_LOADER_CONTROLLER_END";
+const controllerStart = script.indexOf(controllerStartMarker);
+const controllerEnd = script.indexOf(controllerEndMarker);
+assert.ok(controllerStart >= 0 && controllerEnd > controllerStart, "loader controller should expose explicit test boundaries");
+const loaderController = script.slice(controllerStart + controllerStartMarker.length, controllerEnd);
+const watchdogSource = watchdogBlocks[0];
 assert.match(script, /document\.fonts\s*\?[\s\S]*?document\.fonts\.ready\.catch\([\s\S]*?:\s*Promise\.resolve\(\)/, "font readiness should have failure and unsupported-browser fallbacks");
 
 for (const page of ["website-design.html", "video-design.html"]) {
@@ -146,6 +140,11 @@ class FakeEventTarget {
     this.listeners.set(type, listeners);
   }
 
+  removeEventListener(type, callback) {
+    const listeners = this.listeners.get(type) || [];
+    this.listeners.set(type, listeners.filter((listener) => listener.callback !== callback));
+  }
+
   dispatch(type, event = {}) {
     const listeners = [...(this.listeners.get(type) || [])];
     listeners.forEach((listener) => {
@@ -159,6 +158,10 @@ class FakeEventTarget {
 
   listenerCount(type) {
     return (this.listeners.get(type) || []).length;
+  }
+
+  totalListenerCount() {
+    return [...this.listeners.values()].reduce((total, listeners) => total + listeners.length, 0);
   }
 }
 
@@ -178,6 +181,14 @@ class FakeClock {
 
   clearTimeout(id) {
     this.timers.delete(id);
+  }
+
+  nextDueAt() {
+    return Math.min(...[...this.timers.values()].map((timer) => timer.dueAt));
+  }
+
+  timerCount() {
+    return this.timers.size;
   }
 
   advance(milliseconds) {
@@ -202,6 +213,18 @@ class FakeClock {
   }
 }
 
+function createStateElement(classes = []) {
+  const attributes = new Map();
+  return {
+    attributes,
+    classList: new FakeClassList(classes),
+    getAttribute: (name) => attributes.get(name) ?? null,
+    removeAttribute: (name) => attributes.delete(name),
+    setAttribute: (name, value) => attributes.set(name, String(value)),
+    style: {},
+  };
+}
+
 function deferred() {
   let resolve;
   let reject;
@@ -215,6 +238,7 @@ function deferred() {
 function createResource(options = {}) {
   const resource = new FakeEventTarget();
   Object.assign(resource, options);
+  resource.dataset = options.dataset || {};
   resource.getBoundingClientRect = () => options.rect || { top: 0, bottom: 100 };
   return resource;
 }
@@ -232,15 +256,15 @@ function createLoaderHarness(options = {}) {
 
   const fill = { style: fillStyle };
   const percent = { textContent: "08%" };
-  const attributes = new Map(options.loaderHidden ? [["aria-hidden", "true"]] : []);
-  const loader = {
-    getAttribute: (name) => attributes.get(name) ?? null,
-    querySelector: (selector) => selector === ".page-loader__fill" ? fill : percent,
-    removeAttribute: (name) => attributes.delete(name),
-    setAttribute: (name, value) => attributes.set(name, value),
-  };
-  const documentElement = { classList: new FakeClassList(options.loading === false ? [] : ["is-page-loading"]) };
-  const body = { classList: new FakeClassList(options.loading === false ? [] : ["is-page-loading"]) };
+  const loader = createStateElement();
+  if (options.loaderHidden) {
+    loader.setAttribute("aria-hidden", "true");
+  }
+  loader.querySelector = (selector) => selector === ".page-loader__fill" ? fill : percent;
+  const initialClasses = options.loading === false ? [] : ["is-page-loading"];
+  const documentElement = createStateElement(initialClasses);
+  const body = createStateElement(initialClasses);
+  const pageShell = createStateElement();
   const stylesheets = options.stylesheets || [];
   const images = options.images || [];
   const windowTarget = new FakeEventTarget();
@@ -259,25 +283,41 @@ function createLoaderHarness(options = {}) {
     documentElement,
     fonts: options.fonts,
     images,
-    querySelector: (selector) => selector === ".page-loader" ? loader : null,
+    querySelector: (selector) => {
+      if (selector === ".page-loader") return loader;
+      if (selector === ".page-shell") return pageShell;
+      return null;
+    },
     querySelectorAll: (selector) => selector === 'link[rel="stylesheet"]' ? stylesheets : [],
   };
-
-  vm.runInNewContext(loaderController, {
+  const context = vm.createContext({
     clearTimeout: (id) => clock.clearTimeout(id),
     document,
     performance: { now: () => clock.now },
     window: windowTarget,
-  }, { filename: "script.js", timeout: 1000 });
+  });
+  const runController = () => vm.runInContext(loaderController, context, { filename: "script.js", timeout: 1000 });
+
+  if (options.runWatchdog) {
+    vm.runInContext(watchdogSource, context, { filename: "watchdog.js", timeout: 1000 });
+  }
+  if (options.startController !== false) {
+    runController();
+  }
 
   return {
     body,
     clock,
+    context,
+    document,
     documentElement,
     loader,
+    pageShell,
     percent,
     progressValues,
+    runController,
     scrollState,
+    stylesheets,
     window: windowTarget,
   };
 }
@@ -308,10 +348,12 @@ async function testSettledResourcesAndMinimumDuration() {
     stylesheets: [stylesheet],
   });
 
+  assert.equal(harness.documentElement.getAttribute("aria-busy"), "true", "controller should mark the page busy while loading");
   assert.equal(lazyImage.listenerCount("load"), 0, "lazy images should not receive readiness listeners");
   assert.equal(farImage.listenerCount("load"), 0, "far-offscreen images should not receive readiness listeners");
   stylesheet.dispatch("error");
   await flushMicrotasks();
+  assert.equal(stylesheet.totalListenerCount(), 0, "stylesheet settlement should remove both listeners");
   assert.ok(harness.progressValues.includes(38), "stylesheet error settlement should advance progress");
 
   fonts.resolve();
@@ -321,6 +363,8 @@ async function testSettledResourcesAndMinimumDuration() {
   loadedImage.dispatch("load");
   failedImage.dispatch("error");
   await flushMicrotasks();
+  assert.equal(loadedImage.totalListenerCount(), 0, "image load should remove both listeners");
+  assert.equal(failedImage.totalListenerCount(), 0, "image error should remove both listeners");
 
   assert.deepEqual([...harness.progressValues].sort((left, right) => left - right), harness.progressValues, "progress should be monotonic");
   assert.ok(harness.progressValues.includes(92), "first-view image settlement should advance progress");
@@ -332,6 +376,8 @@ async function testSettledResourcesAndMinimumDuration() {
   assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "settled resources should dismiss after the minimum duration");
   assert.equal(harness.documentElement.classList.contains("is-page-loading"), false, "html loading class should be released");
   assert.equal(harness.body.classList.contains("is-page-loading"), false, "body loading class should be released");
+  assert.equal(harness.documentElement.getAttribute("aria-busy"), null, "normal dismissal should clear aria-busy");
+  assert.equal(harness.clock.timerCount(), 0, "normal dismissal should retain no run timers");
   assert.deepEqual([harness.window.scrollX, harness.window.scrollY], [24, 480], "loader should preserve scroll coordinates");
   assert.equal(harness.scrollState.scrollToCalls, 0, "loader should not mutate scroll position");
 }
@@ -351,6 +397,10 @@ async function testHardTimeoutRelease() {
   await advance(harness, 1);
   assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "hard timeout should release unresolved resources");
   assert.equal(harness.percent.textContent, "100%", "hard timeout should still complete progress");
+  assert.equal(stylesheet.totalListenerCount(), 0, "timeout should remove outstanding stylesheet listeners");
+  assert.equal(image.totalListenerCount(), 0, "timeout should remove outstanding image listeners");
+  assert.equal(harness.clock.timerCount(), 0, "timeout dismissal should retain no run timers");
+  assert.equal(harness.documentElement.getAttribute("aria-busy"), null, "timeout should clear aria-busy");
 }
 
 async function testPersistedRearmInvalidatesPriorCompletion() {
@@ -369,6 +419,7 @@ async function testPersistedRearmInvalidatesPriorCompletion() {
   await flushMicrotasks();
 
   assert.equal(harness.loader.getAttribute("aria-hidden"), null, "persisted pageshow should reveal the restored gate immediately");
+  assert.equal(harness.documentElement.getAttribute("aria-busy"), "true", "persisted pageshow should mark the page busy again");
   assert.equal(harness.documentElement.classList.contains("is-page-loading"), true, "persisted pageshow should re-lock html");
   assert.equal(harness.body.classList.contains("is-page-loading"), true, "persisted pageshow should re-lock body");
 
@@ -385,13 +436,140 @@ async function testPersistedRearmInvalidatesPriorCompletion() {
   assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "rearmed loader should dismiss after its own minimum duration");
   assert.equal(harness.documentElement.classList.contains("is-page-loading"), false, "rearmed loader should release html");
   assert.equal(harness.body.classList.contains("is-page-loading"), false, "rearmed loader should release body");
+  assert.equal(harness.documentElement.getAttribute("aria-busy"), null, "rearmed loader should clear aria-busy");
+  assert.equal(harness.clock.timerCount(), 0, "rearmed dismissal should retain no timers");
   assert.equal(harness.scrollState.scrollToCalls, 0, "BFCache rearm should not mutate scroll");
+}
+
+async function testAlreadySettledStylesheetError() {
+  const stylesheet = createResource({ dataset: { loaderState: "error" }, sheet: null });
+  const harness = createLoaderHarness({
+    fonts: { ready: Promise.resolve() },
+    images: [createResource({ complete: true, loading: "eager" })],
+    stylesheets: [stylesheet],
+  });
+  await flushMicrotasks();
+
+  assert.equal(stylesheet.totalListenerCount(), 0, "an already-failed stylesheet should not receive late listeners");
+  await advance(harness, 350);
+  assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "an already-failed stylesheet should settle without the hard timeout");
+}
+
+async function testIndependentWatchdogFailOpen() {
+  const harness = createLoaderHarness({ runWatchdog: true, startController: false });
+  const watchdogDueAt = harness.clock.nextDueAt();
+
+  assert.ok(watchdogDueAt >= 5000 && watchdogDueAt <= 6000, "watchdog should independently start at approximately five seconds");
+  assert.equal(harness.documentElement.getAttribute("aria-busy"), "true", "watchdog should mark the initial document busy");
+  await advance(harness, watchdogDueAt - 1);
+  assert.equal(harness.window.__pageLoaderWatchdogFired, false, "watchdog should not fail open early");
+  await advance(harness, 1);
+
+  assert.equal(harness.window.__pageLoaderWatchdogFired, true, "watchdog should expose a global fired flag");
+  assert.equal(harness.documentElement.classList.contains("is-page-loading"), false, "watchdog should unlock html when the controller never runs");
+  assert.equal(harness.body.classList.contains("is-page-loading"), false, "watchdog should unlock body when the controller never runs");
+  assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "watchdog should hide the loader semantically");
+  assert.equal(harness.loader.style.display, "none", "watchdog should hide the loader without shared CSS");
+  assert.equal(harness.pageShell.style.visibility, "visible", "watchdog should reveal the page shell without shared CSS");
+  assert.equal(harness.documentElement.getAttribute("aria-busy"), null, "watchdog should clear aria-busy");
+  assert.deepEqual([harness.window.scrollX, harness.window.scrollY], [24, 480], "watchdog should preserve scroll coordinates");
+  assert.equal(harness.scrollState.scrollToCalls, 0, "watchdog should not mutate scroll position");
+}
+
+async function testControllerCancelsWatchdog() {
+  const harness = createLoaderHarness({
+    fonts: { ready: Promise.resolve() },
+    images: [createResource({ complete: true, loading: "eager" })],
+    runWatchdog: true,
+    stylesheets: [createResource({ sheet: {} })],
+  });
+  await flushMicrotasks();
+  await advance(harness, 350);
+
+  assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "controller should dismiss normally before the watchdog");
+  assert.equal(harness.clock.timerCount(), 0, "normal dismissal should cancel the independent watchdog timer");
+  await advance(harness, 6000);
+  assert.equal(harness.window.__pageLoaderWatchdogFired, false, "canceled watchdog should never fire later");
+}
+
+async function testFiredWatchdogPreventsRelock() {
+  const stylesheet = createResource({ sheet: null });
+  const image = createResource({ complete: false, loading: "eager" });
+  const harness = createLoaderHarness({
+    fonts: { ready: deferred().promise },
+    images: [image],
+    runWatchdog: true,
+    startController: false,
+    stylesheets: [stylesheet],
+  });
+  await advance(harness, harness.clock.nextDueAt());
+  harness.runController();
+  await flushMicrotasks();
+
+  assert.equal(harness.documentElement.classList.contains("is-page-loading"), false, "controller should not re-lock html after watchdog fail-open");
+  assert.equal(harness.body.classList.contains("is-page-loading"), false, "controller should not re-lock body after watchdog fail-open");
+  assert.equal(harness.documentElement.getAttribute("aria-busy"), null, "controller should not restore aria-busy after watchdog fail-open");
+  assert.equal(stylesheet.totalListenerCount(), 0, "controller should not attach stylesheet listeners after watchdog fail-open");
+  assert.equal(image.totalListenerCount(), 0, "controller should not attach image listeners after watchdog fail-open");
+  assert.equal(harness.clock.timerCount(), 0, "controller should not start timers after watchdog fail-open");
+}
+
+async function testWatchdogCleansPartiallyStartedController() {
+  const stylesheet = createResource({ sheet: null });
+  const image = createResource({ complete: false, loading: "eager" });
+  const harness = createLoaderHarness({
+    fonts: { ready: deferred().promise },
+    images: [image],
+    runWatchdog: true,
+    stylesheets: [stylesheet],
+  });
+  const controllerTimer = [...harness.clock.timers.entries()]
+    .find(([, timer]) => timer.dueAt === 5000)?.[0];
+  harness.clock.clearTimeout(controllerTimer);
+
+  assert.equal(stylesheet.totalListenerCount(), 2, "partially started controller should have stylesheet listeners before fail-open");
+  assert.equal(image.totalListenerCount(), 2, "partially started controller should have image listeners before fail-open");
+  await advance(harness, harness.clock.nextDueAt() - harness.clock.now);
+
+  assert.equal(harness.window.__pageLoaderWatchdogFired, true, "independent watchdog should fire when the controller timeout is unavailable");
+  assert.equal(stylesheet.totalListenerCount(), 0, "watchdog should clean a partial controller's stylesheet listeners");
+  assert.equal(image.totalListenerCount(), 0, "watchdog should clean a partial controller's image listeners");
+  assert.equal(harness.clock.timerCount(), 0, "watchdog should clean a partial controller's remaining timers");
+}
+
+async function testRearmCleansPriorRunListeners() {
+  const oldStylesheet = createResource({ sheet: null });
+  const oldImage = createResource({ complete: false, loading: "eager" });
+  const harness = createLoaderHarness({
+    fonts: { ready: deferred().promise },
+    images: [oldImage],
+    stylesheets: [oldStylesheet],
+  });
+
+  assert.equal(oldStylesheet.totalListenerCount(), 2, "initial run should observe stylesheet load and error");
+  assert.equal(oldImage.totalListenerCount(), 2, "initial run should observe image load and error");
+  harness.stylesheets.splice(0, harness.stylesheets.length, createResource({ sheet: {} }));
+  harness.document.images = [createResource({ complete: true, loading: "eager" })];
+  harness.document.fonts = { ready: Promise.resolve() };
+  harness.window.dispatch("pageshow", { persisted: true });
+  await flushMicrotasks();
+
+  assert.equal(oldStylesheet.totalListenerCount(), 0, "rearm should remove prior stylesheet listeners");
+  assert.equal(oldImage.totalListenerCount(), 0, "rearm should remove prior image listeners");
+  await advance(harness, 350);
+  assert.equal(harness.clock.timerCount(), 0, "rearmed run should clean all timers on dismissal");
 }
 
 (async () => {
   await testSettledResourcesAndMinimumDuration();
   await testHardTimeoutRelease();
   await testPersistedRearmInvalidatesPriorCompletion();
+  await testAlreadySettledStylesheetError();
+  await testIndependentWatchdogFailOpen();
+  await testControllerCancelsWatchdog();
+  await testFiredWatchdogPreventsRelock();
+  await testWatchdogCleansPartiallyStartedController();
+  await testRearmCleansPriorRunListeners();
   console.log(`page loading gate checks passed (${pages.length} pages, ${videoTags.length} videos, executable controller)`);
 })().catch((error) => {
   console.error(error);
