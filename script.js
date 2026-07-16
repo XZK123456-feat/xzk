@@ -1,8 +1,10 @@
 // PAGE_LOADER_CONTROLLER_START
 const PAGE_LOADER_MIN_MS = 350;
 const PAGE_LOADER_TIMEOUT_MS = 5000;
+const PAGE_LOADER_EXIT_MS = 400;
 
 let activePageLoaderRun = null;
+let pageLoaderUnlockTimer = null;
 
 function createPageLoaderRun() {
   return {
@@ -50,12 +52,20 @@ function invalidatePageLoaderRun(run) {
 }
 
 function cleanupActivePageLoaderRun() {
+  cancelPageLoaderUnlockTimer();
   if (!activePageLoaderRun) {
     return;
   }
 
   invalidatePageLoaderRun(activePageLoaderRun);
   activePageLoaderRun = null;
+}
+
+function cancelPageLoaderUnlockTimer() {
+  if (pageLoaderUnlockTimer !== null) {
+    window.clearTimeout(pageLoaderUnlockTimer);
+    pageLoaderUnlockTimer = null;
+  }
 }
 
 function waitForResourceSettlement(resource, run) {
@@ -134,17 +144,37 @@ function dismissPageLoader(run, loader) {
     return;
   }
 
-  releasePageLoadingState(loader);
+  cancelPageLoaderUnlockTimer();
+  if (loader) {
+    loader.setAttribute("aria-hidden", "true");
+  }
   cancelPageLoaderWatchdog();
   invalidatePageLoaderRun(run);
   if (activePageLoaderRun === run) {
     activePageLoaderRun = null;
   }
+
+  const release = () => {
+    pageLoaderUnlockTimer = null;
+    releasePageLoadingState(loader);
+  };
+
+  const prefersReducedMotion = typeof window.matchMedia === "function"
+    && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (prefersReducedMotion) {
+    release();
+    return;
+  }
+
+  pageLoaderUnlockTimer = window.setTimeout(release, PAGE_LOADER_EXIT_MS);
 }
 
 function initPageLoader() {
   const loader = document.querySelector(".page-loader");
   cleanupActivePageLoaderRun();
+  if (loader) {
+    loader.style.display = "";
+  }
 
   if (window.__pageLoaderWatchdogFired || !loader) {
     releasePageLoadingState(loader);
@@ -224,6 +254,26 @@ function initPageLoader() {
 
 window.addEventListener("pageshow", (event) => {
   if (event.persisted) {
+    window.__pageLoaderWatchdogFired = false;
+    cancelPageLoaderUnlockTimer();
+    const loader = document.querySelector(".page-loader");
+    if (loader) {
+      loader.style.display = "";
+      loader.removeAttribute("aria-hidden");
+    }
+    const root = document.documentElement;
+    const body = document.body;
+    root.classList.add("is-page-loading");
+    root.setAttribute("aria-busy", "true");
+    if (body) {
+      body.classList.add("is-page-loading");
+      body.setAttribute("aria-busy", "true");
+    }
+    const shell = document.querySelector(".page-shell");
+    if (shell) {
+      shell.style.visibility = "";
+      shell.removeAttribute("aria-hidden");
+    }
     initPageLoader();
   }
 });

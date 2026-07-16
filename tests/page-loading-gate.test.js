@@ -276,6 +276,7 @@ function createLoaderHarness(options = {}) {
     scrollX: scrollState.x,
     scrollY: scrollState.y,
     setTimeout: (callback, delay) => clock.setTimeout(callback, delay),
+    matchMedia: () => ({ matches: Boolean(options.reduceMotion) }),
   });
 
   const document = {
@@ -374,6 +375,10 @@ async function testSettledResourcesAndMinimumDuration() {
   assert.equal(harness.loader.getAttribute("aria-hidden"), null, "loader should honor the minimum duration");
   await advance(harness, 1);
   assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "settled resources should dismiss after the minimum duration");
+  assert.equal(harness.documentElement.classList.contains("is-page-loading"), true, "normal dismissal should keep html locked during the fade");
+  assert.equal(harness.body.classList.contains("is-page-loading"), true, "normal dismissal should keep body locked during the fade");
+  assert.equal(harness.documentElement.getAttribute("aria-busy"), "true", "normal dismissal should keep aria-busy during the fade");
+  await advance(harness, 400);
   assert.equal(harness.documentElement.classList.contains("is-page-loading"), false, "html loading class should be released");
   assert.equal(harness.body.classList.contains("is-page-loading"), false, "body loading class should be released");
   assert.equal(harness.documentElement.getAttribute("aria-busy"), null, "normal dismissal should clear aria-busy");
@@ -397,8 +402,11 @@ async function testHardTimeoutRelease() {
   await advance(harness, 1);
   assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "hard timeout should release unresolved resources");
   assert.equal(harness.percent.textContent, "100%", "hard timeout should still complete progress");
+  assert.equal(harness.documentElement.classList.contains("is-page-loading"), true, "hard timeout should keep html locked during the fade");
+  assert.equal(harness.documentElement.getAttribute("aria-busy"), "true", "hard timeout should keep aria-busy during the fade");
   assert.equal(stylesheet.totalListenerCount(), 0, "timeout should remove outstanding stylesheet listeners");
   assert.equal(image.totalListenerCount(), 0, "timeout should remove outstanding image listeners");
+  await advance(harness, 400);
   assert.equal(harness.clock.timerCount(), 0, "timeout dismissal should retain no run timers");
   assert.equal(harness.documentElement.getAttribute("aria-busy"), null, "timeout should clear aria-busy");
 }
@@ -434,6 +442,9 @@ async function testPersistedRearmInvalidatesPriorCompletion() {
   assert.equal(harness.loader.getAttribute("aria-hidden"), null, "obsolete first-run completion should be invalidated");
   await advance(harness, 100);
   assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "rearmed loader should dismiss after its own minimum duration");
+  assert.equal(harness.documentElement.classList.contains("is-page-loading"), true, "rearmed loader should keep html locked during the fade");
+  assert.equal(harness.body.classList.contains("is-page-loading"), true, "rearmed loader should keep body locked during the fade");
+  await advance(harness, 400);
   assert.equal(harness.documentElement.classList.contains("is-page-loading"), false, "rearmed loader should release html");
   assert.equal(harness.body.classList.contains("is-page-loading"), false, "rearmed loader should release body");
   assert.equal(harness.documentElement.getAttribute("aria-busy"), null, "rearmed loader should clear aria-busy");
@@ -453,6 +464,23 @@ async function testAlreadySettledStylesheetError() {
   assert.equal(stylesheet.totalListenerCount(), 0, "an already-failed stylesheet should not receive late listeners");
   await advance(harness, 350);
   assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "an already-failed stylesheet should settle without the hard timeout");
+}
+
+async function testReducedMotionReleasesImmediately() {
+  const harness = createLoaderHarness({
+    reduceMotion: true,
+    fonts: { ready: Promise.resolve() },
+    images: [createResource({ complete: true, loading: "eager" })],
+    stylesheets: [createResource({ sheet: {} })],
+  });
+  await flushMicrotasks();
+  await advance(harness, 350);
+
+  assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "reduced motion should still dismiss the loader");
+  assert.equal(harness.documentElement.classList.contains("is-page-loading"), false, "reduced motion should release html immediately");
+  assert.equal(harness.body.classList.contains("is-page-loading"), false, "reduced motion should release body immediately");
+  assert.equal(harness.documentElement.getAttribute("aria-busy"), null, "reduced motion should clear aria-busy immediately");
+  assert.equal(harness.clock.timerCount(), 0, "reduced motion dismissal should retain no timers");
 }
 
 async function testIndependentWatchdogFailOpen() {
@@ -487,9 +515,10 @@ async function testControllerCancelsWatchdog() {
   await advance(harness, 350);
 
   assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "controller should dismiss normally before the watchdog");
-  assert.equal(harness.clock.timerCount(), 0, "normal dismissal should cancel the independent watchdog timer");
+  assert.equal(harness.clock.timerCount(), 1, "normal dismissal should retain only the fade unlock timer");
   await advance(harness, 6000);
   assert.equal(harness.window.__pageLoaderWatchdogFired, false, "canceled watchdog should never fire later");
+  assert.equal(harness.clock.timerCount(), 0, "normal dismissal should clean the fade unlock timer");
 }
 
 async function testFiredWatchdogPreventsRelock() {
@@ -512,6 +541,64 @@ async function testFiredWatchdogPreventsRelock() {
   assert.equal(stylesheet.totalListenerCount(), 0, "controller should not attach stylesheet listeners after watchdog fail-open");
   assert.equal(image.totalListenerCount(), 0, "controller should not attach image listeners after watchdog fail-open");
   assert.equal(harness.clock.timerCount(), 0, "controller should not start timers after watchdog fail-open");
+}
+
+async function testPersistedWatchdogRestoresLoader() {
+  const harness = createLoaderHarness({
+    fonts: { ready: deferred().promise },
+    images: [createResource({ complete: false, loading: "eager" })],
+    runWatchdog: true,
+    startController: false,
+    stylesheets: [createResource({ sheet: null })],
+  });
+  await advance(harness, harness.clock.nextDueAt());
+  assert.equal(harness.window.__pageLoaderWatchdogFired, true, "watchdog should have failed open before the persisted return");
+  assert.equal(harness.loader.style.display, "none", "watchdog should leave the loader display hidden");
+  harness.runController();
+  await flushMicrotasks();
+
+  harness.stylesheets.splice(0, harness.stylesheets.length, createResource({ sheet: {} }));
+  harness.document.images = [createResource({ complete: true, loading: "eager" })];
+  harness.document.fonts = { ready: Promise.resolve() };
+  harness.window.dispatch("pageshow", { persisted: true });
+  await flushMicrotasks();
+
+  assert.equal(harness.window.__pageLoaderWatchdogFired, false, "persisted pageshow should clear the watchdog fired state");
+  assert.equal(harness.loader.style.display, "", "persisted pageshow should restore the loader display property");
+  assert.equal(harness.loader.getAttribute("aria-hidden"), null, "persisted pageshow should reveal the loader");
+  assert.equal(harness.documentElement.classList.contains("is-page-loading"), true, "persisted pageshow should re-lock html");
+  assert.equal(harness.body.classList.contains("is-page-loading"), true, "persisted pageshow should re-lock body");
+  assert.equal(harness.documentElement.getAttribute("aria-busy"), "true", "persisted pageshow should restore aria-busy");
+
+  await advance(harness, 350);
+  assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "restored loader should dismiss after readiness");
+  assert.equal(harness.documentElement.classList.contains("is-page-loading"), true, "restored loader should keep html locked during the fade");
+  await advance(harness, 400);
+  assert.equal(harness.documentElement.classList.contains("is-page-loading"), false, "restored loader should unlock html after the fade");
+}
+
+async function testPersistedRearmCancelsPendingUnlock() {
+  const harness = createLoaderHarness({
+    fonts: { ready: Promise.resolve() },
+    images: [createResource({ complete: true, loading: "eager" })],
+    stylesheets: [createResource({ sheet: {} })],
+  });
+  await flushMicrotasks();
+  await advance(harness, 350);
+
+  assert.equal(harness.documentElement.classList.contains("is-page-loading"), true, "fade should leave html locked before persisted rearm");
+  harness.stylesheets.splice(0, harness.stylesheets.length, createResource({ sheet: null }));
+  harness.document.images = [createResource({ complete: false, loading: "eager" })];
+  harness.document.fonts = { ready: deferred().promise };
+  harness.window.dispatch("pageshow", { persisted: true });
+  await flushMicrotasks();
+
+  await advance(harness, 400);
+  assert.equal(harness.documentElement.classList.contains("is-page-loading"), true, "an old unlock callback must not release a rearmed page");
+  assert.equal(harness.body.classList.contains("is-page-loading"), true, "an old unlock callback must not release the rearmed body");
+  assert.equal(harness.documentElement.getAttribute("aria-busy"), "true", "rearmed page should remain busy while resources are pending");
+  harness.window.__pageLoaderControllerCleanup();
+  assert.equal(harness.clock.timerCount(), 0, "cleanup should cancel the rearmed run and unlock timer");
 }
 
 async function testWatchdogCleansPartiallyStartedController() {
@@ -557,6 +644,7 @@ async function testRearmCleansPriorRunListeners() {
   assert.equal(oldStylesheet.totalListenerCount(), 0, "rearm should remove prior stylesheet listeners");
   assert.equal(oldImage.totalListenerCount(), 0, "rearm should remove prior image listeners");
   await advance(harness, 350);
+  await advance(harness, 400);
   assert.equal(harness.clock.timerCount(), 0, "rearmed run should clean all timers on dismissal");
 }
 
@@ -565,9 +653,12 @@ async function testRearmCleansPriorRunListeners() {
   await testHardTimeoutRelease();
   await testPersistedRearmInvalidatesPriorCompletion();
   await testAlreadySettledStylesheetError();
+  await testReducedMotionReleasesImmediately();
   await testIndependentWatchdogFailOpen();
   await testControllerCancelsWatchdog();
   await testFiredWatchdogPreventsRelock();
+  await testPersistedWatchdogRestoresLoader();
+  await testPersistedRearmCancelsPendingUnlock();
   await testWatchdogCleansPartiallyStartedController();
   await testRearmCleansPriorRunListeners();
   console.log(`page loading gate checks passed (${pages.length} pages, ${videoTags.length} videos, executable controller)`);
