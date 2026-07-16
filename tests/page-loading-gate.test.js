@@ -376,7 +376,8 @@ async function testPersistedRearmInvalidatesPriorCompletion() {
   const hiddenLoaderRule = css.match(/\.page-loader\[aria-hidden="true"\]\s*{([\s\S]*?)}/)?.[1] || "";
   assert.match(loaderRule, /visibility:\s*visible;/, "restored loader should use a visible base state");
   assert.doesNotMatch(loaderRule, /visibility\s+0s\s+linear\s+400ms/, "restored loader visibility must not wait for the exit delay");
-  assert.match(hiddenLoaderRule, /transition:[^;]*visibility\s+0s\s+linear\s+400ms;/, "only dismissal should delay visibility hiding");
+  assert.doesNotMatch(loaderRule, /transition:[^;]*opacity/, "restored loader opacity must not fade in");
+  assert.match(hiddenLoaderRule, /transition:\s*opacity\s+400ms\s+ease,\s*visibility\s+0s\s+linear\s+400ms;/, "only dismissal should own the opacity fade and delayed visibility hiding");
 
   await advance(harness, 250);
   assert.equal(harness.loader.getAttribute("aria-hidden"), null, "obsolete first-run completion should be invalidated");

@@ -62,7 +62,6 @@ body.is-page-loading {
   background: #111;
   opacity: 1;
   visibility: visible;
-  transition: opacity 400ms ease;
 }
 
 .page-loader[aria-hidden="true"] {
