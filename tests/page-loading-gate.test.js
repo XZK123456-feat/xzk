@@ -96,6 +96,8 @@ const controllerEnd = script.indexOf(controllerEndMarker);
 assert.ok(controllerStart >= 0 && controllerEnd > controllerStart, "loader controller should expose explicit test boundaries");
 const loaderController = script.slice(controllerStart + controllerStartMarker.length, controllerEnd);
 const watchdogSource = watchdogBlocks[0];
+const hashSyncGuardSource = script.match(/function syncHashTargetWhenUnlocked\(\) \{[\s\S]*?\n\}/)?.[0] || "";
+const loadHandlerSource = script.match(/window\.addEventListener\("load", \(\) => \{[\s\S]*?\n\}\);/)?.[0] || "";
 
 for (const page of ["website-design.html", "video-design.html"]) {
   assert.ok(read(page).includes('loading="lazy"'), `${page} should preserve lazy gallery media`);
@@ -813,6 +815,41 @@ function testUpdatedTimeouts() {
   });
 }
 
+function testLoadHashRetriesWaitForUnlock() {
+  assert.ok(hashSyncGuardSource, "script should define an unlocked hash-sync guard");
+  assert.match(
+    loadHandlerSource,
+    /syncHashTargetWhenUnlocked\(\);\s*updateScrollProgress\(\);\s*window\.setTimeout\(syncHashTargetWhenUnlocked, 120\);\s*window\.setTimeout\(syncHashTargetWhenUnlocked, 420\);/,
+    "load-time hash sync and retries should use the unlocked guard",
+  );
+
+  const documentElement = { classList: new FakeClassList(["is-page-loading"]) };
+  const body = { classList: new FakeClassList(["is-page-loading"]) };
+  const retryCallbacks = new Map();
+  const windowTarget = new FakeEventTarget();
+  windowTarget.setTimeout = (callback, delay) => retryCallbacks.set(delay, callback);
+  let hashSyncCalls = 0;
+  let progressCalls = 0;
+  const context = vm.createContext({
+    document: { body, documentElement },
+    syncHashTarget: () => { hashSyncCalls += 1; },
+    updateScrollProgress: () => { progressCalls += 1; },
+    window: windowTarget,
+  });
+
+  vm.runInContext(`${hashSyncGuardSource}\n${loadHandlerSource}`, context, { filename: "hash-load-guard.js" });
+  windowTarget.dispatch("load");
+  assert.equal(hashSyncCalls, 0, "immediate load sync should be suppressed while loading");
+  assert.equal(progressCalls, 1, "load should still update scroll progress");
+  documentElement.classList.remove("is-page-loading");
+  retryCallbacks.get(120)();
+  assert.equal(hashSyncCalls, 0, "legacy retry should be suppressed while the body remains loading");
+
+  body.classList.remove("is-page-loading");
+  retryCallbacks.get(420)();
+  assert.equal(hashSyncCalls, 1, "legacy retry should sync after loading unlocks");
+}
+
 async function testHardTimeoutRelease() {
   const stylesheet = createResource({ sheet: null });
   let decodeCalls = 0;
@@ -1138,6 +1175,7 @@ async function testRearmCleansPriorRunListeners() {
   await testExplicitFontAndVisibleImageDecode();
   await testDecodeAndFontFailuresSettleSafely();
   testUpdatedTimeouts();
+  testLoadHashRetriesWaitForUnlock();
   await testSettledResourcesAndMinimumDuration();
   await testHardTimeoutRelease();
   await testPersistedRearmInvalidatesPriorCompletion();

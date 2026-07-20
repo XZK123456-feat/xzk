@@ -657,11 +657,20 @@ function syncHashTarget() {
   requestAnimationFrame(revealVisibleItems);
 }
 
-window.addEventListener("load", () => {
+function syncHashTargetWhenUnlocked() {
+  if (document.documentElement.classList.contains("is-page-loading")
+    || document.body.classList.contains("is-page-loading")) {
+    return;
+  }
+
   syncHashTarget();
+}
+
+window.addEventListener("load", () => {
+  syncHashTargetWhenUnlocked();
   updateScrollProgress();
-  window.setTimeout(syncHashTarget, 120);
-  window.setTimeout(syncHashTarget, 420);
+  window.setTimeout(syncHashTargetWhenUnlocked, 120);
+  window.setTimeout(syncHashTargetWhenUnlocked, 420);
 });
 window.addEventListener("scroll", () => {
   setActiveFromScroll();
