@@ -24,8 +24,7 @@
 
 @font-face {
   font-family: "ZHYuwanPortfolio";
-  src: url("assets/fonts/ZHYuwanPortfolio.woff2") format("woff2"),
-       url("assets/fonts/ZHYuwanPortfolio.ttf") format("truetype");
+  src: url("assets/fonts/ZHYuwanPortfolio-subset.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: block;
@@ -33,8 +32,7 @@
 
 @font-face {
   font-family: "ZHYuwanPortfolio";
-  src: url("assets/fonts/ZHYuwanPortfolio.woff2") format("woff2"),
-       url("assets/fonts/ZHYuwanPortfolio.ttf") format("truetype");
+  src: url("assets/fonts/ZHYuwanPortfolio-subset.woff2") format("woff2");
   font-weight: 500;
   font-style: normal;
   font-display: block;
@@ -42,8 +40,7 @@
 
 @font-face {
   font-family: "ZHYuwanPortfolio";
-  src: url("assets/fonts/ZHYuwanPortfolio.woff2") format("woff2"),
-       url("assets/fonts/ZHYuwanPortfolio.ttf") format("truetype");
+  src: url("assets/fonts/ZHYuwanPortfolio-subset.woff2") format("woff2");
   font-weight: 700;
   font-style: normal;
   font-display: block;
@@ -51,8 +48,7 @@
 
 @font-face {
   font-family: "ZHYuwanPortfolio";
-  src: url("assets/fonts/ZHYuwanPortfolio.woff2") format("woff2"),
-       url("assets/fonts/ZHYuwanPortfolio.ttf") format("truetype");
+  src: url("assets/fonts/ZHYuwanPortfolio-subset.woff2") format("woff2");
   font-weight: 800;
   font-style: normal;
   font-display: block;
@@ -60,8 +56,7 @@
 
 @font-face {
   font-family: "ZHYuwanPortfolio";
-  src: url("assets/fonts/ZHYuwanPortfolio.woff2") format("woff2"),
-       url("assets/fonts/ZHYuwanPortfolio.ttf") format("truetype");
+  src: url("assets/fonts/ZHYuwanPortfolio-subset.woff2") format("woff2");
   font-weight: 900;
   font-style: normal;
   font-display: block;
@@ -69,7 +64,7 @@
 
 @font-face {
   font-family: "Alibaba PuHuiTi";
-  src: url("assets/fonts/AlibabaPuHuiTi-3-85-Bold.woff2") format("woff2");
+  src: url("assets/fonts/AlibabaPuHuiTi-Bold-subset.woff2") format("woff2");
   font-weight: 800;
   font-style: normal;
   font-display: swap;
@@ -2496,7 +2491,7 @@ body.is-previewing {
   content: "";
   position: absolute;
   inset: 0;
-  background: url("assets/website-design/pc/20260123-182955.jpg") center/cover no-repeat;
+  background: url("assets/website-design/pc/20260123-182955-delivery.webp") center/cover no-repeat;
   opacity: 0.3;
   border-radius: 20px;
   z-index: 0;

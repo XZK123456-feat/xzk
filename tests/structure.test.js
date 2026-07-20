@@ -197,7 +197,7 @@ assert.strictEqual(
   "supplemental community videos should only receive a source after the user presses play",
 );
 assert.strictEqual(
-  (videoDetailHtml.match(/assets\/video\/community\/posters\/community-video-\d{2}\.jpg/g) || []).length,
+  (videoDetailHtml.match(/<img class="community-video-poster" src="assets\/video\/community\/posters\/community-video-\d{2}-delivery\.webp"/g) || []).length,
   6,
   "community videos should include still-frame poster images",
 );

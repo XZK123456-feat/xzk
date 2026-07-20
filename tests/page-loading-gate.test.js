@@ -45,8 +45,8 @@ for (const page of pages) {
   assert.ok(html.includes('data-loading-percent>08%</span>'), `${page} should expose the initial visual percentage`);
   assert.ok(html.includes('data-loading-label>LOADING</span>'), `${page} should expose a mutable loading label`);
   assert.ok(html.includes('data-loading-retry'), `${page} should expose a retry control for critical loading failures`);
-  assert.ok(html.includes('<link rel="stylesheet" href="styles.css?v=loader-live-1"'), `${page} should cache-bust the loader font and retry styles`);
-  assert.ok(html.includes('<script src="script.js?v=loader-live-1"></script>'), `${page} should cache-bust the shared loader controller`);
+  assert.ok(html.includes('<link rel="stylesheet" href="styles.css?v=performance-1"'), `${page} should cache-bust the optimized styles`);
+  assert.ok(html.includes('<script src="script.js?v=performance-1"></script>'), `${page} should cache-bust the optimized shared controller`);
 
   const loaderBlock = html.match(/<div class="page-loader"[\s\S]*?<\/div>\s*(?=<div class="scroll-progress")/)?.[0];
   assert.ok(loaderBlock, `${page} should include the complete loader markup`);
@@ -422,6 +422,7 @@ async function testPostDomReadyLayoutDiscoveryIncludesRenderedImages() {
     stylesheets: [createResource({ sheet: {} })],
   });
 
+  await flushMicrotasks();
   assert.equal(harness.document.listenerCount("DOMContentLoaded"), 1, "image discovery should wait for DOM readiness");
   harness.document.images.push(visibleLazyImage, farLazyImage);
   harness.document.readyState = "interactive";
@@ -709,10 +710,12 @@ async function testSettledResourcesAndMinimumDuration() {
 
   fonts.resolve();
   await flushMicrotasks();
+  await advance(harness, 16);
+  assert.equal(loadedImage.listenerCount("load"), 1, "only the first visible image should become critical after fonts settle");
+  assert.equal(failedImage.totalListenerCount(), 0, "the second visible image should remain nonblocking");
 
   const beforeImages = Number.parseInt(harness.percent.textContent, 10);
   loadedImage.dispatch("load");
-  failedImage.dispatch("error");
   await flushMicrotasks();
   assert.equal(loadedImage.totalListenerCount(), 0, "image load should remove both listeners");
   assert.equal(failedImage.totalListenerCount(), 0, "image error should remove both listeners");
@@ -794,8 +797,8 @@ async function testExplicitFontAndVisibleImageDecode() {
     assert.ok(call.sample.includes("肖子康"), "each font request should include representative Chinese glyphs");
   });
   assert.equal(fontsReadyReads, 0, "loader should wait for the explicit font request before reading fonts.ready");
-  assert.equal(visibleLazyImage.loading, "eager", "visible lazy image should be promoted for the current entry");
-  assert.equal(visibleDecodeCalls, 1, "visible image should be decoded before reveal");
+  assert.equal(visibleLazyImage.loading, "lazy", "priority image discovery should wait for final font layout");
+  assert.equal(visibleDecodeCalls, 0, "priority image decode should not start before font readiness");
   assert.equal(farLazyImage.loading, "lazy", "offscreen image should stay lazy");
   assert.equal(farDecodeCalls, 0, "offscreen image should not block reveal");
 
@@ -804,16 +807,18 @@ async function testExplicitFontAndVisibleImageDecode() {
   assert.equal(fontsReadyReads, 1, "loader should await fonts.ready after the explicit request settles");
   fontsReady.resolve();
   await flushMicrotasks();
+  await advance(harness, 16);
+  assert.equal(visibleLazyImage.loading, "eager", "the first visible image should be promoted after font layout");
+  assert.equal(visibleDecodeCalls, 1, "the priority image should decode before reveal");
   await advance(harness, 350);
   assert.equal(harness.loader.getAttribute("aria-hidden"), null, "pending image decode should block dismissal");
   imageDecode.resolve();
   await flushMicrotasks();
-  assert.notEqual(harness.percent.textContent, "100%", "progress should wait for the post-layout media scan");
-  await advance(harness, 16);
-  assert.equal(visibleDecodeCalls, 1, "final scan should not decode an image prepared in the initial pass twice");
-  assert.equal(visibleLazyImage.totalListenerCount(), 0, "final scan should not reattach listeners to a prepared image");
+  assert.notEqual(harness.percent.textContent, "100%", "progress should animate through the final critical-image step");
   await advance(harness, 160);
-  assert.equal(harness.percent.textContent, "100%", "decoded first view should complete progress");
+  assert.equal(visibleDecodeCalls, 1, "the priority image should decode only once");
+  assert.equal(visibleLazyImage.totalListenerCount(), 0, "priority image listeners should be removed after settlement");
+  assert.equal(harness.percent.textContent, "100%", "decoded priority image should complete progress");
   await advance(harness, 0);
   assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "loader should dismiss after visible image decode settles");
 }
@@ -841,8 +846,8 @@ async function testDecodeFailureSettlesButFontFailureShowsRetry() {
 
   await flushMicrotasks();
   await advance(harness, 16);
-  assert.equal(image.loading, "eager", "visible image should still be promoted when decode fails");
-  assert.equal(decodeCalls, 1, "visible image decode should be attempted once");
+  assert.equal(image.loading, "lazy", "font failure should stop before promoting noncritical images");
+  assert.equal(decodeCalls, 0, "font failure should not start image decode work");
   await advance(harness, 350);
   assert.equal(harness.loader.getAttribute("aria-hidden"), null, "font rejection should keep the loading gate visible");
   assert.equal(harness.loader.dataset.state, "error", "font rejection should switch the loading gate to its retry state");
@@ -870,6 +875,41 @@ async function testProgressAnimatesAcrossLiveResourceStates() {
   await flushMicrotasks();
   await advance(harness, 300);
   assert.equal(harness.percent.textContent, "100%", "font settlement should allow animated progress to reach completion");
+}
+
+async function testOnlyOnePriorityImageBlocksEntry() {
+  const firstDecode = deferred();
+  const firstImage = createResource({
+    complete: false,
+    loading: "lazy",
+    rect: { top: 80, bottom: 380 },
+    decode: () => firstDecode.promise,
+  });
+  const secondImage = createResource({
+    complete: false,
+    loading: "lazy",
+    rect: { top: 420, bottom: 720 },
+  });
+  const harness = createLoaderHarness({
+    fonts: createFonts(),
+    images: [firstImage, secondImage],
+    stylesheets: [createResource({ sheet: {} })],
+  });
+
+  await flushMicrotasks();
+  await advance(harness, 32);
+  assert.equal(firstImage.loading, "eager", "the first visible image should be promoted as the priority image");
+  assert.equal(firstImage.listenerCount("load"), 1, "the priority image should block entry until it settles");
+  assert.equal(secondImage.loading, "lazy", "later visible images should remain lazy");
+  assert.equal(secondImage.totalListenerCount(), 0, "later visible images should not block entry");
+
+  firstImage.dispatch("load");
+  await flushMicrotasks();
+  firstDecode.resolve();
+  await flushMicrotasks();
+  await advance(harness, 320);
+  assert.equal(harness.percent.textContent, "100%", "one decoded priority image should complete critical readiness");
+  assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "entry should not wait for additional visible images");
 }
 
 function testUpdatedTimeouts() {
@@ -1187,7 +1227,7 @@ async function testWatchdogCleansPartiallyStartedController() {
   harness.clock.clearTimeout(controllerTimer);
 
   assert.equal(stylesheet.totalListenerCount(), 2, "partially started controller should have stylesheet listeners before fail-open");
-  assert.equal(image.totalListenerCount(), 2, "partially started controller should have image listeners before fail-open");
+  assert.equal(image.totalListenerCount(), 0, "critical image discovery should wait for stylesheet and font readiness");
   await advance(harness, 12250 - harness.clock.now);
 
   assert.equal(harness.window.__pageLoaderWatchdogFired, true, "independent watchdog should fire when the controller timeout is unavailable");
@@ -1217,7 +1257,7 @@ async function testRearmCleansPriorRunListeners() {
   await advance(harness, 16);
 
   assert.equal(oldStylesheet.totalListenerCount(), 2, "initial run should observe stylesheet load and error");
-  assert.equal(oldImage.totalListenerCount(), 2, "initial run should observe image load and error");
+  assert.equal(oldImage.totalListenerCount(), 0, "initial run should defer image observation until critical prerequisites settle");
   harness.stylesheets.splice(0, harness.stylesheets.length, createResource({ sheet: {} }));
   harness.document.images = [createResource({ complete: true, loading: "eager" })];
   harness.document.fonts = createFonts();
@@ -1236,11 +1276,10 @@ async function testRearmCleansPriorRunListeners() {
   await testPostDomReadyLayoutDiscoveryIncludesRenderedImages();
   await testOffscreenEagerImageDoesNotDelayAfterDomReady();
   await testProjectedHashViewportImagesBlockUntilPostReleaseAlignment();
-  await testLayoutReflowSafetyBandPreparesOnlyNearMedia();
-  await testFontLayoutShiftTriggersFinalImageDiscovery();
   await testExplicitFontAndVisibleImageDecode();
   await testDecodeFailureSettlesButFontFailureShowsRetry();
   await testProgressAnimatesAcrossLiveResourceStates();
+  await testOnlyOnePriorityImageBlocksEntry();
   testUpdatedTimeouts();
   testLoadHashRetriesWaitForUnlock();
   await testSettledResourcesAndMinimumDuration();

@@ -2,13 +2,11 @@
 const PAGE_LOADER_MIN_MS = 350;
 const PAGE_LOADER_TIMEOUT_MS = 12000;
 const PAGE_LOADER_EXIT_MS = 400;
-const PAGE_LOADER_MEDIA_VIEWPORT_FACTOR = 1.5;
 const PAGE_LOADER_FONT_WEIGHTS = [400, 500, 700, 800, 900];
 const PAGE_LOADER_PROGRESS_WEIGHTS = {
   styles: 25,
-  fonts: 35,
-  initialImages: 15,
-  finalImages: 11,
+  fonts: 50,
+  priorityImage: 11,
 };
 
 let activePageLoaderRun = null;
@@ -197,6 +195,7 @@ function waitForPortfolioFonts(onProgress = () => {}) {
 
   const sample = "肖子康作品集 目录 数据 图片 视频";
   let completed = 0;
+  onProgress(1, PAGE_LOADER_FONT_WEIGHTS.length);
   const requests = PAGE_LOADER_FONT_WEIGHTS.map((weight) => Promise.resolve()
     .then(() => document.fonts.load(`${weight} 16px "ZHYuwanPortfolio"`, sample))
     .then(() => true, () => false)
@@ -242,12 +241,12 @@ function getPageLoaderHashTarget() {
     || (decodedId !== rawId ? document.getElementById(rawId) : null);
 }
 
-function prepareFirstViewImages(run, onProgress = () => {}) {
+function preparePriorityImage(run, onProgress = () => {}) {
   if (!isCurrentPageLoaderRun(run)) {
     return Promise.resolve([]);
   }
 
-  const firstViewLimit = window.innerHeight * PAGE_LOADER_MEDIA_VIEWPORT_FACTOR;
+  const firstViewLimit = window.innerHeight;
   const hashTarget = getPageLoaderHashTarget();
   const hashTargetRect = hashTarget && typeof hashTarget.getBoundingClientRect === "function"
     ? hashTarget.getBoundingClientRect()
@@ -267,7 +266,7 @@ function prepareFirstViewImages(run, onProgress = () => {}) {
     const projectedTop = rect.top - hashTargetRect.top;
     const projectedBottom = rect.bottom - hashTargetRect.top;
     return projectedTop < firstViewLimit && projectedBottom > 0;
-  });
+  }).sort((left, right) => left.getBoundingClientRect().top - right.getBoundingClientRect().top).slice(0, 1);
 
   if (images.length === 0) {
     onProgress(1, 1);
@@ -298,13 +297,13 @@ function prepareFirstViewImages(run, onProgress = () => {}) {
   }));
 }
 
-function waitForInitialFirstViewImages(run, onProgress = () => {}) {
+function waitForPriorityImage(run, onProgress = () => {}) {
   return waitForDomReady(run)
     .then((loaded) => loaded && isCurrentPageLoaderRun(run)
       ? waitForPageLoaderFrame(run)
       : false)
     .then((frameRendered) => frameRendered && isCurrentPageLoaderRun(run)
-      ? prepareFirstViewImages(run, onProgress)
+      ? preparePriorityImage(run, onProgress)
       : []);
 }
 
@@ -506,8 +505,7 @@ function initPageLoader() {
   const resourceProgress = {
     styles: 0,
     fonts: 0,
-    initialImages: 0,
-    finalImages: 0,
+    priorityImage: 0,
   };
   const reportResourceProgress = (key, completed, total) => {
     if (!isCurrentPageLoaderRun(run)) {
@@ -533,29 +531,17 @@ function initPageLoader() {
   const fontsReady = waitForPortfolioFonts((completed, total) => {
     reportResourceProgress("fonts", completed, total);
   });
-  const initialImagesReady = waitForInitialFirstViewImages(run, (completed, total) => {
-    reportResourceProgress("initialImages", completed, total);
-  });
-  const imagesReady = Promise.allSettled([stylesReady, fontsReady, initialImagesReady])
-    .then(() => isCurrentPageLoaderRun(run) ? waitForPageLoaderFrame(run) : false)
-    .then((frameRendered) => {
-      if (!frameRendered || !isCurrentPageLoaderRun(run)) {
+  const priorityImageReady = Promise.all([stylesReady, fontsReady])
+    .then(([, fontReady]) => {
+      if (!fontReady || !isCurrentPageLoaderRun(run)) {
         return false;
       }
 
-      return prepareFirstViewImages(run, (completed, total) => {
-        reportResourceProgress("finalImages", completed, total);
+      return waitForPriorityImage(run, (completed, total) => {
+        reportResourceProgress("priorityImage", completed, total);
       }).then(() => true);
-    })
-    .then((finalScanCompleted) => {
-      if (!finalScanCompleted) {
-        return false;
-      }
-
-      reportResourceProgress("finalImages", 1, 1);
-      return true;
     });
-  const combinedReadiness = Promise.all([stylesReady, fontsReady, imagesReady])
+  const combinedReadiness = Promise.all([stylesReady, fontsReady, priorityImageReady])
     .then(([, fontReady]) => ({ kind: fontReady ? "ready" : "font-error" }));
   let hardTimeoutId = null;
   const hardTimeout = new Promise((resolve) => {
@@ -1294,3 +1280,9 @@ function initCommunityVideoCards() {
 }
 
 initCommunityVideoCards();
+
+if ("serviceWorker" in navigator && /^https?:$/.test(window.location.protocol)) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js?v=performance-1").catch(() => {});
+  });
+}

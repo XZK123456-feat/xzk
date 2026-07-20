@@ -157,7 +157,16 @@ function openPreview(button) {
   lightbox.dataset.direction = lastPreviewIndex <= currentIndex ? "next" : "prev";
   lastPreviewIndex = currentIndex;
   resetZoom();
-  lightboxImage.src = button.dataset.full || image.currentSrc || image.src;
+  const fullSource = button.dataset.full || image.currentSrc || image.src;
+  const fullSmallSource = button.dataset.fullSmall;
+  if (fullSmallSource && button.dataset.fullWidth) {
+    lightboxImage.srcset = `${encodeURI(fullSmallSource)} 480w, ${encodeURI(fullSource)} ${button.dataset.fullWidth}w`;
+    lightboxImage.sizes = "100vw";
+  } else {
+    lightboxImage.removeAttribute("srcset");
+    lightboxImage.removeAttribute("sizes");
+  }
+  lightboxImage.src = fullSource;
   lightboxImage.alt = image.alt;
   lightboxCaption.textContent = button.querySelector(".detail-shot-label")?.textContent || image.alt;
   if (lightboxCounter) {
