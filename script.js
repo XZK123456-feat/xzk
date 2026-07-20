@@ -178,9 +178,17 @@ function waitForPortfolioFonts() {
 
 function waitForFirstViewImages(run) {
   return waitForDomReady(run)
-    .then((loaded) => loaded && isCurrentPageLoaderRun(run)
-      ? waitForPageLoaderFrame(run)
-      : false)
+    .then((loaded) => {
+      if (!loaded || !isCurrentPageLoaderRun(run)) {
+        return false;
+      }
+
+      if (window.location && window.location.hash && typeof syncHashTarget === "function") {
+        syncHashTarget();
+      }
+
+      return waitForPageLoaderFrame(run);
+    })
     .then((frameRendered) => {
       if (!frameRendered || !isCurrentPageLoaderRun(run)) {
         return [];

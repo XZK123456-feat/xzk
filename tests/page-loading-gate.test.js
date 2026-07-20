@@ -276,6 +276,7 @@ function createLoaderHarness(options = {}) {
     cancelAnimationFrame: (id) => clock.clearTimeout(id),
     clearTimeout: (id) => clock.clearTimeout(id),
     innerHeight: 800,
+    location: { hash: options.hash || "" },
     requestAnimationFrame: (callback) => clock.setTimeout(() => callback(clock.now), 16),
     scrollTo: () => { scrollState.scrollToCalls += 1; },
     scrollX: scrollState.x,
@@ -302,6 +303,7 @@ function createLoaderHarness(options = {}) {
     clearTimeout: (id) => clock.clearTimeout(id),
     document,
     performance: { now: () => clock.now },
+    syncHashTarget: options.syncHashTarget,
     window: windowTarget,
   });
   const runController = () => vm.runInContext(loaderController, context, { filename: "script.js", timeout: 1000 });
@@ -401,16 +403,22 @@ async function testPostDomReadyLayoutDiscoveryIncludesRenderedImages() {
 }
 
 async function testOffscreenEagerImageDoesNotDelayAfterDomReady() {
+  let hashSyncCalls = 0;
+  let harness;
   const offscreenEagerImage = createResource({
     complete: false,
     loading: "eager",
     rect: { top: 1800, bottom: 2100 },
   });
-  const harness = createLoaderHarness({
+  harness = createLoaderHarness({
     fonts: createFonts(),
     images: [offscreenEagerImage],
     readyState: "loading",
     stylesheets: [createResource({ sheet: {} })],
+    syncHashTarget: () => {
+      hashSyncCalls += 1;
+      harness.window.scrollTo();
+    },
   });
 
   harness.document.readyState = "interactive";
@@ -419,8 +427,63 @@ async function testOffscreenEagerImageDoesNotDelayAfterDomReady() {
   await advance(harness, 16);
 
   assert.equal(offscreenEagerImage.totalListenerCount(), 0, "an offscreen eager image should not be included in readiness");
+  assert.equal(hashSyncCalls, 0, "an empty hash should not invoke early fragment alignment");
+  assert.equal(harness.scrollState.scrollToCalls, 0, "an empty hash should not mutate scroll");
   await advance(harness, 334);
   assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "offscreen eager image bytes should not delay dismissal");
+}
+
+async function testHashAlignmentPrecedesFirstViewImageDiscovery() {
+  const imageDecode = deferred();
+  const imageRect = { top: 1800, bottom: 2140 };
+  let decodeCalls = 0;
+  let hashSyncCalls = 0;
+  let harness;
+  const hashTargetImage = createResource({
+    complete: false,
+    loading: "lazy",
+    rect: imageRect,
+    decode: () => {
+      decodeCalls += 1;
+      return imageDecode.promise;
+    },
+  });
+  harness = createLoaderHarness({
+    fonts: createFonts(),
+    hash: "#horizontal",
+    images: [hashTargetImage],
+    readyState: "loading",
+    stylesheets: [createResource({ sheet: {} })],
+    syncHashTarget: () => {
+      hashSyncCalls += 1;
+      harness.window.scrollTo({ top: 1400, behavior: "auto" });
+      imageRect.top = 100;
+      imageRect.bottom = 440;
+    },
+  });
+
+  harness.document.readyState = "interactive";
+  harness.document.dispatch("DOMContentLoaded");
+  await flushMicrotasks();
+  assert.equal(hashTargetImage.loading, "lazy", "hash-aligned media discovery should still wait for the layout frame");
+  await advance(harness, 16);
+
+  assert.equal(hashSyncCalls, 1, "the fragment target should align before first-view media discovery");
+  assert.equal(harness.scrollState.scrollToCalls, 1, "fragment alignment should update scroll once before discovery");
+  assert.equal(hashTargetImage.loading, "eager", "a gallery image exposed by fragment alignment should be promoted");
+  assert.equal(hashTargetImage.listenerCount("load"), 1, "a gallery image exposed by fragment alignment should be awaited");
+
+  await advance(harness, 334);
+  assert.equal(harness.loader.getAttribute("aria-hidden"), null, "fragment-target media should block dismissal while loading");
+  hashTargetImage.dispatch("load");
+  await flushMicrotasks();
+  assert.equal(decodeCalls, 1, "fragment-target media should decode after loading");
+  assert.equal(harness.loader.getAttribute("aria-hidden"), null, "fragment-target decode should block dismissal");
+
+  imageDecode.resolve();
+  await flushMicrotasks();
+  await advance(harness, 0);
+  assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "loader should dismiss after fragment-target media decodes");
 }
 
 async function testSettledResourcesAndMinimumDuration() {
@@ -901,6 +964,7 @@ async function testRearmCleansPriorRunListeners() {
 (async () => {
   await testPostDomReadyLayoutDiscoveryIncludesRenderedImages();
   await testOffscreenEagerImageDoesNotDelayAfterDomReady();
+  await testHashAlignmentPrecedesFirstViewImageDiscovery();
   await testExplicitFontAndVisibleImageDecode();
   await testDecodeAndFontFailuresSettleSafely();
   testUpdatedTimeouts();
