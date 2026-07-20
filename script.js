@@ -176,15 +176,28 @@ function waitForPortfolioFonts() {
   return request.then(() => document.fonts.ready.catch(() => undefined));
 }
 
+function getPageLoaderHashTarget() {
+  if (!window.location || !window.location.hash || typeof document.getElementById !== "function") {
+    return null;
+  }
+
+  const rawId = window.location.hash.slice(1);
+  let decodedId = rawId;
+  try {
+    decodedId = decodeURIComponent(rawId);
+  } catch (_error) {
+    // Keep the raw fragment when percent-decoding fails.
+  }
+
+  return document.getElementById(decodedId)
+    || (decodedId !== rawId ? document.getElementById(rawId) : null);
+}
+
 function waitForFirstViewImages(run) {
   return waitForDomReady(run)
     .then((loaded) => {
       if (!loaded || !isCurrentPageLoaderRun(run)) {
         return false;
-      }
-
-      if (window.location && window.location.hash && typeof syncHashTarget === "function") {
-        syncHashTarget();
       }
 
       return waitForPageLoaderFrame(run);
@@ -195,9 +208,21 @@ function waitForFirstViewImages(run) {
       }
 
       const firstViewLimit = window.innerHeight * 1.25;
+      const hashTarget = getPageLoaderHashTarget();
+      const hashTargetRect = hashTarget && typeof hashTarget.getBoundingClientRect === "function"
+        ? hashTarget.getBoundingClientRect()
+        : null;
       const images = Array.from(document.images).filter((image) => {
         const rect = image.getBoundingClientRect();
-        return rect.top < firstViewLimit && rect.bottom > 0;
+        const isCurrentlyVisible = rect.top < firstViewLimit && rect.bottom > 0;
+        if (isCurrentlyVisible || !hashTargetRect || typeof hashTarget.contains !== "function"
+          || !hashTarget.contains(image)) {
+          return isCurrentlyVisible;
+        }
+
+        const projectedTop = rect.top - hashTargetRect.top;
+        const projectedBottom = rect.bottom - hashTargetRect.top;
+        return projectedTop < firstViewLimit && projectedBottom > 0;
       });
 
       return Promise.allSettled(images.map((image) => {
@@ -256,6 +281,9 @@ function dismissPageLoader(run, loader) {
   const release = () => {
     pageLoaderUnlockTimer = null;
     releasePageLoadingState(loader);
+    if (window.location && window.location.hash && typeof syncHashTarget === "function") {
+      syncHashTarget();
+    }
   };
 
   const prefersReducedMotion = typeof window.matchMedia === "function"

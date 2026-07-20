@@ -271,14 +271,27 @@ function createLoaderHarness(options = {}) {
   const stylesheets = options.stylesheets || [];
   const images = options.images || [];
   const windowTarget = new FakeEventTarget();
-  const scrollState = { scrollToCalls: 0, x: 24, y: 480 };
+  const scrollState = {
+    appliedScrollToCalls: 0,
+    ignoredScrollToCalls: 0,
+    scrollToCalls: 0,
+    x: 24,
+    y: 480,
+  };
   Object.assign(windowTarget, {
     cancelAnimationFrame: (id) => clock.clearTimeout(id),
     clearTimeout: (id) => clock.clearTimeout(id),
     innerHeight: 800,
     location: { hash: options.hash || "" },
     requestAnimationFrame: (callback) => clock.setTimeout(() => callback(clock.now), 16),
-    scrollTo: () => { scrollState.scrollToCalls += 1; },
+    scrollTo: () => {
+      scrollState.scrollToCalls += 1;
+      if (documentElement.classList.contains("is-page-loading")) {
+        scrollState.ignoredScrollToCalls += 1;
+      } else {
+        scrollState.appliedScrollToCalls += 1;
+      }
+    },
     scrollX: scrollState.x,
     scrollY: scrollState.y,
     setTimeout: (callback, delay) => clock.setTimeout(callback, delay),
@@ -292,6 +305,7 @@ function createLoaderHarness(options = {}) {
     fonts: options.fonts,
     images,
     readyState: options.readyState || "complete",
+    getElementById: (id) => options.elementsById?.[id] || null,
     querySelector: (selector) => {
       if (selector === ".page-loader") return loader;
       if (selector === ".page-shell") return pageShell;
@@ -431,59 +445,81 @@ async function testOffscreenEagerImageDoesNotDelayAfterDomReady() {
   assert.equal(harness.scrollState.scrollToCalls, 0, "an empty hash should not mutate scroll");
   await advance(harness, 334);
   assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "offscreen eager image bytes should not delay dismissal");
+  await advance(harness, 400);
+  assert.equal(hashSyncCalls, 0, "an empty hash should not invoke fragment alignment after release");
+  assert.equal(harness.scrollState.scrollToCalls, 0, "an empty hash should preserve scroll after release");
 }
 
-async function testHashAlignmentPrecedesFirstViewImageDiscovery() {
+async function testProjectedHashViewportImagesBlockUntilPostReleaseAlignment() {
   const imageDecode = deferred();
-  const imageRect = { top: 1800, bottom: 2140 };
   let decodeCalls = 0;
   let hashSyncCalls = 0;
   let harness;
-  const hashTargetImage = createResource({
+  const projectedNearImage = createResource({
     complete: false,
     loading: "lazy",
-    rect: imageRect,
+    rect: { top: 1500, bottom: 1840 },
     decode: () => {
       decodeCalls += 1;
       return imageDecode.promise;
     },
   });
+  const projectedFarImage = createResource({
+    complete: false,
+    loading: "lazy",
+    rect: { top: 2700, bottom: 3040 },
+  });
+  const hashTarget = {
+    contains: (image) => image === projectedNearImage || image === projectedFarImage,
+    getBoundingClientRect: () => ({ top: 1400, bottom: 3200 }),
+  };
   harness = createLoaderHarness({
+    elementsById: { "horizontal gallery": hashTarget },
     fonts: createFonts(),
-    hash: "#horizontal",
-    images: [hashTargetImage],
+    hash: "#horizontal%20gallery",
+    images: [projectedNearImage, projectedFarImage],
     readyState: "loading",
     stylesheets: [createResource({ sheet: {} })],
     syncHashTarget: () => {
       hashSyncCalls += 1;
       harness.window.scrollTo({ top: 1400, behavior: "auto" });
-      imageRect.top = 100;
-      imageRect.bottom = 440;
     },
   });
 
   harness.document.readyState = "interactive";
   harness.document.dispatch("DOMContentLoaded");
   await flushMicrotasks();
-  assert.equal(hashTargetImage.loading, "lazy", "hash-aligned media discovery should still wait for the layout frame");
+  assert.equal(projectedNearImage.loading, "lazy", "projected media discovery should still wait for the layout frame");
   await advance(harness, 16);
 
-  assert.equal(hashSyncCalls, 1, "the fragment target should align before first-view media discovery");
-  assert.equal(harness.scrollState.scrollToCalls, 1, "fragment alignment should update scroll once before discovery");
-  assert.equal(hashTargetImage.loading, "eager", "a gallery image exposed by fragment alignment should be promoted");
-  assert.equal(hashTargetImage.listenerCount("load"), 1, "a gallery image exposed by fragment alignment should be awaited");
+  assert.equal(hashSyncCalls, 0, "fragment alignment should not run while loader scroll lock is active");
+  assert.equal(harness.scrollState.scrollToCalls, 0, "media selection should not rely on locked scroll attempts");
+  assert.equal(projectedNearImage.loading, "eager", "an image in the projected fragment viewport should be promoted");
+  assert.equal(projectedNearImage.listenerCount("load"), 1, "an image in the projected fragment viewport should be awaited");
+  assert.equal(projectedFarImage.loading, "lazy", "an image beyond the projected fragment viewport should remain lazy");
+  assert.equal(projectedFarImage.totalListenerCount(), 0, "far projected fragment media should not block readiness");
 
   await advance(harness, 334);
-  assert.equal(harness.loader.getAttribute("aria-hidden"), null, "fragment-target media should block dismissal while loading");
-  hashTargetImage.dispatch("load");
+  assert.equal(harness.loader.getAttribute("aria-hidden"), null, "projected fragment media should block dismissal while loading");
+  projectedNearImage.dispatch("load");
   await flushMicrotasks();
-  assert.equal(decodeCalls, 1, "fragment-target media should decode after loading");
-  assert.equal(harness.loader.getAttribute("aria-hidden"), null, "fragment-target decode should block dismissal");
+  assert.equal(decodeCalls, 1, "projected fragment media should decode after loading");
+  assert.equal(harness.loader.getAttribute("aria-hidden"), null, "projected fragment decode should block dismissal");
 
   imageDecode.resolve();
   await flushMicrotasks();
   await advance(harness, 0);
-  assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "loader should dismiss after fragment-target media decodes");
+  assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "loader should dismiss after projected fragment media decodes");
+  assert.equal(harness.documentElement.classList.contains("is-page-loading"), true, "fragment alignment should wait through the exit fade");
+  assert.equal(hashSyncCalls, 0, "fragment alignment should not run before scroll lock release");
+
+  await advance(harness, 399);
+  assert.equal(hashSyncCalls, 0, "fragment alignment should remain pending until the lock is released");
+  await advance(harness, 1);
+  assert.equal(harness.documentElement.classList.contains("is-page-loading"), false, "release should remove scroll lock before fragment alignment");
+  assert.equal(hashSyncCalls, 1, "fragment alignment should run once after release");
+  assert.equal(harness.scrollState.ignoredScrollToCalls, 0, "fragment alignment should not attempt scrolling while locked");
+  assert.equal(harness.scrollState.appliedScrollToCalls, 1, "post-release fragment alignment should apply scrolling");
 }
 
 async function testSettledResourcesAndMinimumDuration() {
@@ -964,7 +1000,7 @@ async function testRearmCleansPriorRunListeners() {
 (async () => {
   await testPostDomReadyLayoutDiscoveryIncludesRenderedImages();
   await testOffscreenEagerImageDoesNotDelayAfterDomReady();
-  await testHashAlignmentPrecedesFirstViewImageDiscovery();
+  await testProjectedHashViewportImagesBlockUntilPostReleaseAlignment();
   await testExplicitFontAndVisibleImageDecode();
   await testDecodeAndFontFailuresSettleSafely();
   testUpdatedTimeouts();
