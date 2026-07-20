@@ -26,7 +26,43 @@
   font-family: "ZHYuwanPortfolio";
   src: url("assets/fonts/ZHYuwanPortfolio.woff2") format("woff2"),
        url("assets/fonts/ZHYuwanPortfolio.ttf") format("truetype");
-  font-weight: 400 900;
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "ZHYuwanPortfolio";
+  src: url("assets/fonts/ZHYuwanPortfolio.woff2") format("woff2"),
+       url("assets/fonts/ZHYuwanPortfolio.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "ZHYuwanPortfolio";
+  src: url("assets/fonts/ZHYuwanPortfolio.woff2") format("woff2"),
+       url("assets/fonts/ZHYuwanPortfolio.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "ZHYuwanPortfolio";
+  src: url("assets/fonts/ZHYuwanPortfolio.woff2") format("woff2"),
+       url("assets/fonts/ZHYuwanPortfolio.ttf") format("truetype");
+  font-weight: 800;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "ZHYuwanPortfolio";
+  src: url("assets/fonts/ZHYuwanPortfolio.woff2") format("woff2"),
+       url("assets/fonts/ZHYuwanPortfolio.ttf") format("truetype");
+  font-weight: 900;
   font-style: normal;
   font-display: block;
 }
@@ -103,7 +139,7 @@ body.is-page-loading .page-shell {
   background: var(--yellow);
   transform: scaleX(0.08);
   transform-origin: left center;
-  transition: transform 180ms ease-out;
+  transition: none;
 }
 
 .page-loader__meta {
@@ -116,6 +152,30 @@ body.is-page-loading .page-shell {
   font-weight: 800;
   line-height: 1.2;
   letter-spacing: 0;
+}
+
+.page-loader__retry {
+  display: none;
+  width: 100%;
+  min-height: 38px;
+  margin-top: 16px;
+  border: 2px solid var(--yellow);
+  border-radius: 4px;
+  color: var(--ink);
+  background: var(--yellow);
+  font-family: "Microsoft YaHei", Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+  cursor: pointer;
+}
+
+.page-loader[data-state="error"] .page-loader__track {
+  opacity: 0.45;
+}
+
+.page-loader[data-state="error"] .page-loader__retry {
+  display: block;
 }
 
 @media (max-width: 620px) {

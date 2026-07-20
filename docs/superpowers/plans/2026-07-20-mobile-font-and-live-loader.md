@@ -17,8 +17,8 @@
 - Modify: `styles.css`
 - Modify: `script.js`
 
-- [ ] Add assertions that `ZHYuwanPortfolio` has explicit static 400, 500, 700, and 800 faces and no ranged `400 900` descriptor.
-- [ ] Add a loader test that records `document.fonts.load` calls and expects all four critical weights before `document.fonts.ready` is read.
+- [ ] Add assertions that `ZHYuwanPortfolio` has explicit static 400, 500, 700, 800, and 900 faces and no ranged `400 900` descriptor.
+- [ ] Add a loader test that records `document.fonts.load` calls and expects all five critical weights before `document.fonts.ready` is read.
 - [ ] Run `node --test tests/page-loading-gate.test.js` and confirm the new assertions fail for the current single ranged face and single 800 request.
 - [ ] Add the explicit static font faces and request all critical weights with `Promise.allSettled`.
 - [ ] Re-run the focused test and confirm it passes.
@@ -46,4 +46,3 @@
 - [ ] Confirm the loader shows intermediate percentages, the content is hidden until critical font readiness, and computed typography uses `ZHYuwanPortfolio` at representative weights.
 - [ ] Review `git diff --check` and the final diff for unrelated changes.
 - [ ] Commit the implementation, push the current branch to `main`, and verify the GitHub Pages deployment serves the new commit.
-

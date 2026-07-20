@@ -43,9 +43,11 @@ for (const page of pages) {
   assert.equal(firstBodyChild, '<div class="page-loader" role="status" aria-label="页面正在加载">', `${page} loader should be the first body child`);
   assert.ok(html.indexOf('class="page-loader"') < html.indexOf('class="page-shell"'), `${page} loader should precede visible page content`);
   assert.ok(html.includes('data-loading-percent>08%</span>'), `${page} should expose the initial visual percentage`);
+  assert.ok(html.includes('data-loading-label>LOADING</span>'), `${page} should expose a mutable loading label`);
+  assert.ok(html.includes('data-loading-retry'), `${page} should expose a retry control for critical loading failures`);
   assert.ok(html.includes('<script src="script.js"></script>'), `${page} should load the shared controller`);
 
-  const loaderBlock = html.match(/<div class="page-loader"[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/)?.[0];
+  const loaderBlock = html.match(/<div class="page-loader"[\s\S]*?<\/div>\s*(?=<div class="scroll-progress")/)?.[0];
   assert.ok(loaderBlock, `${page} should include the complete loader markup`);
   loaderBlocks.push(loaderBlock.replace(/\s+/g, " "));
   const watchdogBlock = html.match(/<script data-loader-watchdog>([\s\S]*?)<\/script>/)?.[1];
@@ -88,6 +90,17 @@ assert.ok(!brandRule.includes("ZHYuwanPortfolio"), "loader brand should not wait
 assert.match(css, /@media \(max-width: 620px\)[\s\S]*?\.page-loader__inner\s*{[\s\S]*?width:[^;}]+;[\s\S]*?\.page-loader__brand\s*{[\s\S]*?font-size:\s*21px;/, "mobile loader should reduce inner width and brand size");
 assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.page-loader[\s\S]*?transition:\s*none;[\s\S]*?\.page-loader__fill[\s\S]*?transition:\s*none;/, "reduced motion should disable loader exit and fill transitions");
 assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.page-loader,\s*\.page-loader\[aria-hidden="true"\]\s*{\s*transition:\s*none;/, "reduced motion should override the more-specific dismissed loader transition");
+
+const fontFaceBlocks = [...css.matchAll(/@font-face\s*{([\s\S]*?)}/g)]
+  .map((match) => match[1])
+  .filter((block) => block.includes('font-family: "ZHYuwanPortfolio"'));
+assert.equal(fontFaceBlocks.length, 5, "portfolio font should expose one static face per critical UI weight");
+assert.deepEqual(
+  fontFaceBlocks.map((block) => Number(block.match(/font-weight:\s*(\d+)\s*;/)?.[1])).sort((left, right) => left - right),
+  [400, 500, 700, 800, 900],
+  "portfolio font should explicitly map every critical mobile weight",
+);
+assert.doesNotMatch(css, /font-family:\s*"ZHYuwanPortfolio";[\s\S]{0,300}?font-weight:\s*400\s+900\s*;/, "static portfolio font must not be declared as a variable range");
 
 const controllerStartMarker = "// PAGE_LOADER_CONTROLLER_START";
 const controllerEndMarker = "// PAGE_LOADER_CONTROLLER_END";
@@ -219,6 +232,7 @@ function createStateElement(classes = []) {
   return {
     attributes,
     classList: new FakeClassList(classes),
+    dataset: {},
     getAttribute: (name) => attributes.get(name) ?? null,
     removeAttribute: (name) => attributes.delete(name),
     setAttribute: (name, value) => attributes.set(name, String(value)),
@@ -262,11 +276,20 @@ function createLoaderHarness(options = {}) {
 
   const fill = { style: fillStyle };
   const percent = { textContent: "08%" };
+  const label = { textContent: "LOADING" };
+  const retry = createStateElement();
+  retry.hidden = true;
   const loader = createStateElement();
   if (options.loaderHidden) {
     loader.setAttribute("aria-hidden", "true");
   }
-  loader.querySelector = (selector) => selector === ".page-loader__fill" ? fill : percent;
+  loader.querySelector = (selector) => {
+    if (selector === ".page-loader__fill") return fill;
+    if (selector === "[data-loading-percent]") return percent;
+    if (selector === "[data-loading-label]") return label;
+    if (selector === "[data-loading-retry]") return retry;
+    return null;
+  };
   const initialClasses = options.loading === false ? [] : ["is-page-loading"];
   const documentElement = createStateElement(initialClasses);
   const body = createStateElement(initialClasses);
@@ -339,9 +362,11 @@ function createLoaderHarness(options = {}) {
     document,
     documentElement,
     loader,
+    label,
     pageShell,
     percent,
     progressValues,
+    retry,
     runController,
     scrollState,
     stylesheets,
@@ -350,7 +375,7 @@ function createLoaderHarness(options = {}) {
 }
 
 async function flushMicrotasks() {
-  for (let index = 0; index < 8; index += 1) {
+  for (let index = 0; index < 24; index += 1) {
     await Promise.resolve();
   }
 }
@@ -424,6 +449,7 @@ async function testPostDomReadyLayoutDiscoveryIncludesRenderedImages() {
   await advance(harness, 16);
   assert.equal(visibleDecodeCalls, 1, "final scan should not decode an initially prepared image twice");
   assert.equal(visibleLazyImage.totalListenerCount(), 0, "final scan should not reattach listeners to an initially prepared image");
+  await advance(harness, 160);
   assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "the loader should dismiss after rendered image decode");
 }
 
@@ -522,11 +548,13 @@ async function testProjectedHashViewportImagesBlockUntilPostReleaseAlignment() {
   await advance(harness, 16);
   assert.equal(decodeCalls, 1, "final scan should not decode projected media prepared in pass one twice");
   assert.equal(projectedNearImage.totalListenerCount(), 0, "final scan should not reattach projected media listeners");
+  await advance(harness, 160);
   assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "loader should dismiss after projected fragment media decodes");
   assert.equal(harness.documentElement.classList.contains("is-page-loading"), true, "fragment alignment should wait through the exit fade");
   assert.equal(hashSyncCalls, 0, "fragment alignment should not run before scroll lock release");
 
-  await advance(harness, 399);
+  const unlockDueAt = harness.clock.nextDueAt();
+  await advance(harness, unlockDueAt - harness.clock.now - 1);
   assert.equal(hashSyncCalls, 0, "fragment alignment should remain pending until the lock is released");
   await advance(harness, 1);
   assert.equal(harness.documentElement.classList.contains("is-page-loading"), false, "release should remove scroll lock before fragment alignment");
@@ -583,6 +611,7 @@ async function testLayoutReflowSafetyBandPreparesOnlyNearMedia() {
   await flushMicrotasks();
   await advance(harness, 16);
   assert.equal(decodeCalls, 1, "final scan should not decode safety-band media twice");
+  await advance(harness, 160);
   assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "loader should dismiss after safety-band media decode");
 }
 
@@ -648,6 +677,7 @@ async function testFontLayoutShiftTriggersFinalImageDiscovery() {
   imageDecode.resolve();
   await flushMicrotasks();
   await advance(harness, 0);
+  await advance(harness, 160);
   assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "loader should dismiss after shifted media decode");
 }
 
@@ -669,27 +699,30 @@ async function testSettledResourcesAndMinimumDuration() {
   assert.equal(harness.documentElement.getAttribute("aria-busy"), "true", "controller should mark the page busy while loading");
   assert.equal(lazyImage.listenerCount("load"), 0, "lazy images should not receive readiness listeners");
   assert.equal(farImage.listenerCount("load"), 0, "far-offscreen images should not receive readiness listeners");
+  const beforeStyles = Number.parseInt(harness.percent.textContent, 10);
   stylesheet.dispatch("error");
   await flushMicrotasks();
   assert.equal(stylesheet.totalListenerCount(), 0, "stylesheet settlement should remove both listeners");
-  assert.ok(harness.progressValues.includes(38), "stylesheet error settlement should advance progress");
+  await advance(harness, 64);
+  assert.ok(Number.parseInt(harness.percent.textContent, 10) > beforeStyles, "stylesheet settlement should advance displayed progress");
 
   fonts.resolve();
   await flushMicrotasks();
-  assert.ok(harness.progressValues.includes(68), "font settlement should advance progress");
 
+  const beforeImages = Number.parseInt(harness.percent.textContent, 10);
   loadedImage.dispatch("load");
   failedImage.dispatch("error");
   await flushMicrotasks();
   assert.equal(loadedImage.totalListenerCount(), 0, "image load should remove both listeners");
   assert.equal(failedImage.totalListenerCount(), 0, "image error should remove both listeners");
-  await advance(harness, 16);
+  await advance(harness, 160);
 
   assert.deepEqual([...harness.progressValues].sort((left, right) => left - right), harness.progressValues, "progress should be monotonic");
-  assert.ok(harness.progressValues.includes(92), "first-view image settlement should advance progress");
+  assert.ok(harness.progressValues.some((value) => value > beforeImages), "first-view image settlement should advance progress");
   assert.equal(harness.percent.textContent, "100%", "combined readiness should reach 100 percent");
 
-  await advance(harness, 317);
+  const remainingBeforeMinimum = Math.max(0, 350 - harness.clock.now);
+  await advance(harness, Math.max(0, remainingBeforeMinimum - 1));
   assert.equal(harness.loader.getAttribute("aria-hidden"), null, "loader should honor the minimum duration");
   await advance(harness, 1);
   assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "settled resources should dismiss after the minimum duration");
@@ -751,9 +784,14 @@ async function testExplicitFontAndVisibleImageDecode() {
 
   await flushMicrotasks();
   await advance(harness, 16);
-  assert.equal(fontCalls.length, 1, "loader should explicitly request the portfolio font");
-  assert.equal(fontCalls[0].descriptor, '800 16px "ZHYuwanPortfolio"', "loader should request the visible body font at its interface weight");
-  assert.ok(fontCalls[0].sample.includes("肖子康"), "font request should include representative Chinese glyphs");
+  assert.deepEqual(
+    fontCalls.map((call) => call.descriptor),
+    [400, 500, 700, 800, 900].map((weight) => `${weight} 16px "ZHYuwanPortfolio"`),
+    "loader should explicitly request every critical portfolio font weight",
+  );
+  fontCalls.forEach((call) => {
+    assert.ok(call.sample.includes("肖子康"), "each font request should include representative Chinese glyphs");
+  });
   assert.equal(fontsReadyReads, 0, "loader should wait for the explicit font request before reading fonts.ready");
   assert.equal(visibleLazyImage.loading, "eager", "visible lazy image should be promoted for the current entry");
   assert.equal(visibleDecodeCalls, 1, "visible image should be decoded before reveal");
@@ -773,12 +811,13 @@ async function testExplicitFontAndVisibleImageDecode() {
   await advance(harness, 16);
   assert.equal(visibleDecodeCalls, 1, "final scan should not decode an image prepared in the initial pass twice");
   assert.equal(visibleLazyImage.totalListenerCount(), 0, "final scan should not reattach listeners to a prepared image");
+  await advance(harness, 160);
   assert.equal(harness.percent.textContent, "100%", "decoded first view should complete progress");
   await advance(harness, 0);
   assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "loader should dismiss after visible image decode settles");
 }
 
-async function testDecodeAndFontFailuresSettleSafely() {
+async function testDecodeFailureSettlesButFontFailureShowsRetry() {
   let decodeCalls = 0;
   const image = createResource({
     complete: true,
@@ -790,7 +829,7 @@ async function testDecodeAndFontFailuresSettleSafely() {
     },
   });
   const fonts = createFonts(
-    Promise.reject(new Error("fonts ready failed")),
+    Promise.resolve(),
     () => Promise.reject(new Error("font load failed")),
   );
   const harness = createLoaderHarness({
@@ -804,8 +843,32 @@ async function testDecodeAndFontFailuresSettleSafely() {
   assert.equal(image.loading, "eager", "visible image should still be promoted when decode fails");
   assert.equal(decodeCalls, 1, "visible image decode should be attempted once");
   await advance(harness, 350);
-  assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "font and decode rejection should fail open safely");
-  assert.equal(harness.percent.textContent, "100%", "resource rejection should still settle progress");
+  assert.equal(harness.loader.getAttribute("aria-hidden"), null, "font rejection should keep the loading gate visible");
+  assert.equal(harness.loader.dataset.state, "error", "font rejection should switch the loading gate to its retry state");
+  assert.equal(harness.retry.hidden, false, "font rejection should expose the retry control");
+  assert.notEqual(harness.percent.textContent, "100%", "font rejection must not report successful completion");
+}
+
+async function testProgressAnimatesAcrossLiveResourceStates() {
+  const fontLoad = deferred();
+  const harness = createLoaderHarness({
+    fonts: createFonts(Promise.resolve(), () => fontLoad.promise),
+    images: [createResource({ complete: true, loading: "eager" })],
+    stylesheets: [createResource({ sheet: {} })],
+  });
+
+  await flushMicrotasks();
+  await advance(harness, 240);
+  const pendingFontProgress = Number.parseInt(harness.percent.textContent, 10);
+  const intermediateValues = new Set(harness.progressValues.filter((value) => value > 8 && value < pendingFontProgress));
+  assert.ok(pendingFontProgress > 38, "settled styles and first-view media should move progress beyond the old 38 percent stall");
+  assert.ok(pendingFontProgress < 100, "pending fonts should keep progress below completion");
+  assert.ok(intermediateValues.size >= 3, "displayed progress should render multiple intermediate values instead of jumping milestones");
+
+  fontLoad.resolve();
+  await flushMicrotasks();
+  await advance(harness, 300);
+  assert.equal(harness.percent.textContent, "100%", "font settlement should allow animated progress to reach completion");
 }
 
 function testUpdatedTimeouts() {
@@ -872,16 +935,18 @@ async function testHardTimeoutRelease() {
   await advance(harness, 11999);
   assert.equal(harness.loader.getAttribute("aria-hidden"), null, "loader should remain before the hard timeout");
   await advance(harness, 1);
-  assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "hard timeout should release unresolved resources");
-  assert.equal(harness.percent.textContent, "100%", "hard timeout should still complete progress");
-  assert.equal(harness.documentElement.classList.contains("is-page-loading"), true, "hard timeout should keep html locked during the fade");
+  assert.equal(harness.loader.getAttribute("aria-hidden"), null, "hard timeout should keep the gate visible instead of revealing fallback typography");
+  assert.equal(harness.loader.dataset.state, "error", "hard timeout should enter the retry state");
+  assert.equal(harness.retry.hidden, false, "hard timeout should expose the retry control");
+  assert.notEqual(harness.percent.textContent, "100%", "hard timeout must not report false completion");
+  assert.equal(harness.documentElement.classList.contains("is-page-loading"), true, "hard timeout should keep html locked behind the retry state");
   assert.equal(harness.documentElement.getAttribute("aria-busy"), "true", "hard timeout should keep aria-busy during the fade");
   assert.equal(stylesheet.totalListenerCount(), 0, "timeout should remove outstanding stylesheet listeners");
   assert.equal(image.totalListenerCount(), 0, "timeout should remove outstanding image listeners");
   assert.equal(decodeCalls, 0, "timeout cancellation should not start stale image decode work");
   await advance(harness, 400);
   assert.equal(harness.clock.timerCount(), 0, "timeout dismissal should retain no run timers");
-  assert.equal(harness.documentElement.getAttribute("aria-busy"), null, "timeout should clear aria-busy");
+  assert.equal(harness.documentElement.getAttribute("aria-busy"), "true", "retry state should remain busy until the user reloads");
 }
 
 async function testPersistedRearmInvalidatesPriorCompletion() {
@@ -947,7 +1012,7 @@ async function testReducedMotionReleasesImmediately() {
     stylesheets: [createResource({ sheet: {} })],
   });
   await flushMicrotasks();
-  await advance(harness, 350);
+  await advance(harness, 366);
 
   assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "reduced motion should still dismiss the loader");
   assert.equal(harness.documentElement.classList.contains("is-page-loading"), false, "reduced motion should release html immediately");
@@ -1122,7 +1187,7 @@ async function testWatchdogCleansPartiallyStartedController() {
 
   assert.equal(stylesheet.totalListenerCount(), 2, "partially started controller should have stylesheet listeners before fail-open");
   assert.equal(image.totalListenerCount(), 2, "partially started controller should have image listeners before fail-open");
-  await advance(harness, harness.clock.nextDueAt() - harness.clock.now);
+  await advance(harness, 12250 - harness.clock.now);
 
   assert.equal(harness.window.__pageLoaderWatchdogFired, true, "independent watchdog should fire when the controller timeout is unavailable");
   assert.equal(stylesheet.totalListenerCount(), 0, "watchdog should clean a partial controller's stylesheet listeners");
@@ -1173,7 +1238,8 @@ async function testRearmCleansPriorRunListeners() {
   await testLayoutReflowSafetyBandPreparesOnlyNearMedia();
   await testFontLayoutShiftTriggersFinalImageDiscovery();
   await testExplicitFontAndVisibleImageDecode();
-  await testDecodeAndFontFailuresSettleSafely();
+  await testDecodeFailureSettlesButFontFailureShowsRetry();
+  await testProgressAnimatesAcrossLiveResourceStates();
   testUpdatedTimeouts();
   testLoadHashRetriesWaitForUnlock();
   await testSettledResourcesAndMinimumDuration();

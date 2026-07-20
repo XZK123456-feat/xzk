@@ -12,7 +12,7 @@ Ensure every page reveals with the portfolio font already matched on mobile, and
 
 ## Design
 
-Declare separate static font faces for weights 400, 500, 700, and 800, all referencing the same cached WOFF2/TTF asset. The loader explicitly requests those four weights and waits for `document.fonts.ready` before font readiness is complete.
+Declare separate static font faces for weights 400, 500, 700, 800, and 900, all referencing the same cached WOFF2/TTF asset. The loader explicitly requests those five weights and waits for `document.fonts.ready` before font readiness is complete.
 
 Represent loading as resource tasks. Stylesheets, critical font weights, and images within the current first-view range report settlement individually. Each settlement advances a confirmed target percentage. The displayed percentage eases toward that target on animation frames and is capped below 100 until all critical readiness promises settle. The existing watchdog remains an emergency release path, but normal completion reaches 100 only after the critical tasks settle.
 
@@ -30,4 +30,3 @@ Video files remain lazy-loaded and are excluded from the entry gate. Image failu
 - Automated tests cover explicit static font weights, all critical font requests, incremental resource progress, no premature 100%, watchdog cleanup, and back-forward-cache re-entry.
 - Run the complete loader test suite.
 - Verify desktop and 390px mobile views against the local server, including computed font usage and visible progress changes.
-
