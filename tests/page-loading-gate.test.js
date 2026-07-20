@@ -242,7 +242,8 @@ function createResource(options = {}) {
   const resource = new FakeEventTarget();
   Object.assign(resource, options);
   resource.dataset = options.dataset || {};
-  resource.getBoundingClientRect = () => options.rect || { top: 0, bottom: 100 };
+  resource.getBoundingClientRect = options.getBoundingClientRect
+    || (() => options.rect || { top: 0, bottom: 100 });
   return resource;
 }
 
@@ -353,9 +354,14 @@ async function flushMicrotasks() {
 }
 
 async function advance(harness, milliseconds) {
-  harness.clock.advance(milliseconds);
-  await flushMicrotasks();
-  harness.clock.advance(0);
+  const target = harness.clock.now + milliseconds;
+  while (harness.clock.nextDueAt() <= target) {
+    const nextDelay = harness.clock.nextDueAt() - harness.clock.now;
+    harness.clock.advance(nextDelay);
+    await flushMicrotasks();
+  }
+
+  harness.clock.advance(target - harness.clock.now);
   await flushMicrotasks();
 }
 
@@ -412,7 +418,10 @@ async function testPostDomReadyLayoutDiscoveryIncludesRenderedImages() {
 
   imageDecode.resolve();
   await flushMicrotasks();
-  await advance(harness, 0);
+  assert.equal(harness.loader.getAttribute("aria-hidden"), null, "final media scan should run before dismissal");
+  await advance(harness, 16);
+  assert.equal(visibleDecodeCalls, 1, "final scan should not decode an initially prepared image twice");
+  assert.equal(visibleLazyImage.totalListenerCount(), 0, "final scan should not reattach listeners to an initially prepared image");
   assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "the loader should dismiss after rendered image decode");
 }
 
@@ -508,7 +517,9 @@ async function testProjectedHashViewportImagesBlockUntilPostReleaseAlignment() {
 
   imageDecode.resolve();
   await flushMicrotasks();
-  await advance(harness, 0);
+  await advance(harness, 16);
+  assert.equal(decodeCalls, 1, "final scan should not decode projected media prepared in pass one twice");
+  assert.equal(projectedNearImage.totalListenerCount(), 0, "final scan should not reattach projected media listeners");
   assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "loader should dismiss after projected fragment media decodes");
   assert.equal(harness.documentElement.classList.contains("is-page-loading"), true, "fragment alignment should wait through the exit fade");
   assert.equal(hashSyncCalls, 0, "fragment alignment should not run before scroll lock release");
@@ -520,6 +531,71 @@ async function testProjectedHashViewportImagesBlockUntilPostReleaseAlignment() {
   assert.equal(hashSyncCalls, 1, "fragment alignment should run once after release");
   assert.equal(harness.scrollState.ignoredScrollToCalls, 0, "fragment alignment should not attempt scrolling while locked");
   assert.equal(harness.scrollState.appliedScrollToCalls, 1, "post-release fragment alignment should apply scrolling");
+}
+
+async function testFontLayoutShiftTriggersFinalImageDiscovery() {
+  const fontsReady = deferred();
+  const imageDecode = deferred();
+  let decodeCalls = 0;
+  let fontsSettled = false;
+  fontsReady.promise.then(() => {
+    fontsSettled = true;
+  });
+  const shiftedImage = createResource({
+    complete: false,
+    loading: "lazy",
+    getBoundingClientRect: () => fontsSettled
+      ? { top: 2272, bottom: 2572 }
+      : { top: 2400, bottom: 2700 },
+    decode: () => {
+      decodeCalls += 1;
+      return imageDecode.promise;
+    },
+  });
+  const finalOffscreenImage = createResource({
+    complete: false,
+    loading: "lazy",
+    rect: { top: 2700, bottom: 3000 },
+  });
+  const hashTarget = {
+    contains: (image) => image === shiftedImage || image === finalOffscreenImage,
+    getBoundingClientRect: () => ({ top: 1400, bottom: 3200 }),
+  };
+  const harness = createLoaderHarness({
+    elementsById: { horizontal: hashTarget },
+    fonts: createFonts(fontsReady.promise),
+    hash: "#horizontal",
+    images: [shiftedImage, finalOffscreenImage],
+    stylesheets: [createResource({ sheet: {} })],
+  });
+
+  await flushMicrotasks();
+  await advance(harness, 16);
+  assert.equal(shiftedImage.loading, "lazy", "initial scan should exclude media at the projected viewport boundary");
+  assert.equal(shiftedImage.totalListenerCount(), 0, "initially offscreen media should not receive listeners");
+
+  fontsReady.resolve();
+  await flushMicrotasks();
+  assert.equal(shiftedImage.loading, "lazy", "font settlement should wait for a fresh layout frame before rescanning");
+  await advance(harness, 16);
+
+  assert.equal(shiftedImage.loading, "eager", "post-font rescan should promote media shifted into the projected viewport");
+  assert.equal(shiftedImage.listenerCount("load"), 1, "post-font rescan should await shifted media");
+  assert.equal(finalOffscreenImage.loading, "lazy", "media outside the final projected viewport should remain lazy");
+  assert.equal(finalOffscreenImage.totalListenerCount(), 0, "final offscreen media should remain nonblocking");
+  assert.equal(harness.progressValues.includes(92), false, "image progress should wait for final-scan media readiness");
+
+  await advance(harness, 318);
+  assert.equal(harness.loader.getAttribute("aria-hidden"), null, "shifted media should prevent early reveal");
+  shiftedImage.dispatch("load");
+  await flushMicrotasks();
+  assert.equal(decodeCalls, 1, "shifted media should decode after loading");
+  assert.equal(harness.loader.getAttribute("aria-hidden"), null, "shifted media decode should block reveal");
+
+  imageDecode.resolve();
+  await flushMicrotasks();
+  await advance(harness, 0);
+  assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "loader should dismiss after shifted media decode");
 }
 
 async function testSettledResourcesAndMinimumDuration() {
@@ -554,12 +630,13 @@ async function testSettledResourcesAndMinimumDuration() {
   await flushMicrotasks();
   assert.equal(loadedImage.totalListenerCount(), 0, "image load should remove both listeners");
   assert.equal(failedImage.totalListenerCount(), 0, "image error should remove both listeners");
+  await advance(harness, 16);
 
   assert.deepEqual([...harness.progressValues].sort((left, right) => left - right), harness.progressValues, "progress should be monotonic");
   assert.ok(harness.progressValues.includes(92), "first-view image settlement should advance progress");
   assert.equal(harness.percent.textContent, "100%", "combined readiness should reach 100 percent");
 
-  await advance(harness, 333);
+  await advance(harness, 317);
   assert.equal(harness.loader.getAttribute("aria-hidden"), null, "loader should honor the minimum duration");
   await advance(harness, 1);
   assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "settled resources should dismiss after the minimum duration");
@@ -639,6 +716,10 @@ async function testExplicitFontAndVisibleImageDecode() {
   assert.equal(harness.loader.getAttribute("aria-hidden"), null, "pending image decode should block dismissal");
   imageDecode.resolve();
   await flushMicrotasks();
+  assert.notEqual(harness.percent.textContent, "100%", "progress should wait for the post-layout media scan");
+  await advance(harness, 16);
+  assert.equal(visibleDecodeCalls, 1, "final scan should not decode an image prepared in the initial pass twice");
+  assert.equal(visibleLazyImage.totalListenerCount(), 0, "final scan should not reattach listeners to a prepared image");
   assert.equal(harness.percent.textContent, "100%", "decoded first view should complete progress");
   await advance(harness, 0);
   assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "loader should dismiss after visible image decode settles");
@@ -1001,6 +1082,7 @@ async function testRearmCleansPriorRunListeners() {
   await testPostDomReadyLayoutDiscoveryIncludesRenderedImages();
   await testOffscreenEagerImageDoesNotDelayAfterDomReady();
   await testProjectedHashViewportImagesBlockUntilPostReleaseAlignment();
+  await testFontLayoutShiftTriggersFinalImageDiscovery();
   await testExplicitFontAndVisibleImageDecode();
   await testDecodeAndFontFailuresSettleSafely();
   testUpdatedTimeouts();

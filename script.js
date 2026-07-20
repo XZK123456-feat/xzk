@@ -10,6 +10,7 @@ function createPageLoaderRun() {
   return {
     active: true,
     lifecycleSettlers: new Set(),
+    preparedImages: new WeakSet(),
     resourceSettlers: new Set(),
     timerIds: new Set(),
   };
@@ -193,56 +194,61 @@ function getPageLoaderHashTarget() {
     || (decodedId !== rawId ? document.getElementById(rawId) : null);
 }
 
-function waitForFirstViewImages(run) {
-  return waitForDomReady(run)
-    .then((loaded) => {
-      if (!loaded || !isCurrentPageLoaderRun(run)) {
-        return false;
+function prepareFirstViewImages(run) {
+  if (!isCurrentPageLoaderRun(run)) {
+    return Promise.resolve([]);
+  }
+
+  const firstViewLimit = window.innerHeight * 1.25;
+  const hashTarget = getPageLoaderHashTarget();
+  const hashTargetRect = hashTarget && typeof hashTarget.getBoundingClientRect === "function"
+    ? hashTarget.getBoundingClientRect()
+    : null;
+  const images = Array.from(document.images).filter((image) => {
+    if (run.preparedImages.has(image)) {
+      return false;
+    }
+
+    const rect = image.getBoundingClientRect();
+    const isCurrentlyVisible = rect.top < firstViewLimit && rect.bottom > 0;
+    if (isCurrentlyVisible || !hashTargetRect || typeof hashTarget.contains !== "function"
+      || !hashTarget.contains(image)) {
+      return isCurrentlyVisible;
+    }
+
+    const projectedTop = rect.top - hashTargetRect.top;
+    const projectedBottom = rect.bottom - hashTargetRect.top;
+    return projectedTop < firstViewLimit && projectedBottom > 0;
+  });
+
+  images.forEach((image) => run.preparedImages.add(image));
+  return Promise.allSettled(images.map((image) => {
+    if (image.loading === "lazy") {
+      image.loading = "eager";
+    }
+
+    const loaded = image.complete
+      ? Promise.resolve(true)
+      : waitForResourceSettlement(image, run);
+
+    return loaded.then((completed) => {
+      if (!completed || !isCurrentPageLoaderRun(run) || typeof image.decode !== "function") {
+        return undefined;
       }
 
-      return waitForPageLoaderFrame(run);
-    })
-    .then((frameRendered) => {
-      if (!frameRendered || !isCurrentPageLoaderRun(run)) {
-        return [];
-      }
-
-      const firstViewLimit = window.innerHeight * 1.25;
-      const hashTarget = getPageLoaderHashTarget();
-      const hashTargetRect = hashTarget && typeof hashTarget.getBoundingClientRect === "function"
-        ? hashTarget.getBoundingClientRect()
-        : null;
-      const images = Array.from(document.images).filter((image) => {
-        const rect = image.getBoundingClientRect();
-        const isCurrentlyVisible = rect.top < firstViewLimit && rect.bottom > 0;
-        if (isCurrentlyVisible || !hashTargetRect || typeof hashTarget.contains !== "function"
-          || !hashTarget.contains(image)) {
-          return isCurrentlyVisible;
-        }
-
-        const projectedTop = rect.top - hashTargetRect.top;
-        const projectedBottom = rect.bottom - hashTargetRect.top;
-        return projectedTop < firstViewLimit && projectedBottom > 0;
-      });
-
-      return Promise.allSettled(images.map((image) => {
-        if (image.loading === "lazy") {
-          image.loading = "eager";
-        }
-
-        const loaded = image.complete
-          ? Promise.resolve(true)
-          : waitForResourceSettlement(image, run);
-
-        return loaded.then((completed) => {
-          if (!completed || !isCurrentPageLoaderRun(run) || typeof image.decode !== "function") {
-            return undefined;
-          }
-
-          return image.decode().catch(() => undefined);
-        });
-      }));
+      return image.decode().catch(() => undefined);
     });
+  }));
+}
+
+function waitForInitialFirstViewImages(run) {
+  return waitForDomReady(run)
+    .then((loaded) => loaded && isCurrentPageLoaderRun(run)
+      ? waitForPageLoaderFrame(run)
+      : false)
+    .then((frameRendered) => frameRendered && isCurrentPageLoaderRun(run)
+      ? prepareFirstViewImages(run)
+      : []);
 }
 
 function cancelPageLoaderWatchdog() {
@@ -344,7 +350,21 @@ function initPageLoader() {
 
   const stylesReady = waitForStylesheets(run).then(() => setProgress(38));
   const fontsReady = waitForPortfolioFonts().then(() => setProgress(68));
-  const imagesReady = waitForFirstViewImages(run).then(() => setProgress(92));
+  const initialImagesReady = waitForInitialFirstViewImages(run);
+  const imagesReady = Promise.allSettled([stylesReady, fontsReady, initialImagesReady])
+    .then(() => isCurrentPageLoaderRun(run) ? waitForPageLoaderFrame(run) : false)
+    .then((frameRendered) => {
+      if (!frameRendered || !isCurrentPageLoaderRun(run)) {
+        return false;
+      }
+
+      return prepareFirstViewImages(run).then(() => true);
+    })
+    .then((finalScanCompleted) => {
+      if (finalScanCompleted) {
+        setProgress(92);
+      }
+    });
   const combinedReadiness = Promise.allSettled([stylesReady, fontsReady, imagesReady]);
   let hardTimeoutId = null;
   const hardTimeout = new Promise((resolve) => {
