@@ -97,8 +97,8 @@ function waitForResourceSettlement(resource, run) {
   });
 }
 
-function waitForWindowLoad(run) {
-  if (document.readyState === "complete") {
+function waitForDomReady(run) {
+  if (document.readyState !== "loading") {
     return Promise.resolve(true);
   }
 
@@ -110,14 +110,14 @@ function waitForWindowLoad(run) {
       }
 
       settled = true;
-      window.removeEventListener("load", complete);
+      document.removeEventListener("DOMContentLoaded", complete);
       run.lifecycleSettlers.delete(cancel);
       resolve(completed);
     };
     const complete = () => finish(true);
     const cancel = () => finish(false);
 
-    window.addEventListener("load", complete);
+    document.addEventListener("DOMContentLoaded", complete);
     run.lifecycleSettlers.add(cancel);
   });
 }
@@ -177,7 +177,7 @@ function waitForPortfolioFonts() {
 }
 
 function waitForFirstViewImages(run) {
-  return waitForWindowLoad(run)
+  return waitForDomReady(run)
     .then((loaded) => loaded && isCurrentPageLoaderRun(run)
       ? waitForPageLoaderFrame(run)
       : false)

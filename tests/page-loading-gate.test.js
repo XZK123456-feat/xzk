@@ -284,7 +284,8 @@ function createLoaderHarness(options = {}) {
     matchMedia: () => ({ matches: Boolean(options.reduceMotion) }),
   });
 
-  const document = {
+  const document = new FakeEventTarget();
+  Object.assign(document, {
     body,
     documentElement,
     fonts: options.fonts,
@@ -296,7 +297,7 @@ function createLoaderHarness(options = {}) {
       return null;
     },
     querySelectorAll: (selector) => selector === 'link[rel="stylesheet"]' ? stylesheets : [],
-  };
+  });
   const context = vm.createContext({
     clearTimeout: (id) => clock.clearTimeout(id),
     document,
@@ -342,7 +343,7 @@ async function advance(harness, milliseconds) {
   await flushMicrotasks();
 }
 
-async function testPostLoadLayoutDiscoveryIncludesRenderedImages() {
+async function testPostDomReadyLayoutDiscoveryIncludesRenderedImages() {
   const imageDecode = deferred();
   let visibleDecodeCalls = 0;
   let farDecodeCalls = 0;
@@ -371,12 +372,14 @@ async function testPostLoadLayoutDiscoveryIncludesRenderedImages() {
     stylesheets: [createResource({ sheet: {} })],
   });
 
+  assert.equal(harness.document.listenerCount("DOMContentLoaded"), 1, "image discovery should wait for DOM readiness");
   harness.document.images.push(visibleLazyImage, farLazyImage);
-  harness.document.readyState = "complete";
-  harness.window.dispatch("load");
+  harness.document.readyState = "interactive";
+  harness.document.dispatch("DOMContentLoaded");
   await flushMicrotasks();
 
-  assert.equal(visibleLazyImage.loading, "lazy", "image discovery should wait for a post-load layout frame");
+  assert.equal(harness.document.listenerCount("DOMContentLoaded"), 0, "DOM readiness listener should clean itself after firing");
+  assert.equal(visibleLazyImage.loading, "lazy", "image discovery should wait for a post-readiness layout frame");
   await advance(harness, 16);
   assert.equal(visibleLazyImage.loading, "eager", "a visible image rendered before load discovery should be promoted");
   assert.equal(visibleLazyImage.listenerCount("load"), 1, "a rendered first-view image should be awaited");
@@ -395,6 +398,29 @@ async function testPostLoadLayoutDiscoveryIncludesRenderedImages() {
   await flushMicrotasks();
   await advance(harness, 0);
   assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "the loader should dismiss after rendered image decode");
+}
+
+async function testOffscreenEagerImageDoesNotDelayAfterDomReady() {
+  const offscreenEagerImage = createResource({
+    complete: false,
+    loading: "eager",
+    rect: { top: 1800, bottom: 2100 },
+  });
+  const harness = createLoaderHarness({
+    fonts: createFonts(),
+    images: [offscreenEagerImage],
+    readyState: "loading",
+    stylesheets: [createResource({ sheet: {} })],
+  });
+
+  harness.document.readyState = "interactive";
+  harness.document.dispatch("DOMContentLoaded");
+  await flushMicrotasks();
+  await advance(harness, 16);
+
+  assert.equal(offscreenEagerImage.totalListenerCount(), 0, "an offscreen eager image should not be included in readiness");
+  await advance(harness, 334);
+  assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "offscreen eager image bytes should not delay dismissal");
 }
 
 async function testSettledResourcesAndMinimumDuration() {
@@ -873,7 +899,8 @@ async function testRearmCleansPriorRunListeners() {
 }
 
 (async () => {
-  await testPostLoadLayoutDiscoveryIncludesRenderedImages();
+  await testPostDomReadyLayoutDiscoveryIncludesRenderedImages();
+  await testOffscreenEagerImageDoesNotDelayAfterDomReady();
   await testExplicitFontAndVisibleImageDecode();
   await testDecodeAndFontFailuresSettleSafely();
   testUpdatedTimeouts();
