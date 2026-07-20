@@ -9,6 +9,7 @@ let pageLoaderUnlockTimer = null;
 function createPageLoaderRun() {
   return {
     active: true,
+    lifecycleSettlers: new Set(),
     resourceSettlers: new Set(),
     timerIds: new Set(),
   };
@@ -40,12 +41,17 @@ function settlePageLoaderResources(run) {
   [...run.resourceSettlers].forEach((settle) => settle());
 }
 
+function settlePageLoaderLifecycle(run) {
+  [...run.lifecycleSettlers].forEach((settle) => settle());
+}
+
 function invalidatePageLoaderRun(run) {
   if (!run || !run.active) {
     return;
   }
 
   run.active = false;
+  settlePageLoaderLifecycle(run);
   run.timerIds.forEach((timerId) => window.clearTimeout(timerId));
   run.timerIds.clear();
   settlePageLoaderResources(run);
@@ -71,21 +77,78 @@ function cancelPageLoaderUnlockTimer() {
 function waitForResourceSettlement(resource, run) {
   return new Promise((resolve) => {
     let settled = false;
-    const settle = () => {
+    const finish = (completed) => {
       if (settled) {
         return;
       }
 
       settled = true;
-      resource.removeEventListener("load", settle);
-      resource.removeEventListener("error", settle);
-      run.resourceSettlers.delete(settle);
-      resolve();
+      resource.removeEventListener("load", complete);
+      resource.removeEventListener("error", complete);
+      run.resourceSettlers.delete(cancel);
+      resolve(completed);
     };
+    const complete = () => finish(true);
+    const cancel = () => finish(false);
 
-    resource.addEventListener("load", settle);
-    resource.addEventListener("error", settle);
-    run.resourceSettlers.add(settle);
+    resource.addEventListener("load", complete);
+    resource.addEventListener("error", complete);
+    run.resourceSettlers.add(cancel);
+  });
+}
+
+function waitForWindowLoad(run) {
+  if (document.readyState === "complete") {
+    return Promise.resolve(true);
+  }
+
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (completed) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      window.removeEventListener("load", complete);
+      run.lifecycleSettlers.delete(cancel);
+      resolve(completed);
+    };
+    const complete = () => finish(true);
+    const cancel = () => finish(false);
+
+    window.addEventListener("load", complete);
+    run.lifecycleSettlers.add(cancel);
+  });
+}
+
+function waitForPageLoaderFrame(run) {
+  return new Promise((resolve) => {
+    let settled = false;
+    let cancelScheduledFrame = () => {};
+    const finish = (completed) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      cancelScheduledFrame();
+      run.lifecycleSettlers.delete(cancel);
+      resolve(completed);
+    };
+    const complete = () => finish(true);
+    const cancel = () => finish(false);
+
+    run.lifecycleSettlers.add(cancel);
+    if (typeof window.requestAnimationFrame === "function"
+      && typeof window.cancelAnimationFrame === "function") {
+      const frameId = window.requestAnimationFrame(complete);
+      cancelScheduledFrame = () => window.cancelAnimationFrame(frameId);
+      return;
+    }
+
+    const timerId = schedulePageLoaderTimer(run, complete, 0);
+    cancelScheduledFrame = () => clearPageLoaderTimer(run, timerId);
   });
 }
 
@@ -114,29 +177,39 @@ function waitForPortfolioFonts() {
 }
 
 function waitForFirstViewImages(run) {
-  const firstViewLimit = window.innerHeight * 1.25;
-  const images = Array.from(document.images).filter((image) => {
-    const rect = image.getBoundingClientRect();
-    return rect.top < firstViewLimit && rect.bottom > 0;
-  });
-
-  return Promise.allSettled(images.map((image) => {
-    if (image.loading === "lazy") {
-      image.loading = "eager";
-    }
-
-    const loaded = image.complete
-      ? Promise.resolve()
-      : waitForResourceSettlement(image, run);
-
-    return loaded.then(() => {
-      if (typeof image.decode !== "function") {
-        return undefined;
+  return waitForWindowLoad(run)
+    .then((loaded) => loaded && isCurrentPageLoaderRun(run)
+      ? waitForPageLoaderFrame(run)
+      : false)
+    .then((frameRendered) => {
+      if (!frameRendered || !isCurrentPageLoaderRun(run)) {
+        return [];
       }
 
-      return image.decode().catch(() => undefined);
+      const firstViewLimit = window.innerHeight * 1.25;
+      const images = Array.from(document.images).filter((image) => {
+        const rect = image.getBoundingClientRect();
+        return rect.top < firstViewLimit && rect.bottom > 0;
+      });
+
+      return Promise.allSettled(images.map((image) => {
+        if (image.loading === "lazy") {
+          image.loading = "eager";
+        }
+
+        const loaded = image.complete
+          ? Promise.resolve(true)
+          : waitForResourceSettlement(image, run);
+
+        return loaded.then((completed) => {
+          if (!completed || !isCurrentPageLoaderRun(run) || typeof image.decode !== "function") {
+            return undefined;
+          }
+
+          return image.decode().catch(() => undefined);
+        });
+      }));
     });
-  }));
 }
 
 function cancelPageLoaderWatchdog() {
@@ -249,6 +322,7 @@ function initPageLoader() {
       }
 
       clearPageLoaderTimer(run, hardTimeoutId);
+      settlePageLoaderLifecycle(run);
       settlePageLoaderResources(run);
       setProgress(100);
       const elapsed = performance.now() - startedAt;

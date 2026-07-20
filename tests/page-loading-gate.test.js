@@ -273,8 +273,10 @@ function createLoaderHarness(options = {}) {
   const windowTarget = new FakeEventTarget();
   const scrollState = { scrollToCalls: 0, x: 24, y: 480 };
   Object.assign(windowTarget, {
+    cancelAnimationFrame: (id) => clock.clearTimeout(id),
     clearTimeout: (id) => clock.clearTimeout(id),
     innerHeight: 800,
+    requestAnimationFrame: (callback) => clock.setTimeout(() => callback(clock.now), 16),
     scrollTo: () => { scrollState.scrollToCalls += 1; },
     scrollX: scrollState.x,
     scrollY: scrollState.y,
@@ -287,6 +289,7 @@ function createLoaderHarness(options = {}) {
     documentElement,
     fonts: options.fonts,
     images,
+    readyState: options.readyState || "complete",
     querySelector: (selector) => {
       if (selector === ".page-loader") return loader;
       if (selector === ".page-shell") return pageShell;
@@ -339,6 +342,61 @@ async function advance(harness, milliseconds) {
   await flushMicrotasks();
 }
 
+async function testPostLoadLayoutDiscoveryIncludesRenderedImages() {
+  const imageDecode = deferred();
+  let visibleDecodeCalls = 0;
+  let farDecodeCalls = 0;
+  const visibleLazyImage = createResource({
+    complete: false,
+    loading: "lazy",
+    rect: { top: 100, bottom: 420 },
+    decode: () => {
+      visibleDecodeCalls += 1;
+      return imageDecode.promise;
+    },
+  });
+  const farLazyImage = createResource({
+    complete: false,
+    loading: "lazy",
+    rect: { top: 1800, bottom: 2100 },
+    decode: () => {
+      farDecodeCalls += 1;
+      return Promise.resolve();
+    },
+  });
+  const harness = createLoaderHarness({
+    fonts: createFonts(),
+    images: [],
+    readyState: "loading",
+    stylesheets: [createResource({ sheet: {} })],
+  });
+
+  harness.document.images.push(visibleLazyImage, farLazyImage);
+  harness.document.readyState = "complete";
+  harness.window.dispatch("load");
+  await flushMicrotasks();
+
+  assert.equal(visibleLazyImage.loading, "lazy", "image discovery should wait for a post-load layout frame");
+  await advance(harness, 16);
+  assert.equal(visibleLazyImage.loading, "eager", "a visible image rendered before load discovery should be promoted");
+  assert.equal(visibleLazyImage.listenerCount("load"), 1, "a rendered first-view image should be awaited");
+  assert.equal(farLazyImage.loading, "lazy", "an offscreen image rendered before discovery should stay lazy");
+  assert.equal(farLazyImage.totalListenerCount(), 0, "an offscreen rendered image should not block reveal");
+
+  await advance(harness, 334);
+  assert.equal(harness.loader.getAttribute("aria-hidden"), null, "the rendered image load should block dismissal");
+  visibleLazyImage.dispatch("load");
+  await flushMicrotasks();
+  assert.equal(visibleDecodeCalls, 1, "the rendered first-view image should decode after loading");
+  assert.equal(farDecodeCalls, 0, "the offscreen rendered image should not decode");
+  assert.equal(harness.loader.getAttribute("aria-hidden"), null, "the rendered image decode should block dismissal");
+
+  imageDecode.resolve();
+  await flushMicrotasks();
+  await advance(harness, 0);
+  assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "the loader should dismiss after rendered image decode");
+}
+
 async function testSettledResourcesAndMinimumDuration() {
   const stylesheet = createResource({ sheet: null });
   const loadedImage = createResource({ complete: false, loading: "eager" });
@@ -351,6 +409,8 @@ async function testSettledResourcesAndMinimumDuration() {
     images: [loadedImage, failedImage, lazyImage, farImage],
     stylesheets: [stylesheet],
   });
+  await flushMicrotasks();
+  await advance(harness, 16);
 
   assert.equal(harness.documentElement.getAttribute("aria-busy"), "true", "controller should mark the page busy while loading");
   assert.equal(lazyImage.listenerCount("load"), 0, "lazy images should not receive readiness listeners");
@@ -374,7 +434,7 @@ async function testSettledResourcesAndMinimumDuration() {
   assert.ok(harness.progressValues.includes(92), "first-view image settlement should advance progress");
   assert.equal(harness.percent.textContent, "100%", "combined readiness should reach 100 percent");
 
-  await advance(harness, 349);
+  await advance(harness, 333);
   assert.equal(harness.loader.getAttribute("aria-hidden"), null, "loader should honor the minimum duration");
   await advance(harness, 1);
   assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "settled resources should dismiss after the minimum duration");
@@ -435,6 +495,7 @@ async function testExplicitFontAndVisibleImageDecode() {
   });
 
   await flushMicrotasks();
+  await advance(harness, 16);
   assert.equal(fontCalls.length, 1, "loader should explicitly request the portfolio font");
   assert.equal(fontCalls[0].descriptor, '800 16px "ZHYuwanPortfolio"', "loader should request the visible body font at its interface weight");
   assert.ok(fontCalls[0].sample.includes("肖子康"), "font request should include representative Chinese glyphs");
@@ -480,6 +541,7 @@ async function testDecodeAndFontFailuresSettleSafely() {
   });
 
   await flushMicrotasks();
+  await advance(harness, 16);
   assert.equal(image.loading, "eager", "visible image should still be promoted when decode fails");
   assert.equal(decodeCalls, 1, "visible image decode should be attempted once");
   await advance(harness, 350);
@@ -496,7 +558,15 @@ function testUpdatedTimeouts() {
 
 async function testHardTimeoutRelease() {
   const stylesheet = createResource({ sheet: null });
-  const image = createResource({ complete: false, loading: "eager" });
+  let decodeCalls = 0;
+  const image = createResource({
+    complete: false,
+    loading: "eager",
+    decode: () => {
+      decodeCalls += 1;
+      return Promise.resolve();
+    },
+  });
   const fonts = deferred();
   const harness = createLoaderHarness({
     fonts: createFonts(fonts.promise),
@@ -504,6 +574,7 @@ async function testHardTimeoutRelease() {
     stylesheets: [stylesheet],
   });
 
+  await flushMicrotasks();
   await advance(harness, 11999);
   assert.equal(harness.loader.getAttribute("aria-hidden"), null, "loader should remain before the hard timeout");
   await advance(harness, 1);
@@ -513,6 +584,7 @@ async function testHardTimeoutRelease() {
   assert.equal(harness.documentElement.getAttribute("aria-busy"), "true", "hard timeout should keep aria-busy during the fade");
   assert.equal(stylesheet.totalListenerCount(), 0, "timeout should remove outstanding stylesheet listeners");
   assert.equal(image.totalListenerCount(), 0, "timeout should remove outstanding image listeners");
+  assert.equal(decodeCalls, 0, "timeout cancellation should not start stale image decode work");
   await advance(harness, 400);
   assert.equal(harness.clock.timerCount(), 0, "timeout dismissal should retain no run timers");
   assert.equal(harness.documentElement.getAttribute("aria-busy"), null, "timeout should clear aria-busy");
@@ -733,13 +805,23 @@ async function testPersistedRearmCancelsPendingUnlock() {
 
 async function testWatchdogCleansPartiallyStartedController() {
   const stylesheet = createResource({ sheet: null });
-  const image = createResource({ complete: false, loading: "eager" });
+  let decodeCalls = 0;
+  const image = createResource({
+    complete: false,
+    loading: "eager",
+    decode: () => {
+      decodeCalls += 1;
+      return Promise.resolve();
+    },
+  });
   const harness = createLoaderHarness({
     fonts: createFonts(deferred().promise),
     images: [image],
     runWatchdog: true,
     stylesheets: [stylesheet],
   });
+  await flushMicrotasks();
+  await advance(harness, 16);
   const controllerTimer = [...harness.clock.timers.entries()]
     .find(([, timer]) => timer.dueAt === 12000)?.[0];
   harness.clock.clearTimeout(controllerTimer);
@@ -751,17 +833,28 @@ async function testWatchdogCleansPartiallyStartedController() {
   assert.equal(harness.window.__pageLoaderWatchdogFired, true, "independent watchdog should fire when the controller timeout is unavailable");
   assert.equal(stylesheet.totalListenerCount(), 0, "watchdog should clean a partial controller's stylesheet listeners");
   assert.equal(image.totalListenerCount(), 0, "watchdog should clean a partial controller's image listeners");
+  assert.equal(decodeCalls, 0, "watchdog cancellation should not start stale image decode work");
   assert.equal(harness.clock.timerCount(), 0, "watchdog should clean a partial controller's remaining timers");
 }
 
 async function testRearmCleansPriorRunListeners() {
   const oldStylesheet = createResource({ sheet: null });
-  const oldImage = createResource({ complete: false, loading: "eager" });
+  let oldDecodeCalls = 0;
+  const oldImage = createResource({
+    complete: false,
+    loading: "eager",
+    decode: () => {
+      oldDecodeCalls += 1;
+      return Promise.resolve();
+    },
+  });
   const harness = createLoaderHarness({
     fonts: createFonts(deferred().promise),
     images: [oldImage],
     stylesheets: [oldStylesheet],
   });
+  await flushMicrotasks();
+  await advance(harness, 16);
 
   assert.equal(oldStylesheet.totalListenerCount(), 2, "initial run should observe stylesheet load and error");
   assert.equal(oldImage.totalListenerCount(), 2, "initial run should observe image load and error");
@@ -773,12 +866,14 @@ async function testRearmCleansPriorRunListeners() {
 
   assert.equal(oldStylesheet.totalListenerCount(), 0, "rearm should remove prior stylesheet listeners");
   assert.equal(oldImage.totalListenerCount(), 0, "rearm should remove prior image listeners");
+  assert.equal(oldDecodeCalls, 0, "BFCache invalidation should not start stale image decode work");
   await advance(harness, 350);
   await advance(harness, 400);
   assert.equal(harness.clock.timerCount(), 0, "rearmed run should clean all timers on dismissal");
 }
 
 (async () => {
+  await testPostLoadLayoutDiscoveryIncludesRenderedImages();
   await testExplicitFontAndVisibleImageDecode();
   await testDecodeAndFontFailuresSettleSafely();
   testUpdatedTimeouts();
