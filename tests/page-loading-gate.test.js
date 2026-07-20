@@ -282,7 +282,7 @@ function createLoaderHarness(options = {}) {
   Object.assign(windowTarget, {
     cancelAnimationFrame: (id) => clock.clearTimeout(id),
     clearTimeout: (id) => clock.clearTimeout(id),
-    innerHeight: 800,
+    innerHeight: options.innerHeight || 800,
     location: { hash: options.hash || "" },
     requestAnimationFrame: (callback) => clock.setTimeout(() => callback(clock.now), 16),
     scrollTo: () => {
@@ -533,6 +533,57 @@ async function testProjectedHashViewportImagesBlockUntilPostReleaseAlignment() {
   assert.equal(harness.scrollState.appliedScrollToCalls, 1, "post-release fragment alignment should apply scrolling");
 }
 
+async function testLayoutReflowSafetyBandPreparesOnlyNearMedia() {
+  const imageDecode = deferred();
+  let decodeCalls = 0;
+  const safetyBandImage = createResource({
+    complete: false,
+    loading: "lazy",
+    rect: { top: 2300, bottom: 2600 },
+    decode: () => {
+      decodeCalls += 1;
+      return imageDecode.promise;
+    },
+  });
+  const beyondSafetyBandImage = createResource({
+    complete: false,
+    loading: "lazy",
+    rect: { top: 2500, bottom: 2800 },
+  });
+  const hashTarget = {
+    contains: (image) => image === safetyBandImage || image === beyondSafetyBandImage,
+    getBoundingClientRect: () => ({ top: 1400, bottom: 3200 }),
+  };
+  const harness = createLoaderHarness({
+    elementsById: { horizontal: hashTarget },
+    fonts: createFonts(),
+    hash: "#horizontal",
+    images: [safetyBandImage, beyondSafetyBandImage],
+    innerHeight: 720,
+    stylesheets: [createResource({ sheet: {} })],
+  });
+
+  await flushMicrotasks();
+  await advance(harness, 16);
+  assert.equal(safetyBandImage.loading, "eager", "media beyond 1.25 viewports but within the safety band should be promoted");
+  assert.equal(safetyBandImage.listenerCount("load"), 1, "safety-band media should be awaited");
+  assert.equal(beyondSafetyBandImage.loading, "lazy", "media beyond the safety band should remain lazy");
+  assert.equal(beyondSafetyBandImage.totalListenerCount(), 0, "media beyond the safety band should remain nonblocking");
+
+  await advance(harness, 334);
+  assert.equal(harness.loader.getAttribute("aria-hidden"), null, "safety-band media should prevent early reveal");
+  safetyBandImage.dispatch("load");
+  await flushMicrotasks();
+  assert.equal(decodeCalls, 1, "safety-band media should decode after loading");
+  assert.equal(harness.loader.getAttribute("aria-hidden"), null, "safety-band decode should block reveal");
+
+  imageDecode.resolve();
+  await flushMicrotasks();
+  await advance(harness, 16);
+  assert.equal(decodeCalls, 1, "final scan should not decode safety-band media twice");
+  assert.equal(harness.loader.getAttribute("aria-hidden"), "true", "loader should dismiss after safety-band media decode");
+}
+
 async function testFontLayoutShiftTriggersFinalImageDiscovery() {
   const fontsReady = deferred();
   const imageDecode = deferred();
@@ -546,7 +597,7 @@ async function testFontLayoutShiftTriggersFinalImageDiscovery() {
     loading: "lazy",
     getBoundingClientRect: () => fontsSettled
       ? { top: 2272, bottom: 2572 }
-      : { top: 2400, bottom: 2700 },
+      : { top: 2600, bottom: 2900 },
     decode: () => {
       decodeCalls += 1;
       return imageDecode.promise;
@@ -571,7 +622,7 @@ async function testFontLayoutShiftTriggersFinalImageDiscovery() {
 
   await flushMicrotasks();
   await advance(harness, 16);
-  assert.equal(shiftedImage.loading, "lazy", "initial scan should exclude media at the projected viewport boundary");
+  assert.equal(shiftedImage.loading, "lazy", "initial scan should exclude media at the projected safety-band boundary");
   assert.equal(shiftedImage.totalListenerCount(), 0, "initially offscreen media should not receive listeners");
 
   fontsReady.resolve();
@@ -1082,6 +1133,7 @@ async function testRearmCleansPriorRunListeners() {
   await testPostDomReadyLayoutDiscoveryIncludesRenderedImages();
   await testOffscreenEagerImageDoesNotDelayAfterDomReady();
   await testProjectedHashViewportImagesBlockUntilPostReleaseAlignment();
+  await testLayoutReflowSafetyBandPreparesOnlyNearMedia();
   await testFontLayoutShiftTriggersFinalImageDiscovery();
   await testExplicitFontAndVisibleImageDecode();
   await testDecodeAndFontFailuresSettleSafely();

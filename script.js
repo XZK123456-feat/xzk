@@ -2,6 +2,7 @@
 const PAGE_LOADER_MIN_MS = 350;
 const PAGE_LOADER_TIMEOUT_MS = 12000;
 const PAGE_LOADER_EXIT_MS = 400;
+const PAGE_LOADER_MEDIA_VIEWPORT_FACTOR = 1.5;
 
 let activePageLoaderRun = null;
 let pageLoaderUnlockTimer = null;
@@ -199,7 +200,7 @@ function prepareFirstViewImages(run) {
     return Promise.resolve([]);
   }
 
-  const firstViewLimit = window.innerHeight * 1.25;
+  const firstViewLimit = window.innerHeight * PAGE_LOADER_MEDIA_VIEWPORT_FACTOR;
   const hashTarget = getPageLoaderHashTarget();
   const hashTargetRect = hashTarget && typeof hashTarget.getBoundingClientRect === "function"
     ? hashTarget.getBoundingClientRect()
