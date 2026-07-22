@@ -45,8 +45,8 @@ for (const page of pages) {
   assert.ok(html.includes('data-loading-percent>08%</span>'), `${page} should expose the initial visual percentage`);
   assert.ok(html.includes('data-loading-label>LOADING</span>'), `${page} should expose a mutable loading label`);
   assert.ok(html.includes('data-loading-retry'), `${page} should expose a retry control for critical loading failures`);
-  assert.ok(html.includes('<link rel="stylesheet" href="styles.css?v=performance-1"'), `${page} should cache-bust the optimized styles`);
-  assert.ok(html.includes('<script src="script.js?v=performance-1"></script>'), `${page} should cache-bust the optimized shared controller`);
+  assert.ok(html.includes('<link rel="stylesheet" href="styles.css?v=stability-1"'), `${page} should cache-bust the optimized styles`);
+  assert.ok(html.includes('<script src="script.js?v=stability-1"></script>'), `${page} should cache-bust the optimized shared controller`);
 
   const loaderBlock = html.match(/<div class="page-loader"[\s\S]*?<\/div>\s*(?=<div class="scroll-progress")/)?.[0];
   assert.ok(loaderBlock, `${page} should include the complete loader markup`);

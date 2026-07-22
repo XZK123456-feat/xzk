@@ -670,6 +670,88 @@ function unlockPreviewScroll() {
 window.lockPreviewScroll = lockPreviewScroll;
 window.unlockPreviewScroll = unlockPreviewScroll;
 
+const modalDialogStates = new WeakMap();
+const MODAL_FOCUSABLE_SELECTOR = [
+  "a[href]",
+  "button:not([disabled])",
+  "input:not([disabled])",
+  "select:not([disabled])",
+  "textarea:not([disabled])",
+  "[tabindex]:not([tabindex='-1'])",
+].join(",");
+
+function getModalFocusables(dialog) {
+  return Array.from(dialog.querySelectorAll(MODAL_FOCUSABLE_SELECTOR))
+    .filter((element) => !element.hidden && getComputedStyle(element).visibility !== "hidden");
+}
+
+function activateModalDialog(dialog, opener = document.activeElement) {
+  if (!dialog || modalDialogStates.has(dialog)) {
+    return;
+  }
+
+  dialog.removeAttribute("inert");
+  const inertElements = Array.from(document.body.children)
+    .filter((element) => element !== dialog && !element.matches("script, .page-loader"))
+    .map((element) => ({ element, wasInert: element.hasAttribute("inert") }));
+
+  inertElements.forEach(({ element }) => element.setAttribute("inert", ""));
+  modalDialogStates.set(dialog, { opener, inertElements });
+  const focusTarget = getModalFocusables(dialog)[0];
+  focusTarget?.focus({ preventScroll: true });
+}
+
+function deactivateModalDialog(dialog) {
+  const state = dialog ? modalDialogStates.get(dialog) : null;
+  if (!state) {
+    return;
+  }
+
+  state.inertElements.forEach(({ element, wasInert }) => {
+    if (!wasInert) {
+      element.removeAttribute("inert");
+    }
+  });
+  modalDialogStates.delete(dialog);
+  dialog.setAttribute("inert", "");
+  if (state.opener?.isConnected) {
+    state.opener.focus({ preventScroll: true });
+  }
+}
+
+function trapModalFocus(event, dialog) {
+  if (event.key !== "Tab" || !dialog) {
+    return;
+  }
+
+  const focusable = getModalFocusables(dialog);
+  if (focusable.length === 0) {
+    event.preventDefault();
+    return;
+  }
+
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  const active = document.activeElement;
+  if (event.shiftKey && (active === first || !dialog.contains(active))) {
+    event.preventDefault();
+    last.focus({ preventScroll: true });
+  } else if (!event.shiftKey && active === last) {
+    event.preventDefault();
+    first.focus({ preventScroll: true });
+  }
+}
+
+document.addEventListener("keydown", (event) => {
+  const openDialog = document.querySelector(".website-lightbox.is-open, .resume-overlay.is-open");
+  if (openDialog) {
+    trapModalFocus(event, openDialog);
+  }
+});
+
+window.activateModalDialog = activateModalDialog;
+window.deactivateModalDialog = deactivateModalDialog;
+
 function initBackToTop() {
   if (!backToTopButton) {
     return;
@@ -983,7 +1065,9 @@ function openResume(e) {
   resumeOverlay.classList.add("is-open");
   resumeOverlay.setAttribute("aria-hidden", "false");
   if (!wasOpen) {
+    resumeOverlay.removeAttribute("inert");
     lockPreviewScroll();
+    activateModalDialog(resumeOverlay, resumeOpenBtn);
   }
   resumeOverlay.querySelector(".resume-modal").scrollTop = 0;
 }
@@ -995,6 +1079,8 @@ function closeResume() {
   resumeOverlay.setAttribute("aria-hidden", "true");
   if (wasOpen) {
     unlockPreviewScroll();
+    deactivateModalDialog(resumeOverlay);
+    resumeOverlay.setAttribute("inert", "");
   }
 }
 
@@ -1065,7 +1151,9 @@ if (resumeOverlay) {
     if (!lightbox.classList.contains("is-open")) return;
     const all = getAllPreviews();
     if (all.length === 0) return;
-    const idx = all.indexOf(currentButton);
+    const activeThumbIndex = Array.from(lightbox.querySelectorAll(".lightbox-thumb"))
+      .findIndex((thumb) => thumb.classList.contains("active"));
+    const idx = activeThumbIndex >= 0 ? activeThumbIndex : all.indexOf(currentButton);
     if (idx === -1) return;
     const nextIdx = idx + direction;
     if (nextIdx < 0 || nextIdx >= all.length) return;
@@ -1283,6 +1371,6 @@ initCommunityVideoCards();
 
 if ("serviceWorker" in navigator && /^https?:$/.test(window.location.protocol)) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=performance-1").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=stability-1").catch(() => {});
   });
 }

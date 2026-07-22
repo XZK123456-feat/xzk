@@ -992,7 +992,7 @@ body.motion-ready .hero-card.is-revealed .hero-stat:nth-child(3) {
   left: 120px;
   top: 0;
   bottom: 0;
-  border-left: 4px dashed rgba(16, 16, 16, 0.35);
+  border-left: 1px solid rgba(16, 16, 16, 0.22);
 }
 
 .mission-list {
@@ -1060,7 +1060,7 @@ body.motion-ready .hero-card.is-revealed .hero-stat:nth-child(3) {
   content: "";
   position: absolute;
   inset: 14px;
-  border: 3px dashed rgba(16, 16, 16, 0.28);
+  border: 0;
   border-radius: 18px;
   pointer-events: none;
 }
@@ -1145,7 +1145,7 @@ body.motion-ready .hero-card.is-revealed .hero-stat:nth-child(3) {
   content: "";
   position: absolute;
   inset: 18px;
-  border: 4px dashed rgba(16, 16, 16, 0.28);
+  border: 0;
   border-radius: 28px;
   pointer-events: none;
 }
@@ -1244,7 +1244,7 @@ body.motion-ready .hero-card.is-revealed .hero-stat:nth-child(3) {
   content: "";
   position: absolute;
   inset: 18px;
-  border: 4px dashed var(--ink);
+  border: 0;
   border-radius: 32px;
   pointer-events: none;
 }
@@ -1309,7 +1309,7 @@ body.motion-ready .hero-card.is-revealed .hero-stat:nth-child(3) {
   content: "";
   position: absolute;
   inset: 14px;
-  border: 3px dashed rgba(16, 16, 16, 0.28);
+  border: 0;
   border-radius: 20px;
   pointer-events: none;
 }
@@ -1520,7 +1520,7 @@ button::before {
   content: "";
   position: absolute;
   inset: 20px;
-  border: 4px dashed var(--ink);
+  border: 0;
   border-radius: 22px;
   pointer-events: none;
 }
@@ -1648,7 +1648,7 @@ dd:first-of-type {
   align-items: center;
   min-height: 112px;
   padding-right: 30px;
-  border-right: 4px dashed rgba(255, 255, 255, 0.4);
+  border-right: 1px solid rgba(255, 255, 255, 0.22);
 }
 
 .summary-item:last-child {
@@ -1718,6 +1718,35 @@ body.is-previewing {
   white-space: nowrap;
   flex-shrink: 0;
   line-height: normal;
+}
+
+@media (min-width: 1101px) and (max-width: 1320px) {
+  .topbar {
+    gap: 12px;
+    padding: 0 24px;
+  }
+
+  .brand-pill {
+    min-width: 240px;
+    padding: 0 24px;
+    font-size: 24px;
+  }
+
+  .vibecoding-tag {
+    margin-left: 0;
+    padding: 0 20px;
+    font-size: 15px;
+  }
+
+  .nav-pills {
+    gap: 10px;
+  }
+
+  .nav-pill {
+    min-width: 100px;
+    padding: 0 18px;
+    font-size: 18px;
+  }
 }
 
 @media (max-width: 1100px) {
@@ -2180,8 +2209,9 @@ body.is-previewing {
   padding: 54px;
   background: rgba(16, 16, 16, 0.86);
   opacity: 0;
+  visibility: hidden;
   pointer-events: none;
-  transition: opacity 180ms ease;
+  transition: opacity 180ms ease, visibility 0s linear 180ms;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.28) transparent;
@@ -2207,7 +2237,9 @@ body.is-previewing {
 
 .website-lightbox.is-open {
   opacity: 1;
+  visibility: visible;
   pointer-events: auto;
+  transition-delay: 0s;
 }
 
 .website-lightbox figure {
@@ -2477,7 +2509,7 @@ body.is-previewing {
   gap: 16px;
   justify-items: center;
   padding: 60px 32px;
-  border: 3px dashed var(--ink);
+  border: 2px solid var(--ink);
   border-radius: 20px;
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent 30%),
@@ -2851,7 +2883,7 @@ body.is-previewing {
 
   .summary-item {
     border-right: 0;
-    border-bottom: 4px dashed rgba(255, 255, 255, 0.4);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.22);
     padding-bottom: 26px;
   }
 
@@ -3294,14 +3326,17 @@ body.is-previewing {
   padding: 40px;
   background: rgba(16, 16, 16, 0.88);
   opacity: 0;
+  visibility: hidden;
   pointer-events: none;
-  transition: opacity 240ms ease;
+  transition: opacity 240ms ease, visibility 0s linear 240ms;
   overflow-y: auto;
 }
 
 .resume-overlay.is-open {
   opacity: 1;
+  visibility: visible;
   pointer-events: auto;
+  transition-delay: 0s;
 }
 
 .resume-modal {
@@ -3335,7 +3370,7 @@ body.is-previewing {
   content: "";
   position: absolute;
   inset: 14px;
-  border: 4px dashed rgba(16, 16, 16, 0.24);
+  border: 0;
   border-radius: 28px;
   pointer-events: none;
 }

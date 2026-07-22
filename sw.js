@@ -1,4 +1,4 @@
-const CACHE_VERSION = "zk-portfolio-performance-1";
+const CACHE_VERSION = "zk-portfolio-stability-1";
 const CORE_CACHE = `${CACHE_VERSION}-core`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const CORE_ASSETS = [
@@ -8,11 +8,13 @@ const CORE_ASSETS = [
   "./ua-creatives.html",
   "./community-creatives.html",
   "./video-design.html",
-  "./styles.css?v=performance-1",
-  "./script.js?v=performance-1",
-  "./website-design.js?v=performance-1",
-  "./ua-creatives.js?v=performance-1",
-  "./community-creatives.js?v=performance-1",
+  "./styles.css?v=stability-1",
+  "./script.js?v=stability-1",
+  "./website-design.js?v=stability-1",
+  "./ua-creatives.js?v=stability-1",
+  "./community-creatives.js?v=stability-1",
+  "./favicon.ico",
+  "./assets/share-cover.webp",
   "./assets/fonts/ZHYuwanPortfolio-subset.woff2",
   "./assets/fonts/AlibabaPuHuiTi-Bold-subset.woff2",
 ];

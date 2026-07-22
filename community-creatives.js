@@ -241,6 +241,7 @@ function closePreview() {
   lightbox.setAttribute("aria-hidden", "true");
   if (wasOpen) {
     window.unlockPreviewScroll?.();
+    window.deactivateModalDialog?.(lightbox);
   }
   lightbox.removeAttribute("data-direction");
   resetZoom();
@@ -332,7 +333,7 @@ function openPreview(button) {
   const fullSource = button.dataset.full || image.currentSrc || image.src;
   const fullSmallSource = button.dataset.fullSmall;
   if (fullSmallSource && button.dataset.fullWidth) {
-    lightboxImage.srcset = `${encodeURI(fullSmallSource)} 480w, ${encodeURI(fullSource)} ${button.dataset.fullWidth}w`;
+    lightboxImage.srcset = `${fullSmallSource} 480w, ${fullSource} ${button.dataset.fullWidth}w`;
     lightboxImage.sizes = "100vw";
   } else {
     lightboxImage.removeAttribute("srcset");
@@ -350,8 +351,8 @@ function openPreview(button) {
   lightbox.setAttribute("aria-hidden", "false");
   if (!wasOpen) {
     window.lockPreviewScroll?.();
+    window.activateModalDialog?.(lightbox, button);
   }
-  closeButton?.focus();
 }
 
 document.addEventListener("click", (event) => {
