@@ -26,7 +26,7 @@
     {
       number: "04",
       label: "VIDEO",
-      title: "AI视频设计",
+      title: "AI 视频设计",
       description: "运营社群视频与买量视频混剪",
       href: "video-design.html",
     },

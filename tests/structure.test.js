@@ -44,7 +44,7 @@ const resumeHref = "assets/resume/xiao-zikang-ai-gicg-marketing-operations.pdf";
   "官网视觉设计",
   "买量图片设计",
   "运营图片设计",
-  "AI视频设计",
+  "AI 视频设计",
   "项目素材产出概览",
   "分阶段全渠道广告素材投放数据",
 ].forEach((text) => {

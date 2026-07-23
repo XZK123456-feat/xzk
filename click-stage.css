@@ -329,11 +329,11 @@ body.stage-ready #data {
 body.stage-ready #data .battle-board {
   height: 100%;
   min-height: 0;
-  padding: 22px;
-  border: 5px solid var(--ink);
-  border-radius: 6px;
-  background: white;
-  box-shadow: 9px 9px 0 var(--ink);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 body.stage-ready #data .battle-board::before {
@@ -379,6 +379,22 @@ body.stage-ready #data .data-stage-page[data-data-page="2"] {
 
 body.stage-ready #data .data-stage-page:not([hidden]) {
   display: grid;
+}
+
+body.stage-ready #data .data-stage-page:not([hidden]) [data-reveal] {
+  opacity: 1;
+  transform: none;
+  animation: none;
+  filter: none;
+  transition: none;
+}
+
+body.stage-ready #data .data-stage-page:not([hidden]) [data-reveal] * {
+  opacity: 1;
+  transform: none;
+  animation: none;
+  filter: none;
+  transition: none;
 }
 
 body.stage-ready #data .section-ribbon {
@@ -720,9 +736,10 @@ body.stage-ready #data .data-stage-pager {
   }
 
   body.stage-ready #data .battle-board {
-    padding: 7px;
-    border-width: 3px;
-    box-shadow: 4px 4px 0 var(--ink);
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
   }
 
   body.stage-ready #data .battle-header {
@@ -730,8 +747,8 @@ body.stage-ready #data .data-stage-pager {
   }
 
   body.stage-ready #data .data-stage-pager {
-    top: 7px;
-    right: 7px;
+    top: 0;
+    right: 0;
     gap: 4px;
   }
 
@@ -748,12 +765,12 @@ body.stage-ready #data .data-stage-pager {
   }
 
   body.stage-ready #data .data-stage-page {
-    inset: 46px 7px 7px;
+    inset: 42px 0 0;
   }
 
   body.stage-ready #data .data-stage-page[data-data-page="1"],
   body.stage-ready #data .data-stage-page[data-data-page="2"] {
-    gap: 7px;
+    gap: 5px;
   }
 
   body.stage-ready #data .section-ribbon {
@@ -846,7 +863,7 @@ body.stage-ready #data .data-stage-pager {
   }
 
   body.stage-ready #data .data-card {
-    padding: 35px 7px 7px;
+    padding: 33px 6px 5px;
     border-width: 3px;
     box-shadow: 3px 3px 0 var(--ink);
   }
@@ -889,9 +906,9 @@ body.stage-ready #data .data-stage-pager {
 
   body.stage-ready #data .summary-strip {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 3px;
-    padding: 6px;
-    box-shadow: 3px 3px 0 var(--yellow);
+    gap: 2px;
+    padding: 4px;
+    box-shadow: none;
   }
 
   body.stage-ready #data .summary-item {

@@ -28,6 +28,7 @@ pages.forEach((page) => {
 });
 
 const homepage = fs.readFileSync(path.join(root, "index.html"), "utf8");
+const homeStageSource = fs.readFileSync(path.join(root, "home-stage.js"), "utf8");
 const missionSelects = homepage.match(/\bdata-mission-select(?:="[^"]*")?/g) || [];
 const missionPreviews = homepage.match(/<img\b[^>]*\bdata-mission-preview(?:="[^"]*")?[^>]*>/g) || [];
 const dataPages = homepage.match(/\bdata-data-page="[^"]+"/g) || [];
@@ -61,6 +62,15 @@ assert.strictEqual(mainElements.length, 1, "index.html should include exactly on
     `index.html should include a top navigation control for ${label}`,
   );
 });
+assert.match(
+  homepage,
+  /mission-card mission-video[\s\S]*?<h2>AI 视频设计<\/h2>/,
+  "the homepage mission 04 title should use the exact spaced copy",
+);
+assert.ok(
+  homeStageSource.includes('title: "AI 视频设计"'),
+  "the mission 04 record should use the exact spaced copy",
+);
 
 const cssPath = path.join(root, "click-stage.css");
 assert.ok(fs.existsSync(cssPath), "click-stage.css should exist");
@@ -76,6 +86,16 @@ assert.match(
   css,
   /\.data-stage-pager button\s*{[^}]*padding:\s*0;/,
   "data pager controls should reset legacy button padding",
+);
+assert.match(
+  css,
+  /body\.stage-ready #data \.data-stage-page:not\(\[hidden\]\) \[data-reveal\]\s*{[^}]*opacity:\s*1;[^}]*transform:\s*none;[^}]*animation:\s*none;/,
+  "active enhanced data pages should neutralize inherited reveal motion",
+);
+assert.match(
+  css,
+  /body\.stage-ready #data \.battle-board\s*{[^}]*border:\s*0;[^}]*background:\s*transparent;[^}]*box-shadow:\s*none;/,
+  "the enhanced data board should be an unframed layout",
 );
 
 console.log(`click stage structure checks passed (${pages.length} pages)`);
