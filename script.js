@@ -799,6 +799,8 @@ function markLoadedImage(image) {
   image.closest(".detail-shot")?.classList.add("is-loaded");
 }
 
+const pendingImageLoadStates = new WeakSet();
+
 function initImageLoadStates(root = document) {
   root.querySelectorAll(".detail-shot img").forEach((image) => {
     const hasLoadedSource = Boolean(
@@ -811,7 +813,15 @@ function initImageLoadStates(root = document) {
       return;
     }
 
-    image.addEventListener("load", () => markLoadedImage(image), { once: true });
+    if (pendingImageLoadStates.has(image)) {
+      return;
+    }
+
+    pendingImageLoadStates.add(image);
+    image.addEventListener("load", () => {
+      pendingImageLoadStates.delete(image);
+      markLoadedImage(image);
+    }, { once: true });
   });
 }
 

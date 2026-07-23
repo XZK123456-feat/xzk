@@ -10,11 +10,12 @@ const end = source.indexOf("initBackToTop();", start);
 assert.ok(start >= 0 && end > start, "image load-state helpers should remain executable in isolation");
 
 const listeners = new Map();
-let loaded = false;
+const listenerCounts = new Map();
+let loadedCount = 0;
 const shot = {
   classList: {
     add(name) {
-      if (name === "is-loaded") loaded = true;
+      if (name === "is-loaded") loadedCount += 1;
     },
   },
 };
@@ -29,6 +30,7 @@ const image = {
     return null;
   },
   addEventListener(type, listener, options) {
+    listenerCounts.set(type, (listenerCounts.get(type) || 0) + 1);
     listeners.set(type, { listener, options });
   },
 };
@@ -44,18 +46,37 @@ const context = {
 
 vm.runInNewContext(source.slice(start, end), context, { filename: "image-load-states.js" });
 context.window.initImageLoadStates(fakeRoot);
+context.window.initImageLoadStates(fakeRoot);
 
 assert.strictEqual(
-  loaded,
-  false,
+  loadedCount,
+  0,
   "a deferred thumbnail with no real source must not be marked loaded just because complete is true",
 );
 assert.ok(listeners.has("load"), "a deferred thumbnail should keep a listener for its later real load");
+assert.strictEqual(
+  listenerCounts.get("load"),
+  1,
+  "initializing the same deferred thumbnail twice should bind only one load listener",
+);
 assert.strictEqual(listeners.get("load").options.once, true);
+
+image.currentSrc = "assets/broken-thumb.webp";
+context.window.initImageLoadStates(fakeRoot);
+assert.strictEqual(loadedCount, 0, "a failed source with no natural width must remain in the loading state");
+assert.strictEqual(
+  listenerCounts.get("load"),
+  1,
+  "reinitializing an errored thumbnail should preserve its existing listener for a later retry",
+);
 
 image.currentSrc = "assets/thumb.webp";
 image.naturalWidth = 320;
 listeners.get("load").listener();
-assert.strictEqual(loaded, true, "the thumbnail should become loaded after its assigned source really loads");
+assert.strictEqual(
+  loadedCount,
+  1,
+  "the thumbnail should become loaded exactly once after its assigned source really loads",
+);
 
 console.log("image load-state checks passed");
