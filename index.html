@@ -89,13 +89,44 @@
         <a class="brand-pill" href="#home" aria-label="返回首页">ZK.PORTFOLIO</a>
         <span class="vibecoding-tag">本网页内容均由 VibeCoding 创作生成</span>
         <nav class="nav-pills" aria-label="页面导航">
-          <a class="nav-pill active" href="#home">首页</a>
-          <a class="nav-pill" href="#contents">目录</a>
-          <a class="nav-pill" href="#data">数据</a>
+          <a class="nav-pill active" href="#contents" data-home-panel-open="missions" aria-current="page">目录</a>
+          <a class="nav-pill" href="#data" data-home-panel-open="data">数据</a>
+          <a class="nav-pill" href="assets/resume/xiao-zikang-ai-gicg-marketing-operations.pdf" target="_blank" data-home-resume>简历</a>
         </nav>
       </header>
 
-      <main>
+      <main data-home-fallback>
+        <section class="home-stage section-panel" data-home-stage data-stage-panel="missions" aria-labelledby="mission-title" aria-hidden="true" hidden>
+          <div class="home-stage__layout">
+            <div class="home-stage__copy">
+              <p class="home-stage__identity">肖子康 / AIGC VISUAL DESIGNER</p>
+              <div class="home-stage__mission">
+                <p class="home-stage__kicker" data-mission-kicker>MISSION 01 / WEBSITE</p>
+                <h1 id="mission-title" data-mission-title>官网视觉设计</h1>
+                <p class="home-stage__description" data-mission-description>游戏官网与 AI 官网视觉交互设计</p>
+              </div>
+              <a class="home-stage__enter" href="website-design.html" data-mission-enter>
+                <span>进入任务</span>
+                <span aria-hidden="true">→</span>
+              </a>
+            </div>
+
+            <div class="home-stage__previews" aria-live="polite">
+              <img id="mission-preview-01" class="home-stage__preview is-active" data-mission-preview="1" src="assets/website-design/pc/顶部+开整-delivery.webp" alt="嘎嘎射击游戏官网首页视觉设计" width="1920" height="1080" />
+              <img id="mission-preview-02" class="home-stage__preview" data-mission-preview="2" src="assets/ua-creatives/sliced/horizontal/new_h_img_001-delivery.webp" alt="不休的乌拉拉横版买量图片设计" width="1280" height="720" aria-hidden="true" inert hidden />
+              <img id="mission-preview-03" class="home-stage__preview" data-mission-preview="3" src="assets/community-creatives/sliced/lili-tangquan/1-delivery.webp" alt="狸狸汤泉社群运营图片设计" width="1080" height="1440" aria-hidden="true" inert hidden />
+              <img id="mission-preview-04" class="home-stage__preview" data-mission-preview="4" src="assets/video/community/posters/community-video-04-delivery.webp" alt="运营社群 AI 视频设计封面" width="960" height="540" aria-hidden="true" inert hidden />
+            </div>
+
+            <div class="home-stage__rail" role="tablist" aria-label="任务选择">
+              <button class="home-stage__tab is-active" type="button" role="tab" aria-selected="true" aria-controls="mission-preview-01" data-mission-select="1"><span>01</span><small>WEBSITE</small></button>
+              <button class="home-stage__tab" type="button" role="tab" aria-selected="false" aria-controls="mission-preview-02" data-mission-select="2"><span>02</span><small>UA</small></button>
+              <button class="home-stage__tab" type="button" role="tab" aria-selected="false" aria-controls="mission-preview-03" data-mission-select="3"><span>03</span><small>COMMUNITY</small></button>
+              <button class="home-stage__tab" type="button" role="tab" aria-selected="false" aria-controls="mission-preview-04" data-mission-select="4"><span>04</span><small>VIDEO</small></button>
+            </div>
+          </div>
+        </section>
+
         <section id="home" class="hero section-panel">
           <div class="corner corner-hero"></div>
           <div class="hero-card comic-card halftone" data-reveal="hero-panel">
@@ -208,12 +239,13 @@
           </div>
         </section>
 
-        <section id="data" class="data section-panel">
+        <section id="data" class="data section-panel" data-stage-panel="data">
           <div class="battle-board" data-reveal="battle-board">
             <div class="battle-header comic-card halftone">
               <span>RESULT BOARD</span>
               <strong>战绩结算面板</strong>
             </div>
+          <div class="data-stage-page" data-data-page="1">
           <h2 class="section-ribbon" data-reveal="ribbon">项目素材产出概览</h2>
 
           <div class="overview-card" data-reveal="overview">
@@ -250,7 +282,9 @@
               </div>
             </div>
           </div>
+          </div>
 
+          <div class="data-stage-page" data-data-page="2">
           <h2 class="section-ribbon" data-reveal="ribbon">分阶段全渠道广告素材投放数据</h2>
 
           <div class="data-cards" data-reveal="data-cards">
@@ -312,6 +346,12 @@
             </div>
           </div>
           </div>
+          <div class="data-stage-pager" aria-label="数据分页">
+            <button type="button" data-data-prev aria-label="上一页">←</button>
+            <span data-data-status aria-live="polite">01 / 02</span>
+            <button type="button" data-data-next aria-label="下一页">→</button>
+          </div>
+          </div>
         </section>
 
       </main>
@@ -331,6 +371,7 @@
     <div class="resume-overlay" role="dialog" aria-modal="true" aria-label="个人简历" aria-hidden="true" inert>
       <button class="resume-overlay-close" type="button" aria-label="关闭简历"><span>×</span></button>
       <div class="resume-modal">
+        <a class="resume-pdf-link" href="assets/resume/xiao-zikang-ai-gicg-marketing-operations.pdf" target="_blank">打开 PDF 简历</a>
         <div class="resume-header-card">
           <img class="resume-photo" src="assets/photo-delivery.webp" alt="肖子康"  width="334" height="400" srcset="assets/photo-delivery.webp 334w" sizes="(max-width: 700px) 44vw, 260px" />
           <h2 class="resume-name">肖子康</h2>
@@ -434,5 +475,6 @@
 
     <script src="script.js?v=stability-1"></script>
     <script src="click-stage.js?v=click-stage-1"></script>
+    <script src="home-stage.js?v=click-stage-1"></script>
   </body>
 </html>
