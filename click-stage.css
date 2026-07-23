@@ -1,0 +1,60 @@
+body.stage-ready {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+body.stage-ready .page-shell {
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
+}
+
+.stage-wipe {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: grid;
+  place-items: center;
+  color: #111;
+  background: var(--yellow);
+  transform: translateX(-102%);
+  pointer-events: none;
+}
+
+.stage-wipe span {
+  font-family: "ZHYuwanPortfolio", "Microsoft YaHei", "PingFang SC", sans-serif;
+  font-size: 48px;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.stage-wipe.is-running {
+  animation: mission-wipe 550ms cubic-bezier(.77,0,.18,1) both;
+}
+
+@keyframes mission-wipe {
+  0% {
+    transform: translateX(-102%);
+  }
+
+  42%,
+  58% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(102%);
+  }
+}
+
+@media (max-width: 620px) {
+  .stage-wipe span {
+    font-size: 30px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage-wipe.is-running {
+    animation: none;
+  }
+}

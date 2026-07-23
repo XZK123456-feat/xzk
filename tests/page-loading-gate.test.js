@@ -48,7 +48,7 @@ for (const page of pages) {
   assert.ok(html.includes('<link rel="stylesheet" href="styles.css?v=stability-1"'), `${page} should cache-bust the optimized styles`);
   assert.ok(html.includes('<script src="script.js?v=stability-1"></script>'), `${page} should cache-bust the optimized shared controller`);
 
-  const loaderBlock = html.match(/<div class="page-loader"[\s\S]*?<\/div>\s*(?=<div class="scroll-progress")/)?.[0];
+  const loaderBlock = html.match(/<div class="page-loader"[\s\S]*?<\/div>\s*(?=<div class="page-shell")/)?.[0];
   assert.ok(loaderBlock, `${page} should include the complete loader markup`);
   loaderBlocks.push(loaderBlock.replace(/\s+/g, " "));
   const watchdogBlock = html.match(/<script data-loader-watchdog>([\s\S]*?)<\/script>/)?.[1];

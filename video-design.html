@@ -72,6 +72,7 @@
       </style>
     </noscript>
     <link rel="stylesheet" href="styles.css?v=stability-1" onload="this.dataset.loaderState='loaded'" onerror="this.dataset.loaderState='error'" />
+    <link rel="stylesheet" href="click-stage.css?v=click-stage-1" />
   </head>
   <body class="detail-page is-page-loading">
     <div class="page-loader" role="status" aria-label="页面正在加载">
@@ -82,9 +83,8 @@
         <button class="page-loader__retry" type="button" data-loading-retry hidden>重新加载</button>
       </div>
     </div>
-    <div class="scroll-progress" aria-hidden="true"><span></span></div>
-    <button class="back-to-top" type="button" aria-label="返回顶部"><span>↑</span></button>
     <div class="page-shell">
+      <div class="stage-wipe" aria-hidden="true"><span>MISSION SWITCH</span></div>
       <header class="topbar fixed-nav">
         <a class="brand-pill back-brand" href="index.html#contents" aria-label="返回作品集目录">‹ 返回</a>
         <span class="vibecoding-tag">本网页内容均由 VibeCoding 创作生成</span>
@@ -257,5 +257,6 @@
     </div>
 
     <script src="script.js?v=stability-1"></script>
+    <script src="click-stage.js?v=click-stage-1"></script>
   </body>
 </html>

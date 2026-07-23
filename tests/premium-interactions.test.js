@@ -10,6 +10,7 @@ const pages = [
   "website-design.html",
   "ua-creatives.html",
   "community-creatives.html",
+  "video-design.html",
 ];
 
 const htmlByPage = Object.fromEntries(
@@ -22,8 +23,8 @@ const uaScript = normalize(fs.readFileSync(path.join(root, "ua-creatives.js"), "
 const communityScript = normalize(fs.readFileSync(path.join(root, "community-creatives.js"), "utf8"));
 
 pages.forEach((page) => {
-  assert.ok(htmlByPage[page].includes("scroll-progress"), `${page} should include a scroll progress indicator`);
-  assert.ok(htmlByPage[page].includes("back-to-top"), `${page} should include a back-to-top control`);
+  assert.ok(!htmlByPage[page].includes('class="scroll-progress"'), `${page} should remove the scroll progress markup`);
+  assert.ok(!htmlByPage[page].includes('class="back-to-top"'), `${page} should remove the back-to-top markup`);
 });
 
 assert.ok(htmlByPage["index.html"].includes("AIGC 买量视觉 / 运营与品宣素材设计"), "hero should state a professional portfolio positioning");
@@ -35,8 +36,6 @@ assert.ok(htmlByPage["index.html"].includes("data-tilt-card"), "mission cards sh
   assert.ok(htmlByPage[page].includes("lightbox-strip"), `${page} lightbox should include a thumbnail strip`);
 });
 
-assert.ok(script.includes("updateScrollProgress"), "global script should update scroll progress");
-assert.ok(script.includes("initBackToTop"), "global script should control the back-to-top affordance");
 assert.ok(script.includes("initTiltCards"), "global script should add restrained 3D hover to core cards");
 assert.ok(script.includes("setActiveDetailDirectory"), "global script should sync detail directory state");
 assert.ok(script.includes("lockPreviewScroll"), "global script should expose a page scroll lock for modal previews");
@@ -90,8 +89,6 @@ assert.ok(!css.includes(".zoom-hint"), "styles should not include the removed zo
 assert.ok(![websiteScript, uaScript, communityScript].join("\n").includes("滑动鼠标滚轮"), "zoom hint copy should be removed from lightboxes");
 
 [
-  ".scroll-progress",
-  ".back-to-top",
   ".lightbox-meta",
   ".lightbox-strip",
   ".lightbox-thumb",
@@ -105,15 +102,8 @@ assert.ok(![websiteScript, uaScript, communityScript].join("\n").includes("滑�
 assert.ok(css.includes("backdrop-filter"), "premium controls should use restrained translucent depth");
 assert.ok(css.includes("filter: blur(10px)"), "gallery images should use blur-up loading polish");
 assert.ok(css.includes(".detail-shot.is-loaded img"), "loaded gallery images should settle into a crisp state");
-assert.ok(css.includes("body.is-scrolled-deep .back-to-top"), "back-to-top button should appear only after scrolling");
 assert.ok(css.includes("html.is-previewing,\nbody.is-previewing"), "modal preview state should lock both html and body scrolling");
 assert.ok(css.includes("body.is-previewing {\n  position: fixed;"), "modal preview state should pin the page to prevent background scroll");
-assert.ok(css.includes(".back-to-top {\n  position: fixed;\n  right: 22px;\n  bottom: 22px;"), "back-to-top button should stay compact and tucked into the corner");
-assert.ok(
-  css.includes("width: 34px;\n  height: 34px;\n  min-width: 34px;\n  min-height: 34px;\n  max-width: 34px;\n  max-height: 34px;\n  padding: 0;"),
-  "back-to-top button should use a compact square hit target without inherited sizing",
-);
-assert.ok(css.includes(".back-to-top span {\n  position: absolute;\n  inset: 0;\n  display: grid;\n  place-items: center;"), "back-to-top arrow should be centered within the frame");
 assert.ok(css.includes("prefers-reduced-motion: reduce"), "new motion should respect reduced-motion preferences");
 assert.ok(css.includes(".website-lightbox .lightbox-arrow {\n  flex: 0 0 64px;"), "desktop lightbox arrows should not inherit wide global button sizing");
 assert.ok(css.includes(".website-lightbox .lightbox-arrow {\n  padding: 0;"), "lightbox arrows should clear global button padding");

@@ -10,6 +10,7 @@ const uaDetailPath = path.join(root, "ua-creatives.html");
 const communityDetailPath = path.join(root, "community-creatives.html");
 const resumePdfPath = path.join(root, "assets", "resume", "xiao-zikang-ai-gicg-marketing-operations.pdf");
 const cssPath = path.join(root, "styles.css");
+const clickStageCssPath = path.join(root, "click-stage.css");
 const jsPath = path.join(root, "script.js");
 const detailJsPath = path.join(root, "website-design.js");
 const normalize = (content) => content.replace(/\r\n/g, "\n");
@@ -21,6 +22,7 @@ assert.ok(fs.existsSync(uaDetailPath), "ua-creatives.html should exist");
 assert.ok(fs.existsSync(communityDetailPath), "community-creatives.html should exist");
 assert.ok(fs.existsSync(resumePdfPath), "updated resume PDF should exist");
 assert.ok(fs.existsSync(cssPath), "styles.css should exist");
+assert.ok(fs.existsSync(clickStageCssPath), "click-stage.css should exist");
 assert.ok(fs.existsSync(jsPath), "script.js should exist");
 assert.ok(fs.existsSync(detailJsPath), "website-design.js should exist");
 
@@ -30,6 +32,7 @@ const videoDetailHtml = normalize(fs.readFileSync(videoDetailPath, "utf8"));
 const uaDetailHtml = normalize(fs.readFileSync(uaDetailPath, "utf8"));
 const communityDetailHtml = normalize(fs.readFileSync(communityDetailPath, "utf8"));
 const css = normalize(fs.readFileSync(cssPath, "utf8"));
+const clickStageCss = normalize(fs.readFileSync(clickStageCssPath, "utf8"));
 const js = normalize(fs.readFileSync(jsPath, "utf8"));
 const detailJs = normalize(fs.readFileSync(detailJsPath, "utf8"));
 const resumeHref = "assets/resume/xiao-zikang-ai-gicg-marketing-operations.pdf";
@@ -60,8 +63,18 @@ assert.ok(!html.includes('id="heroVideo"'), "home page should not keep the video
   assert.ok(html.includes(className) || css.includes(className), `should define ${className}`);
 });
 
-assert.ok(css.includes("position: sticky") || css.includes("position: fixed"), "navigation should stay visible while scrolling");
-assert.ok(css.includes("scroll-behavior: smooth"), "page should scroll smoothly");
+assert.ok(clickStageCss.includes("body.stage-ready"), "enhanced pages should opt into the fixed click stage");
+assert.ok(clickStageCss.includes("height: 100dvh;"), "the click stage should match the viewport height");
+assert.ok(clickStageCss.includes("body.stage-ready .page-shell"), "the enhanced page shell should use fixed-stage overflow");
+assert.match(
+  clickStageCss,
+  /body\.stage-ready \.page-shell\s*{[\s\S]*?overflow:\s*hidden;/,
+  "the enhanced page shell should hide document overflow",
+);
+assert.ok(clickStageCss.includes(".stage-wipe"), "the click stage should define the shared mission wipe");
+[html, websiteDetailHtml, videoDetailHtml, uaDetailHtml, communityDetailHtml].forEach((pageHtml, index) => {
+  assert.ok(pageHtml.includes('class="stage-wipe"'), `page ${index + 1} should include the shared mission wipe`);
+});
 assert.ok(css.includes("@font-face"), "custom font should be declared");
 assert.ok(css.includes("ZHYuwanPortfolio"), "custom font should be used");
 assert.ok(js.includes("IntersectionObserver"), "script should update active nav while scrolling");
