@@ -194,7 +194,7 @@ assert.ok(videoDetailHtml.includes("运营社群视频设计"), "video detail sh
 assert.ok(videoDetailHtml.includes('id="heroVideo"'), "video detail should include the playable video element");
 assert.ok(videoDetailHtml.includes('id="playBtn"'), "video detail should include the video play button");
 assert.ok(videoDetailHtml.includes("assets/video/买量视频混剪.mp4") || js.includes("assets/video/买量视频混剪.mp4"), "video detail should use the existing montage asset");
-assert.ok(videoDetailHtml.includes('href="index.html#contents"'), "video detail should link back to the portfolio contents");
+assert.ok(videoDetailHtml.includes('href="index.html#contents-m4"'), "video detail should link back to mission 04");
 assert.ok(videoDetailHtml.includes('href="#community-video"'), "video detail nav should link to the community video section");
 assert.ok(videoDetailHtml.indexOf('id="community-video"') < videoDetailHtml.indexOf('id="video"'), "community videos should appear before the buying video montage");
 assert.ok(/\.play-btn\s*\{[^}]*box-shadow:\s*none;/s.test(css), "video play button should not inherit the generic button shadow in its default state");

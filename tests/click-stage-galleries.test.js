@@ -1,0 +1,136 @@
+const assert = require("node:assert");
+const fs = require("node:fs");
+const path = require("node:path");
+
+const root = path.resolve(__dirname, "..");
+const read = (file) => fs.readFileSync(path.join(root, file), "utf8").replace(/\r\n/g, "\n");
+const pages = {
+  "website-design.html": {
+    back: "index.html#contents",
+    current: "website-design.html",
+    views: [
+      ["overview", "项目概览"],
+      ["mobile", "移动端"],
+      ["pc", "PC端"],
+      ["vibecoding", "AI官网设计"],
+    ],
+  },
+  "ua-creatives.html": {
+    back: "index.html#contents-m2",
+    current: "ua-creatives.html",
+    views: [
+      ["overview", "项目概览"],
+      ["horizontal", "横图素材"],
+      ["vertical", "竖图素材"],
+      ["nine-grid", "九图素材"],
+    ],
+  },
+  "community-creatives.html": {
+    back: "index.html#contents-m3",
+    current: "community-creatives.html",
+    views: [
+      ["overview", "项目概览"],
+      ["party-all", "小恐龙派对"],
+      ["ulala-all", "不休的乌拉拉"],
+      ["lili-tangquan", "狸狸汤泉"],
+    ],
+  },
+  "video-design.html": {
+    back: "index.html#contents-m4",
+    current: "video-design.html",
+    views: [
+      ["overview", "项目概览"],
+      ["community-video", "运营社群视频"],
+      ["video", "买量视频混剪"],
+    ],
+  },
+};
+
+Object.entries(pages).forEach(([file, contract]) => {
+  const html = read(file);
+  const mains = html.match(/<main\b/g) || [];
+  const mainTag = html.match(/<main\b[^>]*>/)?.[0] || "";
+  const tablist = html.match(/<nav\b[^>]*class="nav-pills"[^>]*role="tablist"[^>]*>[\s\S]*?<\/nav>/)?.[0] || "";
+  const rail = html.match(/<nav\b[^>]*data-task-rail[^>]*>[\s\S]*?<\/nav>/)?.[0] || "";
+
+  assert.strictEqual(mains.length, 1, `${file} should keep exactly one main element`);
+  assert.match(mainTag, /\bdata-detail-stage(?:=""|\s|>)/, `${file} should mark the detail stage root`);
+  assert.match(mainTag, /\bdata-default-view="overview"/, `${file} should default to overview`);
+  assert.ok(tablist, `${file} should expose the category navigation as a tablist`);
+
+  contract.views.forEach(([view, label]) => {
+    const section = html.match(new RegExp(`<section\\b[^>]*\\bid="${view}"[^>]*>`))?.[0] || "";
+    const tab = tablist.match(new RegExp(`<a\\b[^>]*\\bdata-stage-tab="${view}"[^>]*>[\\s\\S]*?<\\/a>`))?.[0] || "";
+
+    assert.ok(section, `${file} should keep the ${view} section in the DOM`);
+    assert.match(section, new RegExp(`\\bdata-stage-view="${view}"`), `${file} should map ${view} to its panel`);
+    assert.match(section, /\brole="tabpanel"/, `${file} ${view} should be a tabpanel`);
+    assert.match(section, new RegExp(`\\baria-labelledby="detail-tab-${view}"`), `${file} ${view} should have a stable label`);
+    assert.doesNotMatch(section, /\b(?:hidden|inert|aria-hidden)=?/, `${file} ${view} should remain visible without JS`);
+
+    assert.ok(tab, `${file} should include a tab for ${view}`);
+    assert.match(tab, new RegExp(`\\bid="detail-tab-${view}"`), `${file} ${view} tab should own the stable label id`);
+    assert.match(tab, /\brole="tab"/, `${file} ${view} control should be a tab`);
+    assert.match(tab, new RegExp(`\\baria-controls="${view}"`), `${file} ${view} tab should control its panel`);
+    assert.match(tab, /\baria-selected="(?:true|false)"/, `${file} ${view} tab should seed selection semantics`);
+    assert.ok(tab.includes(`>${label}</a>`), `${file} ${view} should use the required label`);
+  });
+
+  assert.match(
+    html,
+    /<div\b[^>]*data-stage-pager[^>]*\bhidden[^>]*>[\s\S]*data-stage-previous[\s\S]*data-stage-status[\s\S]*data-stage-next[\s\S]*<\/div>/,
+    `${file} should include the initially hidden shared pager`,
+  );
+  assert.ok(rail, `${file} should include the N2 task rail`);
+  assert.match(rail, /\bclass="[^"]*\bdetail-directory\b[^"]*"/, `${file} should retain the directory compatibility class on the rail`);
+  assert.match(rail, /\bdata-task-rail-toggle/, `${file} should include the rail toggle`);
+  assert.strictEqual((rail.match(/\bclass="[^"]*\bdirectory-item\b[^"]*"/g) || []).length, 4, `${file} should keep four task links`);
+  assert.match(
+    rail,
+    new RegExp(`<a\\b[^>]*href="${contract.current.replace(".", "\\.")}"[^>]*aria-current="page"`),
+    `${file} should identify the current task`,
+  );
+  assert.strictEqual((html.match(/\bclass="[^"]*\bdetail-directory\b[^"]*"/g) || []).length, 1, `${file} should not retain a second standalone directory`);
+  assert.ok(html.includes(`class="brand-pill back-brand" href="${contract.back}"`), `${file} should use the mission-specific top back target`);
+  assert.ok(html.includes(`class="back-link" href="${contract.back}"`) || file === "video-design.html", `${file} should use the mission-specific section back target`);
+  assert.ok(html.includes('href="click-stage.css?v=click-stage-3"'), `${file} should request click-stage.css release 3`);
+  assert.ok(html.includes('src="click-stage.js?v=click-stage-2"'), `${file} should preserve the shared utility release`);
+  assert.ok(
+    html.indexOf('src="detail-stage.js?v=click-stage-3"') > html.indexOf('src="click-stage.js?v=click-stage-2"'),
+    `${file} should load detail-stage.js after click-stage.js`,
+  );
+
+  const pageSpecificScript = html.search(/src="(?:website-design|ua-creatives|community-creatives)\.js\?/);
+  if (pageSpecificScript >= 0) {
+    assert.ok(
+      html.indexOf('src="detail-stage.js?v=click-stage-3"') < pageSpecificScript,
+      `${file} should initialize the stage before its gallery script`,
+    );
+  }
+});
+
+const homepage = read("index.html");
+assert.ok(homepage.includes('href="click-stage.css?v=click-stage-3"'), "index.html should request click-stage.css release 3");
+assert.ok(homepage.includes('src="click-stage.js?v=click-stage-2"'), "index.html should keep click-stage.js release 2");
+assert.ok(homepage.includes('src="home-stage.js?v=click-stage-2"'), "index.html should keep home-stage.js release 2");
+
+const css = read("click-stage.css");
+assert.match(css, /body\.stage-ready \[data-detail-stage\]\s*\{[^}]*position:\s*fixed;[^}]*display:\s*grid;[^}]*grid-template-rows:[^;}]*minmax\(0,\s*1fr\)[^;}]*;/s);
+assert.match(css, /body\.stage-ready \[data-stage-view\]\s*\{[^}]*min-width:\s*0;[^}]*min-height:\s*0;[^}]*overflow:\s*hidden;/s);
+assert.match(css, /body\.stage-ready \[data-task-rail\][\s\S]*?width:\s*34px;/);
+assert.match(css, /max-width:\s*220px;/, "expanded mobile task rail should stay compact");
+assert.ok(css.includes("@media (max-height: 390px)"), "CSS should include a compact 844x390 treatment");
+assert.ok(css.includes("@media (max-width: 375px) and (max-height: 667px)"), "CSS should include a compact 375x667 treatment");
+assert.match(
+  css,
+  /@media \(max-width:\s*375px\)[\s\S]*?body\.stage-ready \.topbar \.nav-pill\s*\{[^}]*font-size:\s*10px;[^}]*overflow:\s*hidden;/,
+  "small-phone detail tabs should keep long labels inside their controls",
+);
+assert.ok(
+  css.lastIndexOf("@media (max-width: 375px)") > css.lastIndexOf("@media (max-width: 620px)"),
+  "the small-phone tab override should follow the shared mobile topbar rules",
+);
+assert.doesNotMatch(css, /font-size:\s*[^;]*vw/, "click-stage.css should not size text with viewport width");
+assert.doesNotMatch(css, /border[^;]*dashed/, "click-stage.css should not use dashed borders");
+
+console.log("detail click-stage static contracts passed");

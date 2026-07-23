@@ -15,7 +15,7 @@ pages.forEach((page) => {
   const html = fs.readFileSync(path.join(root, page), "utf8");
 
   assert.ok(
-    html.includes('href="click-stage.css?v=click-stage-2"'),
+    html.includes('href="click-stage.css?v=click-stage-3"'),
     `${page} should load the click-stage stylesheet`,
   );
   assert.ok(
