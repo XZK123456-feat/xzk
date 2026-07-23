@@ -132,7 +132,7 @@ Object.entries(pages).forEach(([file, contract]) => {
   assert.strictEqual((html.match(/\bclass="[^"]*\bdetail-directory\b[^"]*"/g) || []).length, 1, `${file} should not retain a second standalone directory`);
   assert.ok(html.includes(`class="brand-pill back-brand" href="${contract.back}"`), `${file} should use the mission-specific top back target`);
   assert.ok(html.includes(`class="back-link" href="${contract.back}"`) || file === "video-design.html", `${file} should use the mission-specific section back target`);
-  assert.ok(html.includes('href="click-stage.css?v=click-stage-8"'), `${file} should request click-stage.css release 8`);
+  assert.ok(html.includes('href="click-stage.css?v=click-stage-9"'), `${file} should request click-stage.css release 9`);
   assert.ok(html.includes('src="click-stage.js?v=click-stage-8"'), `${file} should request click-stage.js release 8`);
   assert.ok(
     html.indexOf('src="detail-stage.js?v=click-stage-8"') > html.indexOf('src="click-stage.js?v=click-stage-8"'),
@@ -149,7 +149,7 @@ Object.entries(pages).forEach(([file, contract]) => {
 });
 
 const homepage = read("index.html");
-assert.ok(homepage.includes('href="click-stage.css?v=click-stage-8"'), "index.html should request click-stage.css release 8");
+assert.ok(homepage.includes('href="click-stage.css?v=click-stage-9"'), "index.html should request click-stage.css release 9");
 assert.ok(homepage.includes('src="click-stage.js?v=click-stage-8"'), "index.html should request click-stage.js release 8");
 assert.ok(homepage.includes('src="home-stage.js?v=click-stage-2"'), "index.html should keep home-stage.js release 2");
 

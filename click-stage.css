@@ -97,6 +97,17 @@ body.stage-ready [data-stage-view] [data-reveal] * {
   filter: none;
 }
 
+body.stage-ready .community-video-card:not(.is-playing):not(.is-loading) video {
+  opacity: 0;
+  pointer-events: none;
+}
+
+body.stage-ready .community-video-card.is-playing video,
+body.stage-ready .community-video-card.is-loading video {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 body.stage-ready [data-stage-view] .detail-board,
 body.stage-ready [data-stage-view] .detail-hero-card,
 body.stage-ready [data-stage-view] .detail-summary {

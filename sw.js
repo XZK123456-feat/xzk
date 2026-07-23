@@ -1,4 +1,4 @@
-const CACHE_VERSION = "zk-portfolio-click-stage-8";
+const CACHE_VERSION = "zk-portfolio-click-stage-9";
 const CORE_CACHE = `${CACHE_VERSION}-core`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const CORE_ASSETS = [
@@ -9,8 +9,8 @@ const CORE_ASSETS = [
   "./community-creatives.html",
   "./video-design.html",
   "./styles.css?v=stability-1",
-  "./script.js?v=stability-6",
-  "./click-stage.css?v=click-stage-8",
+  "./script.js?v=stability-7",
+  "./click-stage.css?v=click-stage-9",
   "./click-stage.js?v=click-stage-8",
   "./home-stage.js?v=click-stage-2",
   "./detail-stage.js?v=click-stage-8",

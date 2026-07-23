@@ -1333,12 +1333,94 @@ const videoStage = document.getElementById("videoStage");
 const heroVideo = document.getElementById("heroVideo");
 const playBtn = document.getElementById("playBtn");
 const videoLoading = document.getElementById("videoLoading");
+const communityVideoStates = new WeakMap();
+let heroPlayAttempt = 0;
+
+function setVideoControlsAccess(video, isActive) {
+  if (!video) return;
+  video.controls = isActive;
+  video.tabIndex = isActive ? 0 : -1;
+  video.setAttribute("aria-hidden", isActive ? "false" : "true");
+}
+
+function rewindVideo(video) {
+  try {
+    video.currentTime = 0;
+  } catch (error) {
+    // Media without loaded metadata cannot always be seeked.
+  }
+}
+
+function unloadVideoSource(video) {
+  if (!video?.getAttribute("src")) return;
+  video.removeAttribute("src");
+  video.load();
+}
+
+function getCommunityVideoState(video) {
+  let state = communityVideoStates.get(video);
+  if (!state) {
+    state = { attempt: 0 };
+    communityVideoStates.set(video, state);
+  }
+  return state;
+}
+
+function resetCommunityVideoCard(card, options = {}) {
+  const video = card?.querySelector("video[data-src]");
+  const button = card?.querySelector(".community-play-btn");
+  if (!video) return;
+
+  getCommunityVideoState(video).attempt += 1;
+  video.pause();
+  if (options.rewind) rewindVideo(video);
+  if (options.unload) unloadVideoSource(video);
+  setVideoControlsAccess(video, false);
+
+  card.classList.remove("is-playing");
+  card.classList.remove("is-loading");
+  card.classList.remove("is-error");
+
+  if (button) {
+    button.disabled = false;
+    if (options.focus) button.focus();
+  }
+}
+
+function resetHeroVideo(options = {}) {
+  if (!heroVideo) return;
+
+  heroPlayAttempt += 1;
+  heroVideo.pause();
+  if (options.rewind) rewindVideo(heroVideo);
+  if (options.unload) unloadVideoSource(heroVideo);
+  setVideoControlsAccess(heroVideo, false);
+  heroVideo.classList.remove("is-loaded");
+  heroVideo.classList.remove("is-error");
+
+  if (playBtn) {
+    playBtn.classList.remove("is-hidden");
+    playBtn.disabled = false;
+    if (options.focus) playBtn.focus();
+  }
+  if (videoLoading) {
+    videoLoading.classList.remove("is-active");
+    videoLoading.classList.remove("is-error");
+  }
+  videoStage?.classList?.remove("is-playing");
+  videoStage?.classList?.remove("is-error");
+}
 
 function pauseOtherVideos(activeVideo) {
   document.querySelectorAll("video").forEach((video) => {
-    if (video !== activeVideo) {
+    if (video === activeVideo) return;
+    const card = video.closest(".community-video-card");
+    if (card) {
+      resetCommunityVideoCard(card);
+    } else if (video === heroVideo) {
+      resetHeroVideo();
+    } else {
       video.pause();
-      video.closest(".community-video-card")?.classList.remove("is-playing");
     }
   });
 }
@@ -1348,53 +1430,40 @@ function pauseAllPortfolioVideos() {
 }
 
 function resetPortfolioVideoUi() {
-  pauseAllPortfolioVideos();
-
   document.querySelectorAll(".community-video-card").forEach((card) => {
-    card.classList.remove("is-playing");
+    resetCommunityVideoCard(card, { rewind: true, unload: true });
   });
-
-  if (heroVideo) {
-    try {
-      heroVideo.currentTime = 0;
-    } catch (error) {
-      // The source may not have loaded enough metadata to seek yet.
-    }
-    heroVideo.classList.remove("is-loaded");
-    heroVideo.classList.remove("is-error");
-  }
-
-  if (playBtn) playBtn.classList.remove("is-hidden");
-  if (videoLoading) {
-    videoLoading.classList.remove("is-active");
-    videoLoading.classList.remove("is-error");
-  }
-  videoStage?.classList?.remove("is-playing");
-  videoStage?.classList?.remove("is-error");
+  resetHeroVideo({ rewind: true, unload: true });
 }
 
 if (playBtn && heroVideo) {
+  setVideoControlsAccess(heroVideo, false);
+
   playBtn.addEventListener("click", () => {
+    const attempt = ++heroPlayAttempt;
+    playBtn.disabled = true;
     playBtn.classList.add("is-hidden");
     if (videoLoading) videoLoading.classList.add("is-active");
 
-    if (!heroVideo.src) {
-      heroVideo.src = "assets/video/买量视频混剪.mp4";
+    if (!heroVideo.getAttribute("src") && heroVideo.dataset.src) {
+      heroVideo.setAttribute("src", heroVideo.dataset.src);
       heroVideo.load();
     }
 
     heroVideo.classList.add("is-loaded");
+    setVideoControlsAccess(heroVideo, true);
     pauseOtherVideos(heroVideo);
 
     heroVideo.addEventListener("playing", function onPlay() {
-      if (videoLoading) videoLoading.classList.remove("is-active");
       heroVideo.removeEventListener("playing", onPlay);
+      if (attempt !== heroPlayAttempt) return;
+      if (videoLoading) videoLoading.classList.remove("is-active");
+      playBtn.disabled = false;
     });
 
     heroVideo.play().catch(() => {
-      if (videoLoading) videoLoading.classList.remove("is-active");
-      heroVideo.classList.remove("is-loaded");
-      playBtn.classList.remove("is-hidden");
+      if (attempt !== heroPlayAttempt) return;
+      resetHeroVideo({ rewind: true, unload: true, focus: true });
     });
   });
 
@@ -1407,26 +1476,48 @@ function initCommunityVideoCards() {
     const playButton = card.querySelector(".community-play-btn");
 
     if (!video || !playButton) return;
+    const state = getCommunityVideoState(video);
+    setVideoControlsAccess(video, false);
 
     const loadAndPlay = () => {
-      if (!video.src) {
-        video.src = video.dataset.src;
+      const attempt = ++state.attempt;
+      pauseOtherVideos(video);
+
+      card.classList.remove("is-error");
+      card.classList.add("is-loading");
+      playButton.disabled = true;
+      setVideoControlsAccess(video, true);
+
+      if (!video.getAttribute("src") && video.dataset.src) {
+        video.setAttribute("src", video.dataset.src);
         video.load();
       }
 
-      card.classList.add("is-playing");
-      pauseOtherVideos(video);
-
-      video.play().catch(() => {});
+      video.play().catch(() => {
+        if (attempt !== state.attempt) return;
+        resetCommunityVideoCard(card, { rewind: true, unload: true, focus: true });
+      });
     };
 
     playButton.addEventListener("click", loadAndPlay);
     video.addEventListener("play", () => {
       pauseOtherVideos(video);
+      card.classList.remove("is-loading");
       card.classList.add("is-playing");
+      playButton.disabled = false;
+      setVideoControlsAccess(video, true);
     });
-    video.addEventListener("pause", () => card.classList.remove("is-playing"));
-    video.addEventListener("ended", () => card.classList.remove("is-playing"));
+    video.addEventListener("pause", () => {
+      card.classList.remove("is-playing");
+      if (!card.classList.contains("is-loading")) setVideoControlsAccess(video, false);
+    });
+    video.addEventListener("ended", () => {
+      rewindVideo(video);
+      card.classList.remove("is-playing");
+      card.classList.remove("is-loading");
+      setVideoControlsAccess(video, false);
+      playButton.focus();
+    });
   });
 }
 
@@ -1444,6 +1535,6 @@ document.addEventListener("portfolio:stagechange", resetPortfolioVideoUi);
 
 if ("serviceWorker" in navigator && /^https?:$/.test(window.location.protocol)) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=click-stage-8").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=click-stage-9").catch(() => {});
   });
 }

@@ -80,12 +80,16 @@ class FakeVideo extends FakeTarget {
     super();
     this.card = card;
     this.dataset = {};
+    this.attributes = new Map();
     this.loadCount = 0;
     this.pauseCount = 0;
     this.playCount = 0;
     this.src = "";
     this.currentTime = 0;
+    this.tabIndex = 0;
+    this.controls = true;
     this.classList = new FakeClassList();
+    this.playResults = [];
   }
   closest(selector) {
     return selector === ".community-video-card" ? this.card : null;
@@ -93,14 +97,28 @@ class FakeVideo extends FakeTarget {
   load() {
     this.loadCount += 1;
   }
+  getAttribute(name) {
+    if (name === "src") return this.attributes.get(name) || null;
+    return this.attributes.get(name) || null;
+  }
+  setAttribute(name, value) {
+    this.attributes.set(name, String(value));
+    if (name === "src") this.src = String(value);
+  }
+  removeAttribute(name) {
+    this.attributes.delete(name);
+    if (name === "src") this.src = "";
+  }
   pause() {
     this.pauseCount += 1;
     this.dispatch("pause");
   }
   play() {
     this.playCount += 1;
-    this.dispatch("play");
-    return Promise.resolve();
+    const result = this.playResults.length ? this.playResults.shift() : Promise.resolve();
+    return Promise.resolve(result).then(() => {
+      this.dispatch("play");
+    });
   }
 }
 
@@ -108,9 +126,14 @@ class FakeButton extends FakeTarget {
   constructor() {
     super();
     this.classList = new FakeClassList();
+    this.focusCount = 0;
+    this.tabIndex = 0;
   }
   click() {
     this.dispatch("click");
+  }
+  focus() {
+    this.focusCount += 1;
   }
 }
 
@@ -134,6 +157,7 @@ const cardsForRuntime = [
   createCard("assets/video/community/community-video-05.mp4"),
 ];
 const heroVideo = new FakeVideo();
+heroVideo.dataset.src = "assets/video/买量视频混剪.mp4";
 const playBtn = new FakeButton();
 const videoLoading = { classList: new FakeClassList() };
 const communityVideoGrid = {};
@@ -182,6 +206,12 @@ vm.runInNewContext(sharedSource.slice(playbackStart, playbackEnd), {
   window,
 }, { filename: "video-playback.js" });
 
+async function flushPromises() {
+  await Promise.resolve();
+  await Promise.resolve();
+}
+
+async function run() {
 assert.strictEqual(registrations.length, 1);
 assert.strictEqual(registrations[0].view, "community-video");
 assert.strictEqual(registrations[0].rootElement, communityVideoGrid);
@@ -189,18 +219,32 @@ assert.strictEqual(registrations[0].options.kind, "video");
 assert.strictEqual(registrations[0].options.itemSelector, "[data-video-page-item]");
 assert.strictEqual(cardsForRuntime[0].video.src, "", "community source should be absent before activation");
 assert.strictEqual(heroVideo.src, "", "montage source should be absent before activation");
+assert.strictEqual(cardsForRuntime[0].video.tabIndex, -1, "an unplayed community video should not be keyboard focusable");
+assert.strictEqual(cardsForRuntime[0].video.controls, false, "an unplayed community video should not expose native controls");
+assert.strictEqual(cardsForRuntime[0].video.getAttribute("aria-hidden"), "true");
+assert.strictEqual(heroVideo.tabIndex, -1, "the lazy montage should not be keyboard focusable before play");
+assert.strictEqual(heroVideo.controls, false, "the lazy montage should not expose native controls before play");
+assert.strictEqual(heroVideo.getAttribute("aria-hidden"), "true");
 
 cardsForRuntime[0].button.click();
+await flushPromises();
 assert.strictEqual(cardsForRuntime[0].video.src, cardsForRuntime[0].video.dataset.src);
 assert.strictEqual(cardsForRuntime[0].video.playCount, 1);
 assert.strictEqual(cardsForRuntime[0].classList.contains("is-playing"), true);
+assert.strictEqual(cardsForRuntime[0].video.tabIndex, 0, "the active community video should expose native controls");
+assert.strictEqual(cardsForRuntime[0].video.controls, true);
+assert.strictEqual(cardsForRuntime[0].video.getAttribute("aria-hidden"), "false");
 
+cardsForRuntime[0].video.currentTime = 5;
 cardsForRuntime[1].button.click();
+await flushPromises();
 assert.ok(cardsForRuntime[0].video.pauseCount >= 1, "starting a second card should pause the first");
+assert.strictEqual(cardsForRuntime[0].video.currentTime, 5, "single-play enforcement should pause without rewinding the previous card");
 assert.strictEqual(cardsForRuntime[0].classList.contains("is-playing"), false);
 assert.strictEqual(cardsForRuntime[1].classList.contains("is-playing"), true);
 
 playBtn.click();
+await flushPromises();
 assert.strictEqual(heroVideo.src, "assets/video/买量视频混剪.mp4", "montage remains an independent lazy source");
 assert.ok(cardsForRuntime[1].video.pauseCount >= 1, "starting the montage should pause a community video");
 assert.strictEqual(playBtn.classList.contains("is-hidden"), true);
@@ -210,8 +254,14 @@ heroVideo.currentTime = 12;
 document.dispatch("portfolio:stagechange", { view: "community-video", page: 2 });
 for (const video of [heroVideo, ...cardsForRuntime.map((card) => card.video)]) {
   assert.ok(video.pauseCount >= 1, "every stage change should pause every video");
+  assert.strictEqual(video.currentTime, 0, "every stage change should rewind every video");
+  assert.strictEqual(video.src, "", "every stage change should unload every assigned MP4 source");
+  assert.ok(video.loadCount >= 1, "unloading an assigned source should abort its media buffer");
 }
 assert.ok(cardsForRuntime.every((card) => !card.classList.contains("is-playing")));
+assert.ok(cardsForRuntime.every((card) => !card.classList.contains("is-loading")));
+assert.ok(cardsForRuntime.every((card) => card.video.tabIndex === -1));
+assert.ok(cardsForRuntime.every((card) => card.video.controls === false));
 assert.strictEqual(playBtn.classList.contains("is-hidden"), false, "stage changes should restore the montage play button");
 assert.strictEqual(heroVideo.classList.contains("is-loaded"), false, "stage changes should hide the paused montage");
 assert.strictEqual(videoLoading.classList.contains("is-active"), false, "stage changes should clear the loading overlay");
@@ -219,7 +269,42 @@ assert.strictEqual(heroVideo.currentTime, 0, "stage changes should rewind the mo
 
 const montageLoadCount = heroVideo.loadCount;
 playBtn.click();
-assert.strictEqual(heroVideo.loadCount, montageLoadCount, "replay should reuse the existing lazy-loaded source");
+await flushPromises();
+assert.strictEqual(heroVideo.loadCount, montageLoadCount + 1, "replay should explicitly mount the lazy montage source again");
 assert.strictEqual(heroVideo.playCount, 2, "the restored play control should replay the montage");
 
+const failingCard = cardsForRuntime[0];
+let rejectOldPlay;
+failingCard.video.playResults.push(new Promise((resolve, reject) => {
+  rejectOldPlay = reject;
+}));
+failingCard.button.click();
+assert.strictEqual(failingCard.classList.contains("is-loading"), true, "a pending play should expose a loading state");
+document.dispatch("portfolio:stagechange", { view: "overview", page: 1 });
+failingCard.button.click();
+await flushPromises();
+assert.strictEqual(failingCard.classList.contains("is-playing"), true, "a retry should be able to start after reset");
+rejectOldPlay(new Error("stale play failure"));
+await flushPromises();
+assert.strictEqual(failingCard.classList.contains("is-playing"), true, "an older rejected play must not reset newer playback");
+assert.strictEqual(failingCard.video.src, failingCard.video.dataset.src);
+
+const retryCard = cardsForRuntime[1];
+retryCard.video.playResults.push(Promise.reject(new Error("decode failure")));
+retryCard.button.click();
+await flushPromises();
+assert.strictEqual(retryCard.classList.contains("is-playing"), false, "a rejected play should not leave a playing state");
+assert.strictEqual(retryCard.classList.contains("is-loading"), false, "a rejected play should clear loading state");
+assert.strictEqual(retryCard.video.src, "", "a rejected play should release the failed source");
+assert.strictEqual(retryCard.video.currentTime, 0, "a rejected play should rewind for retry");
+assert.strictEqual(retryCard.video.tabIndex, -1, "a failed video should return focus access to its play control");
+assert.strictEqual(retryCard.video.getAttribute("aria-hidden"), "true");
+assert.ok(retryCard.button.focusCount >= 1, "a rejected play should restore focus to the retry button");
+
 console.log("video stage behavior passed");
+}
+
+run().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

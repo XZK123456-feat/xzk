@@ -10,10 +10,19 @@ const runtimeSources = Array.from(
   html.matchAll(/<video[^>]*\bdata-src="([^"]+\.mp4)"[^>]*>/g),
   (match) => match[1],
 );
-runtimeSources.push("assets/video/买量视频混剪.mp4");
 
 assert.strictEqual(runtimeSources.length, 7, "the video page should expose seven runtime MP4 paths");
 assert.strictEqual(new Set(runtimeSources).size, 7, "the seven runtime MP4 paths should be unique");
+assert.match(
+  html,
+  /<video[\s\S]*?\bid="heroVideo"[\s\S]*?\bdata-src="assets\/video\/买量视频混剪\.mp4"[\s\S]*?><\/video>/,
+  "the montage runtime source should live on the lazy video element",
+);
+assert.doesNotMatch(
+  html,
+  /<video[^>]*\bid="heroVideo"[^>]*\ssrc=/,
+  "the montage must not receive a network source before explicit play",
+);
 
 const fallback = html.match(
   /<noscript\s+data-noscript-video-fallback>([\s\S]*?)<\/noscript>/,
@@ -55,6 +64,11 @@ assert.match(
   stageCss,
   /\.detail-stage-pager\s+button::before,\s*\.detail-stage-pager\s+button::after\s*\{[^}]*content:\s*none/s,
   "detail pager buttons should suppress inherited decorations",
+);
+assert.match(
+  stageCss,
+  /body\.stage-ready\s+\.community-video-card:not\(\.is-playing\):not\(\.is-loading\)\s+video\s*\{[^}]*opacity:\s*0[^}]*pointer-events:\s*none/s,
+  "the fixed stage must preserve the hidden, non-interactive state of unplayed videos",
 );
 
 console.log("video stage presentation passed");
