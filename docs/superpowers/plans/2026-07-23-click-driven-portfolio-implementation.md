@@ -149,6 +149,7 @@ git commit -m "feat: add click stage state utilities"
 - Modify: `community-creatives.html`
 - Modify: `video-design.html`
 - Modify: `styles.css`
+- Modify: `tests/page-loading-gate.test.js`
 
 - [ ] **Step 1: Write the failing structure contract**
 
@@ -203,6 +204,14 @@ Add immediately inside `.page-shell`:
 ```
 
 Remove `.scroll-progress` and `.back-to-top` markup from every page. Keep their legacy CSS temporarily so no-JavaScript fallback diffs remain narrow.
+
+Update the loader-block extraction in `tests/page-loading-gate.test.js` because `.page-shell` becomes the next sibling:
+
+```js
+const loaderBlock = html.match(
+  /<div class="page-loader"[\s\S]*?<\/div>\s*(?=<div class="page-shell")/,
+)?.[0];
+```
 
 - [ ] **Step 4: Add the fixed-stage base CSS**
 
@@ -271,7 +280,7 @@ assert.ok(!html.includes('class="back-to-top"'), "back-to-top should be retired"
 - [ ] **Step 7: Commit**
 
 ```powershell
-git add click-stage.css styles.css index.html website-design.html ua-creatives.html community-creatives.html video-design.html tests/click-stage-structure.test.js tests/structure.test.js tests/premium-interactions.test.js
+git add click-stage.css styles.css index.html website-design.html ua-creatives.html community-creatives.html video-design.html tests/click-stage-structure.test.js tests/structure.test.js tests/premium-interactions.test.js tests/page-loading-gate.test.js
 git commit -m "feat: establish fixed portfolio stage shell"
 ```
 
