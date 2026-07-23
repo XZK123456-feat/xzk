@@ -17,8 +17,8 @@ const script = read("script.js");
 const css = read("styles.css");
 const serviceWorker = read("sw.js");
 const styleRelease = "stability-1";
-const sharedRelease = "stability-5";
-const stageRelease = "click-stage-7";
+const sharedRelease = "stability-6";
+const stageRelease = "click-stage-8";
 
 detailScripts.forEach((file) => {
   const source = read(file);

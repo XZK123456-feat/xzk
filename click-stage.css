@@ -187,6 +187,85 @@ body.stage-ready #community-video .community-video-stage {
   box-shadow: none;
 }
 
+body.stage-ready #video .detail-board {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+body.stage-ready #video .video-player-wrapper {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  width: 100%;
+  height: 100%;
+  gap: 6px;
+  overflow: hidden;
+}
+
+body.stage-ready #video .video-stage {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  aspect-ratio: auto;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 var(--yellow);
+}
+
+body.stage-ready #video .hero-video,
+body.stage-ready #video .video-loading {
+  border-radius: 8px;
+}
+
+body.stage-ready #video .play-btn {
+  max-width: 100%;
+  max-height: 100%;
+  gap: 6px;
+}
+
+body.stage-ready #video .play-btn-ring {
+  width: clamp(56px, 14vmin, 128px);
+  height: clamp(56px, 14vmin, 128px);
+  border-width: 5px;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.34),
+    0 0 0 7px var(--ink),
+    0 0 28px rgba(255, 196, 0, 0.28);
+}
+
+body.stage-ready #video .play-icon {
+  width: clamp(20px, 4.5vmin, 42px);
+}
+
+body.stage-ready #video .play-btn-label {
+  font-size: clamp(11px, 2vmin, 16px);
+  line-height: 1;
+  text-shadow: 2px 2px 0 var(--ink);
+}
+
+body.stage-ready #video .video-meta {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  min-width: 0;
+}
+
+body.stage-ready #video .video-badge {
+  min-height: 28px;
+  padding: 0 10px;
+  border-width: 2px;
+  border-radius: 3px;
+  box-shadow: none;
+  font-size: 10px;
+}
+
+body.stage-ready #video .video-meta p {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 body.stage-ready [data-stage-view] .detail-gallery {
   width: 100%;
   height: 100%;
@@ -318,6 +397,11 @@ body.stage-ready .floating-widget {
   font-size: 22px;
   font-weight: 900;
   cursor: pointer;
+}
+
+.detail-stage-pager button::before,
+.detail-stage-pager button::after {
+  content: none;
 }
 
 .detail-stage-pager button:hover:not(:disabled),

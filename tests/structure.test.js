@@ -200,7 +200,7 @@ assert.ok(videoDetailHtml.indexOf('id="community-video"') < videoDetailHtml.inde
 assert.ok(/\.play-btn\s*\{[^}]*box-shadow:\s*none;/s.test(css), "video play button should not inherit the generic button shadow in its default state");
 assert.ok(videoDetailHtml.includes("community-video-grid"), "video detail should render community videos in a dedicated grid");
 assert.strictEqual(
-  (videoDetailHtml.match(/assets\/video\/community\/community-video-\d{2}\.mp4/g) || []).length,
+  (videoDetailHtml.match(/<article class="community-video-card[^>]*\bdata-video-page-item\b/g) || []).length,
   6,
   "video detail should render all 6 supplemental community videos",
 );

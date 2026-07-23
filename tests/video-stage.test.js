@@ -84,6 +84,7 @@ class FakeVideo extends FakeTarget {
     this.pauseCount = 0;
     this.playCount = 0;
     this.src = "";
+    this.currentTime = 0;
     this.classList = new FakeClassList();
   }
   closest(selector) {
@@ -202,11 +203,23 @@ assert.strictEqual(cardsForRuntime[1].classList.contains("is-playing"), true);
 playBtn.click();
 assert.strictEqual(heroVideo.src, "assets/video/买量视频混剪.mp4", "montage remains an independent lazy source");
 assert.ok(cardsForRuntime[1].video.pauseCount >= 1, "starting the montage should pause a community video");
+assert.strictEqual(playBtn.classList.contains("is-hidden"), true);
+assert.strictEqual(heroVideo.classList.contains("is-loaded"), true);
+heroVideo.currentTime = 12;
 
 document.dispatch("portfolio:stagechange", { view: "community-video", page: 2 });
 for (const video of [heroVideo, ...cardsForRuntime.map((card) => card.video)]) {
   assert.ok(video.pauseCount >= 1, "every stage change should pause every video");
 }
 assert.ok(cardsForRuntime.every((card) => !card.classList.contains("is-playing")));
+assert.strictEqual(playBtn.classList.contains("is-hidden"), false, "stage changes should restore the montage play button");
+assert.strictEqual(heroVideo.classList.contains("is-loaded"), false, "stage changes should hide the paused montage");
+assert.strictEqual(videoLoading.classList.contains("is-active"), false, "stage changes should clear the loading overlay");
+assert.strictEqual(heroVideo.currentTime, 0, "stage changes should rewind the montage");
+
+const montageLoadCount = heroVideo.loadCount;
+playBtn.click();
+assert.strictEqual(heroVideo.loadCount, montageLoadCount, "replay should reuse the existing lazy-loaded source");
+assert.strictEqual(heroVideo.playCount, 2, "the restored play control should replay the montage");
 
 console.log("video stage behavior passed");

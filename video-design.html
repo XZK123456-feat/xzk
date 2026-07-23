@@ -72,7 +72,7 @@
       </style>
     </noscript>
     <link rel="stylesheet" href="styles.css?v=stability-1" onload="this.dataset.loaderState='loaded'" onerror="this.dataset.loaderState='error'" />
-    <link rel="stylesheet" href="click-stage.css?v=click-stage-7" />
+    <link rel="stylesheet" href="click-stage.css?v=click-stage-8" />
   </head>
   <body class="detail-page is-page-loading">
     <div class="page-loader" role="status" aria-label="页面正在加载">
@@ -239,6 +239,54 @@
           <button type="button" data-stage-next aria-label="下一页">›</button>
         </div>
       </main>
+      <noscript data-noscript-video-fallback>
+        <style>
+          .noscript-video-fallback {
+            width: min(1120px, calc(100% - 32px));
+            margin: 36px auto;
+            padding: 20px;
+            border: 3px solid #111;
+            background: #fff;
+          }
+          .noscript-video-fallback h2,
+          .noscript-video-fallback h3 { margin: 0 0 12px; }
+          .noscript-video-fallback section + section { margin-top: 24px; }
+          .noscript-video-fallback__links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+            gap: 8px;
+          }
+          .noscript-video-fallback a {
+            display: block;
+            min-width: 0;
+            padding: 10px 12px;
+            border: 2px solid #111;
+            color: #111;
+            background: #ffc400;
+            overflow-wrap: anywhere;
+          }
+        </style>
+        <div class="noscript-video-fallback">
+          <h2>AI 视频设计作品</h2>
+          <section aria-labelledby="noscript-community-videos">
+            <h3 id="noscript-community-videos">运营社群视频设计</h3>
+            <div class="noscript-video-fallback__links">
+              <a href="assets/video/community/community-video-04.mp4">运营社群视频 01</a>
+              <a href="assets/video/community/community-video-05.mp4">运营社群视频 02</a>
+              <a href="assets/video/community/community-video-03.mp4">运营社群视频 03</a>
+              <a href="assets/video/community/community-video-01.mp4">运营社群视频 04</a>
+              <a href="assets/video/community/community-video-02.mp4">运营社群视频 05</a>
+              <a href="assets/video/community/community-video-06.mp4">运营社群视频 06</a>
+            </div>
+          </section>
+          <section aria-labelledby="noscript-montage-video">
+            <h3 id="noscript-montage-video">买量视频混剪</h3>
+            <div class="noscript-video-fallback__links">
+              <a href="assets/video/买量视频混剪.mp4">打开买量视频混剪</a>
+            </div>
+          </section>
+        </div>
+      </noscript>
     </div>
 
     <nav class="detail-directory task-rail" data-task-rail aria-label="详情页目录">
@@ -262,8 +310,8 @@
       </a>
     </div>
 
-    <script src="click-stage.js?v=click-stage-7"></script>
-    <script src="detail-stage.js?v=click-stage-7"></script>
-    <script src="script.js?v=stability-5"></script>
+    <script src="click-stage.js?v=click-stage-8"></script>
+    <script src="detail-stage.js?v=click-stage-8"></script>
+    <script src="script.js?v=stability-6"></script>
   </body>
 </html>

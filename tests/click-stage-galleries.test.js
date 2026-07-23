@@ -132,25 +132,25 @@ Object.entries(pages).forEach(([file, contract]) => {
   assert.strictEqual((html.match(/\bclass="[^"]*\bdetail-directory\b[^"]*"/g) || []).length, 1, `${file} should not retain a second standalone directory`);
   assert.ok(html.includes(`class="brand-pill back-brand" href="${contract.back}"`), `${file} should use the mission-specific top back target`);
   assert.ok(html.includes(`class="back-link" href="${contract.back}"`) || file === "video-design.html", `${file} should use the mission-specific section back target`);
-  assert.ok(html.includes('href="click-stage.css?v=click-stage-7"'), `${file} should request click-stage.css release 7`);
-  assert.ok(html.includes('src="click-stage.js?v=click-stage-7"'), `${file} should request click-stage.js release 7`);
+  assert.ok(html.includes('href="click-stage.css?v=click-stage-8"'), `${file} should request click-stage.css release 8`);
+  assert.ok(html.includes('src="click-stage.js?v=click-stage-8"'), `${file} should request click-stage.js release 8`);
   assert.ok(
-    html.indexOf('src="detail-stage.js?v=click-stage-7"') > html.indexOf('src="click-stage.js?v=click-stage-7"'),
+    html.indexOf('src="detail-stage.js?v=click-stage-8"') > html.indexOf('src="click-stage.js?v=click-stage-8"'),
     `${file} should load detail-stage.js after click-stage.js`,
   );
 
   const pageSpecificScript = html.search(/src="(?:website-design|ua-creatives|community-creatives)\.js\?/);
   if (pageSpecificScript >= 0) {
     assert.ok(
-      html.indexOf('src="detail-stage.js?v=click-stage-7"') < pageSpecificScript,
+      html.indexOf('src="detail-stage.js?v=click-stage-8"') < pageSpecificScript,
       `${file} should initialize the stage before its gallery script`,
     );
   }
 });
 
 const homepage = read("index.html");
-assert.ok(homepage.includes('href="click-stage.css?v=click-stage-7"'), "index.html should request click-stage.css release 7");
-assert.ok(homepage.includes('src="click-stage.js?v=click-stage-7"'), "index.html should request click-stage.js release 7");
+assert.ok(homepage.includes('href="click-stage.css?v=click-stage-8"'), "index.html should request click-stage.css release 8");
+assert.ok(homepage.includes('src="click-stage.js?v=click-stage-8"'), "index.html should request click-stage.js release 8");
 assert.ok(homepage.includes('src="home-stage.js?v=click-stage-2"'), "index.html should keep home-stage.js release 2");
 
 const websiteScript = read("website-design.js");
