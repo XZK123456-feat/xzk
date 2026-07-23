@@ -38,9 +38,13 @@
 
   function paginate(items, pageSize) {
     const pages = [];
+    const numericPageSize = Number(pageSize);
+    const normalizedPageSize = Number.isFinite(numericPageSize)
+      ? Math.max(1, Math.floor(numericPageSize))
+      : 1;
 
-    for (let index = 0; index < items.length; index += pageSize) {
-      pages.push(items.slice(index, index + pageSize));
+    for (let index = 0; index < items.length; index += normalizedPageSize) {
+      pages.push(items.slice(index, index + normalizedPageSize));
     }
 
     return pages;

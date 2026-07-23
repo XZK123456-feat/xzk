@@ -14,6 +14,15 @@ vm.runInNewContext(source, context, { filename: scriptPath });
 
 const { parseHash, formatHash, getPageSize, paginate } = context.window.PortfolioStage;
 const plain = (value) => JSON.parse(JSON.stringify(value));
+const paginateWithTimeout = (items, pageSize) => {
+  context.testItems = items;
+  context.testPageSize = pageSize;
+  return vm.runInContext(
+    "window.PortfolioStage.paginate(testItems, testPageSize)",
+    context,
+    { timeout: 100 },
+  );
+};
 
 assert.deepStrictEqual(plain(parseHash("#horizontal-p2", "overview")), {
   view: "horizontal",
@@ -34,6 +43,25 @@ assert.strictEqual(getPageSize("video", 1440, 900), 3);
 assert.strictEqual(getPageSize("video", 390, 844), 1);
 
 assert.deepStrictEqual(plain(paginate(["a", "b", "c"], 2)), [
+  ["a", "b"],
+  ["c"],
+]);
+assert.deepStrictEqual(plain(paginateWithTimeout(["a", "b", "c"], 0)), [
+  ["a"],
+  ["b"],
+  ["c"],
+]);
+assert.deepStrictEqual(plain(paginateWithTimeout(["a", "b", "c"], -1)), [
+  ["a"],
+  ["b"],
+  ["c"],
+]);
+assert.deepStrictEqual(plain(paginateWithTimeout(["a", "b", "c"], "invalid")), [
+  ["a"],
+  ["b"],
+  ["c"],
+]);
+assert.deepStrictEqual(plain(paginateWithTimeout(["a", "b", "c"], 2.9)), [
   ["a", "b"],
   ["c"],
 ]);
