@@ -16,7 +16,9 @@ const detailScripts = ["website-design.js", "ua-creatives.js", "community-creati
 const script = read("script.js");
 const css = read("styles.css");
 const serviceWorker = read("sw.js");
-const releaseVersion = "stability-1";
+const styleRelease = "stability-1";
+const sharedRelease = "stability-2";
+const stageRelease = "click-stage-2";
 
 detailScripts.forEach((file) => {
   const source = read(file);
@@ -58,12 +60,15 @@ pages.forEach((page) => {
   assert.ok(html.includes('<meta property="og:image"'), `${page} should include a share image`);
   assert.ok(html.includes('<link rel="canonical"'), `${page} should include a canonical URL`);
   assert.ok(html.includes('<link rel="icon" href="favicon.ico"'), `${page} should include a favicon`);
-  assert.ok(html.includes(`styles.css?v=${releaseVersion}`), `${page} should request the current stylesheet release`);
-  assert.ok(html.includes(`script.js?v=${releaseVersion}`), `${page} should request the current shared script release`);
+  assert.ok(html.includes(`styles.css?v=${styleRelease}`), `${page} should request the current stylesheet release`);
+  assert.ok(html.includes(`script.js?v=${sharedRelease}`), `${page} should request the current shared script release`);
 });
 
-assert.ok(script.includes(`sw.js?v=${releaseVersion}`), "service worker registration should use the current release version");
-assert.ok(serviceWorker.includes(`zk-portfolio-${releaseVersion}`), "service worker caches should use the current release version");
+assert.ok(script.includes(`sw.js?v=${stageRelease}`), "service worker registration should use the current release version");
+assert.ok(
+  serviceWorker.includes(`zk-portfolio-${stageRelease}`),
+  "service worker caches should use the current release version",
+);
 
 ["favicon.ico", "robots.txt", "sitemap.xml", "404.html", "assets/share-cover.webp"].forEach((file) => {
   assert.ok(fs.existsSync(path.join(root, file)), `${file} should exist`);

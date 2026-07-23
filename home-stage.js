@@ -94,12 +94,44 @@
       && normalizedLeft.dataPage === normalizedRight.dataPage;
   }
 
+  function createHistoryState(state) {
+    return {
+      portfolioHomeState: normalizeState(state),
+    };
+  }
+
+  function readHistoryState(historyState, hash) {
+    const candidate = historyState?.portfolioHomeState;
+    if (
+      !candidate ||
+      (candidate.panel !== "missions" && candidate.panel !== "data") ||
+      !Number.isInteger(candidate.mission) ||
+      candidate.mission < 1 ||
+      candidate.mission > 4 ||
+      !Number.isInteger(candidate.dataPage) ||
+      candidate.dataPage < 1 ||
+      candidate.dataPage > 2
+    ) {
+      return null;
+    }
+
+    const normalized = normalizeState(candidate);
+    return formatHash(normalized) === String(hash || "") ? normalized : null;
+  }
+
+  function resolveLocationState(hash, historyState) {
+    return readHistoryState(historyState, hash) || parseHash(hash);
+  }
+
   window.HomeStageState = Object.freeze({
     DEFAULT_STATE,
+    createHistoryState,
     normalizeState,
     parseHash,
     formatHash,
+    readHistoryState,
     reduce,
+    resolveLocationState,
     statesEqual,
   });
 
@@ -196,7 +228,7 @@
     return;
   }
 
-  let desiredState = parseHash(window.location.hash);
+  let desiredState = resolveLocationState(window.location.hash, window.history.state);
   let renderedPanel = desiredState.panel;
   let pendingPanel = null;
   let wipeRun = 0;
@@ -281,15 +313,14 @@
   }
 
   function writeHistory(state, mode) {
+    const normalized = normalizeState(state);
     const hash = formatHash(state);
-    if (window.location.hash === hash) {
-      return;
-    }
+    const historyState = createHistoryState(normalized);
 
     if (mode === "push") {
-      window.history.pushState({ homeStage: true }, "", hash);
+      window.history.pushState(historyState, "", hash);
     } else {
-      window.history.replaceState({ homeStage: true }, "", hash);
+      window.history.replaceState(historyState, "", hash);
     }
   }
 
@@ -366,8 +397,12 @@
     return true;
   }
 
-  function restoreFromLocation() {
-    const restoredState = parseHash(window.location.hash);
+  function restoreFromLocation(event) {
+    const eventHistoryState = event?.type === "popstate"
+      ? event.state
+      : window.history.state;
+    const storedState = readHistoryState(eventHistoryState, window.location.hash);
+    const restoredState = storedState || parseHash(window.location.hash);
     cancelWipe();
     pendingPanel = null;
     desiredState = reduce(desiredState, {
@@ -375,7 +410,9 @@
       state: restoredState,
     });
     renderState(desiredState);
-    writeHistory(desiredState, "replace");
+    if (!storedState) {
+      writeHistory(desiredState, "replace");
+    }
   }
 
   function openResume() {

@@ -15,11 +15,11 @@ pages.forEach((page) => {
   const html = fs.readFileSync(path.join(root, page), "utf8");
 
   assert.ok(
-    html.includes('href="click-stage.css?v=click-stage-1"'),
+    html.includes('href="click-stage.css?v=click-stage-2"'),
     `${page} should load the click-stage stylesheet`,
   );
   assert.ok(
-    html.includes('src="click-stage.js?v=click-stage-1"'),
+    html.includes('src="click-stage.js?v=click-stage-2"'),
     `${page} should load the click-stage script`,
   );
   assert.ok(html.includes('class="stage-wipe"'), `${page} should include the shared stage wipe`);
@@ -45,8 +45,8 @@ missionPreviews.forEach((preview, index) => {
   assert.ok(alt && alt[1].trim().length >= 4, `mission preview ${index + 1} should have useful alt text`);
 });
 assert.ok(
-  homepage.indexOf('src="home-stage.js?v=click-stage-1"') >
-    homepage.indexOf('src="click-stage.js?v=click-stage-1"'),
+  homepage.indexOf('src="home-stage.js?v=click-stage-2"') >
+    homepage.indexOf('src="click-stage.js?v=click-stage-2"'),
   "index.html should load home-stage.js after click-stage.js",
 );
 assert.ok(

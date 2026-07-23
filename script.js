@@ -868,6 +868,10 @@ if (prefersReducedMotion) {
 }
 
 function setActiveNav(id) {
+  if (document.body.classList.contains("stage-ready")) {
+    return;
+  }
+
   navLinks.forEach((link) => {
     link.classList.toggle("active", link.getAttribute("href") === `#${id}`);
   });
@@ -893,6 +897,10 @@ function setActiveFromScroll() {
 
 const observer = new IntersectionObserver(
   (entries) => {
+    if (document.body.classList.contains("stage-ready")) {
+      return;
+    }
+
     const visible = entries
       .filter((entry) => entry.isIntersecting)
       .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
@@ -1379,6 +1387,6 @@ initCommunityVideoCards();
 
 if ("serviceWorker" in navigator && /^https?:$/.test(window.location.protocol)) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=stability-1").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=click-stage-2").catch(() => {});
   });
 }
