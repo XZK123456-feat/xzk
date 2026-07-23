@@ -122,7 +122,7 @@ function createShot(group, item, index) {
     <span class="detail-shot-label">${item.label}</span>
     <span class="detail-shot-frame">
       <span class="detail-shot-glass">
-        <img src="${item.src}" srcset="${srcset}" sizes="(max-width: 700px) 44vw, 260px" width="${item.width}" height="${item.height}" alt="${item.label}" loading="lazy" decoding="async" />
+        <img data-stage-thumb-src="${item.src}" data-stage-thumb-srcset="${srcset}" data-stage-thumb-sizes="(max-width: 700px) 44vw, 260px" width="${item.width}" height="${item.height}" alt="${item.label}" loading="lazy" decoding="async" />
       </span>
       <span class="detail-shot-ui"><i></i><i></i><i></i></span>
     </span>
@@ -137,7 +137,13 @@ const scheduleIdle = window.requestIdleCallback
   : (task) => window.setTimeout(task, 24);
 
 function renderGallery(group, gallery) {
-  if (!group || !gallery || gallery.dataset.rendered === "true") {
+  if (!group || !gallery) {
+    return;
+  }
+  if (gallery.dataset.rendered === "true") {
+    if (gallery.classList.contains("is-gallery-ready")) {
+      window.DetailStage?.refreshGallery(group.key);
+    }
     return;
   }
 
@@ -163,51 +169,28 @@ function renderGallery(group, gallery) {
 
     gallery.classList.remove("is-gallery-loading");
     gallery.classList.add("is-gallery-ready");
+    window.DetailStage?.registerGallery(group.key, gallery, { kind: "mixed" });
   }
 
   renderBatch();
 }
 
 function renderGalleries() {
-  const galleries = sourceGroups
-    .map((group) => ({
-      group,
-      gallery: document.querySelector(`[data-community-gallery="${group.key}"]`),
-    }))
-    .filter((entry) => entry.gallery);
-
-  if (!("IntersectionObserver" in window)) {
-    galleries.forEach(({ group, gallery }) => renderGallery(group, gallery));
-    return;
-  }
-
-  const lazyGalleryObserver = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (!entry.isIntersecting) {
-          return;
-        }
-
-        const group = sourceGroups.find((item) => item.key === entry.target.dataset.communityGallery);
-        renderGallery(group, entry.target);
-        lazyGalleryObserver.unobserve(entry.target);
-      });
-    },
-    {
-      rootMargin: "520px 0px",
-      threshold: 0.01,
-    },
-  );
-
-  galleries.forEach(({ group, gallery }) => {
-    const section = gallery.closest("section");
-    if (section && `#${section.id}` === window.location.hash) {
-      renderGallery(group, gallery);
+  const renderActiveGallery = (view) => {
+    const group = sourceGroups.find((item) => item.key === view);
+    if (!group) {
       return;
     }
+    renderGallery(group, document.querySelector(`[data-community-gallery="${group.key}"]`));
+  };
 
-    lazyGalleryObserver.observe(gallery);
+  document.addEventListener("portfolio:stagechange", (event) => {
+    renderActiveGallery(event.detail?.view);
   });
+
+  const activeView = document.querySelector("[data-stage-view].is-active")?.dataset.stageView
+    || window.location.hash.replace(/^#/, "").replace(/-p\d+$/, "");
+  renderActiveGallery(activeView);
 }
 
 renderGalleries();
@@ -311,10 +294,11 @@ function renderLightboxStrip(previews, currentIndex) {
   previews.forEach((preview, index) => {
     const image = preview.querySelector("img");
     const thumb = document.createElement("button");
+    const thumbSource = image?.currentSrc || image?.getAttribute("src") || "";
     thumb.className = `lightbox-thumb${index === currentIndex ? " active" : ""}`;
     thumb.type = "button";
     thumb.setAttribute("aria-label", `切换到${preview.querySelector(".detail-shot-label")?.textContent || image?.alt || "作品"}`);
-    thumb.innerHTML = `<img src="${image?.currentSrc || image?.src || ""}" alt="" /><span>${String(index + 1).padStart(2, "0")}</span>`;
+    thumb.innerHTML = `${thumbSource ? `<img src="${thumbSource}" alt="" />` : ""}<span>${String(index + 1).padStart(2, "0")}</span>`;
     thumb.addEventListener("click", () => openPreview(preview));
     lightboxStrip.append(thumb);
   });

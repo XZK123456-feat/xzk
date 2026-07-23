@@ -82,6 +82,23 @@ class FakeElement {
     this.textContent = "";
     this.offsetWidth = 100;
     this.pauseCount = 0;
+    this.rect = {
+      bottom: options.rect?.bottom ?? 400,
+      height: options.rect?.height ?? 300,
+      left: options.rect?.left ?? 0,
+      right: options.rect?.right ?? 600,
+      top: options.rect?.top ?? 100,
+      width: options.rect?.width ?? 600,
+    };
+    const styleValues = new Map();
+    this.style = {
+      getPropertyValue(name) {
+        return styleValues.get(name) || "";
+      },
+      setProperty(name, value) {
+        styleValues.set(name, String(value));
+      },
+    };
   }
 
   addEventListener(type, listener) {
@@ -132,6 +149,10 @@ class FakeElement {
     this.focused = true;
   }
 
+  getBoundingClientRect() {
+    return { ...this.rect };
+  }
+
   getAttribute(name) {
     return this.attributes.has(name) ? this.attributes.get(name) : null;
   }
@@ -159,6 +180,27 @@ class FakeElement {
   setAttribute(name, value) {
     this.attributes.set(name, String(value));
   }
+}
+
+function createGalleryItem(document, index, width, height) {
+  const item = new FakeElement(document, {
+    tagName: "button",
+    dataset: { full: `full-${index}.webp` },
+  });
+  const image = new FakeElement(document, {
+    attributes: {
+      height: String(height),
+      sizes: "50vw",
+      src: `thumb-${index}.webp`,
+      srcset: `thumb-${index}-small.webp 480w, thumb-${index}.webp ${width}w`,
+      width: String(width),
+    },
+    parentElement: item,
+    tagName: "img",
+  });
+  item.queryMap.set("img", image);
+  item.queryAllMap.set("img", [image]);
+  return { image, item };
 }
 
 function createTimerHarness() {
@@ -195,6 +237,10 @@ function createHarness(initialHash = "#overview", options = {}) {
   const windowListeners = new Map();
   const documentListeners = new Map();
   const mutationObservers = [];
+  const resizeObservers = [];
+  const pageSizeKinds = [];
+  const prefetchedImages = [];
+  let stageChangeCount = 0;
   let declarativeGallery = null;
   const document = {
     activeElement: null,
@@ -206,6 +252,9 @@ function createHarness(initialHash = "#overview", options = {}) {
       documentListeners.set(type, listeners);
     },
     dispatchEvent(event) {
+      if (event.type === "portfolio:stagechange") {
+        stageChangeCount += 1;
+      }
       (documentListeners.get(event.type) || []).slice().forEach((listener) => listener(event));
       return true;
     },
@@ -364,9 +413,27 @@ function createHarness(initialHash = "#overview", options = {}) {
       this.targets.push(target);
     }
   }
+  class ResizeObserver {
+    constructor(callback) {
+      this.callback = callback;
+      this.targets = [];
+      resizeObservers.push(this);
+    }
+
+    observe(target) {
+      this.targets.push(target);
+    }
+  }
+  class Image {
+    set src(value) {
+      prefetchedImages.push(String(value));
+    }
+  }
   const window = {
     CustomEvent,
+    Image,
     MutationObserver,
+    ResizeObserver,
     document,
     history,
     innerHeight: 844,
@@ -376,9 +443,22 @@ function createHarness(initialHash = "#overview", options = {}) {
       formatHash(view, page) {
         return `#${view}${page > 1 ? `-p${page}` : ""}`;
       },
-      getPageSize() {
+      getPageSize(kind) {
+        pageSizeKinds.push(kind);
         return options.pageSize || 1;
       },
+      ...(options.layoutFromBounds ? {
+        getGalleryLayout(kind, _width, _height, bounds) {
+          pageSizeKinds.push(kind);
+          return {
+            columns: 1,
+            itemHeight: bounds.height,
+            itemWidth: Math.min(bounds.width, bounds.height),
+            kind,
+            pageSize: 1,
+          };
+        },
+      } : {}),
     },
     addEventListener(type, listener) {
       const listeners = windowListeners.get(type) || [];
@@ -406,10 +486,15 @@ function createHarness(initialHash = "#overview", options = {}) {
     next,
     pager,
     panels,
+    pageSizeKinds,
+    prefetchedImages,
     previous,
     rail,
     railToggle,
     status,
+    get stageChangeCount() {
+      return stageChangeCount;
+    },
     tabs,
     taskLinks,
     timers,
@@ -417,6 +502,11 @@ function createHarness(initialHash = "#overview", options = {}) {
     window,
     flushMutations(target = declarativeGallery) {
       mutationObservers
+        .filter((observer) => observer.targets.includes(target))
+        .forEach((observer) => observer.callback([{ target }]));
+    },
+    flushResize(target = declarativeGallery) {
+      resizeObservers
         .filter((observer) => observer.targets.includes(target))
         .forEach((observer) => observer.callback([{ target }]));
     },
@@ -483,6 +573,27 @@ assert.strictEqual(
   "declarative production galleries should auto-register with the detail controller",
 );
 
+const resizeHarness = createHarness("#horizontal", {
+  declarativeGallery: true,
+  layoutFromBounds: true,
+});
+assert.strictEqual(resizeHarness.declarativeGallery.style.getPropertyValue("--stage-item-height"), "300px");
+resizeHarness.declarativeGallery.rect.height = 70;
+resizeHarness.flushResize();
+assert.strictEqual(
+  resizeHarness.declarativeGallery.style.getPropertyValue("--stage-item-height"),
+  "70px",
+  "registered galleries should recompute item geometry when fonts or headers change their available height",
+);
+
+const refreshEventCount = resizeHarness.stageChangeCount;
+resizeHarness.window.DetailStage.refreshGallery("horizontal");
+assert.strictEqual(
+  resizeHarness.stageChangeCount,
+  refreshEventCount,
+  "refreshing the active gallery should not recursively broadcast another stage change",
+);
+
 const lateGalleryHarness = createHarness("#horizontal-p2", {
   declarativeGallery: true,
   declarativeGalleryItems: 0,
@@ -531,6 +642,72 @@ const horizontalRoot = new FakeElement(harness.document);
 horizontalRoot.queryAllMap.set(".item", horizontalItems);
 harness.window.DetailStage.registerGallery("horizontal", horizontalRoot, { kind: "horizontal", itemSelector: ".item" });
 assert.strictEqual(harness.status.textContent, "02 / 04", "late gallery registration should restore the requested page");
+
+const loadingHarness = createHarness("#horizontal", { pageSize: 2 });
+const loadingRecords = Array.from(
+  { length: 5 },
+  (_, index) => createGalleryItem(loadingHarness.document, index + 1, 400, 225),
+);
+const loadingRoot = new FakeElement(loadingHarness.document, {
+  rect: { height: 240, width: 640 },
+});
+loadingRoot.queryAllMap.set(".item", loadingRecords.map((record) => record.item));
+loadingHarness.window.DetailStage.registerGallery(
+  "horizontal",
+  loadingRoot,
+  { kind: "horizontal", itemSelector: ".item" },
+);
+loadingRecords.forEach(({ image, item }, index) => {
+  const visible = index < 2;
+  assert.strictEqual(item.hidden, !visible, `item ${index + 1} should match the current page`);
+  assert.strictEqual(item.hasAttribute("inert"), !visible, `item ${index + 1} inert state should match visibility`);
+  assert.strictEqual(item.getAttribute("aria-hidden"), visible ? null : "true");
+  assert.strictEqual(
+    image.getAttribute("src"),
+    visible ? `thumb-${index + 1}.webp` : null,
+    `item ${index + 1} should only keep a thumbnail URL while visible`,
+  );
+});
+assert.deepStrictEqual(
+  loadingHarness.prefetchedImages,
+  ["thumb-3.webp", "thumb-4.webp"],
+  "registration should prefetch only the bounded next page of thumbnails",
+);
+assert.ok(
+  loadingHarness.prefetchedImages.every((source) => !source.startsWith("full-")),
+  "pagination must not prefetch full Lightbox sources",
+);
+
+loadingHarness.next.click();
+assert.strictEqual(loadingRecords[0].image.getAttribute("src"), null);
+assert.strictEqual(loadingRecords[2].image.getAttribute("src"), "thumb-3.webp");
+assert.strictEqual(loadingRecords[3].image.getAttribute("src"), "thumb-4.webp");
+assert.strictEqual(loadingRecords[4].image.getAttribute("src"), null);
+assert.strictEqual(
+  loadingHarness.prefetchedImages.at(-1),
+  "thumb-5.webp",
+  "moving pages should prefetch only the following page",
+);
+
+const mixedHarness = createHarness("#horizontal", { pageSize: 2 });
+const mixedRecords = [
+  createGalleryItem(mixedHarness.document, 1, 600, 900),
+  createGalleryItem(mixedHarness.document, 2, 600, 900),
+  createGalleryItem(mixedHarness.document, 3, 600, 900),
+  createGalleryItem(mixedHarness.document, 4, 1200, 675),
+];
+const mixedRoot = new FakeElement(mixedHarness.document);
+mixedRoot.queryAllMap.set(".item", mixedRecords.map((record) => record.item));
+mixedHarness.window.DetailStage.registerGallery(
+  "horizontal",
+  mixedRoot,
+  { kind: "mixed", itemSelector: ".item" },
+);
+assert.strictEqual(
+  mixedHarness.pageSizeKinds.at(-1),
+  "vertical",
+  "mixed galleries with a portrait majority should use vertical sizing",
+);
 
 harness.tabs[2].click();
 assert.strictEqual(harness.location.hash, "#vertical", "tab clicks should push the selected view hash");

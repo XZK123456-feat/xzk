@@ -157,6 +157,7 @@
 
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const galleries = new Map();
+  const galleryViewByRoot = new Map();
   const limits = {};
   const pagesByView = Object.fromEntries(allowedViews.map((view) => [view, 1]));
   let desiredState;
@@ -216,12 +217,81 @@
     }
   }
 
-  function renderGallery(gallery, page) {
+  function captureThumbnailSource(image) {
+    if (!image?.getAttribute) {
+      return;
+    }
+
+    const attributes = [
+      ["src", "stageThumbSrc"],
+      ["srcset", "stageThumbSrcset"],
+      ["sizes", "stageThumbSizes"],
+    ];
+    attributes.forEach(([attribute, dataKey]) => {
+      const current = image.getAttribute(attribute);
+      if (current && !image.dataset[dataKey]) {
+        image.dataset[dataKey] = current;
+      }
+    });
+  }
+
+  function thumbnailSource(image, dataKey, attribute) {
+    return image?.dataset?.[dataKey]
+      || image?.getAttribute?.(`data-${dataKey.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}`)
+      || image?.getAttribute?.(attribute)
+      || "";
+  }
+
+  function setThumbnailVisibility(item, visible) {
+    Array.from(item.querySelectorAll?.("img") || []).forEach((image) => {
+      captureThumbnailSource(image);
+      const source = thumbnailSource(image, "stageThumbSrc", "src");
+      const srcset = thumbnailSource(image, "stageThumbSrcset", "srcset");
+      const sizes = thumbnailSource(image, "stageThumbSizes", "sizes");
+
+      if (visible) {
+        if (source) image.setAttribute("src", source);
+        if (srcset) image.setAttribute("srcset", srcset);
+        if (sizes) image.setAttribute("sizes", sizes);
+      } else {
+        image.removeAttribute("src");
+        image.removeAttribute("srcset");
+        image.removeAttribute("sizes");
+      }
+    });
+  }
+
+  function prefetchNextPage(gallery, lastIndex) {
+    if (typeof window.Image !== "function" || lastIndex >= gallery.items.length) {
+      return;
+    }
+
+    const prefetchEnd = Math.min(lastIndex + gallery.pageSize, gallery.items.length);
+    for (let index = lastIndex; index < prefetchEnd; index += 1) {
+      Array.from(gallery.items[index].querySelectorAll?.("img") || []).forEach((image) => {
+        captureThumbnailSource(image);
+        const source = thumbnailSource(image, "stageThumbSrc", "src");
+        if (!source || gallery.prefetched.has(source)) {
+          return;
+        }
+        gallery.prefetched.add(source);
+        const preload = new window.Image();
+        preload.src = source;
+      });
+    }
+  }
+
+  function renderGallery(gallery, page, loadThumbnails = gallery.viewId === appliedState?.view) {
     const firstIndex = (page - 1) * gallery.pageSize;
     const lastIndex = firstIndex + gallery.pageSize;
     gallery.items.forEach((item, index) => {
-      setElementVisibility(item, index >= firstIndex && index < lastIndex);
+      const visible = index >= firstIndex && index < lastIndex;
+      setElementVisibility(item, visible);
+      setThumbnailVisibility(item, visible && loadThumbnails);
     });
+    if (loadThumbnails) {
+      prefetchNextPage(gallery, lastIndex);
+    }
     gallery.page = page;
   }
 
@@ -245,7 +315,7 @@
     }));
   }
 
-  function applyState(state) {
+  function applyState(state, { notify = true } = {}) {
     const normalized = reduce(state, { type: "SET_PAGE", page: state.page }, limits);
     if (appliedState && !statesEqual(appliedState, normalized)) {
       pauseAllVideos();
@@ -267,13 +337,15 @@
 
     const gallery = galleries.get(normalized.view);
     if (gallery) {
-      renderGallery(gallery, normalized.page);
+      renderGallery(gallery, normalized.page, true);
     }
     renderPager(normalized);
     pagesByView[normalized.view] = normalized.page;
     desiredState = normalized;
     appliedState = normalized;
-    dispatchStageChange(normalized);
+    if (notify) {
+      dispatchStageChange(normalized);
+    }
   }
 
   function cancelWipe() {
@@ -391,12 +463,62 @@
     }
   }
 
+  function imageDimensions(gallery) {
+    return gallery.items.flatMap((item) => (
+      Array.from(item.querySelectorAll?.("img") || []).map((image) => ({
+        height: Number(image.naturalHeight || image.getAttribute?.("height") || 0),
+        width: Number(image.naturalWidth || image.getAttribute?.("width") || 0),
+      }))
+    ));
+  }
+
+  function resolvedGalleryKind(gallery) {
+    const dimensions = imageDimensions(gallery);
+    if (typeof window.PortfolioStage.resolveGalleryKind === "function") {
+      return window.PortfolioStage.resolveGalleryKind(gallery.kind || gallery.viewId, dimensions);
+    }
+    if (gallery.kind !== "mixed") {
+      return gallery.kind || gallery.viewId;
+    }
+    const portraits = dimensions.filter(({ height, width }) => height > width && width > 0).length;
+    return dimensions.length > 0 && portraits > dimensions.length / 2 ? "vertical" : "horizontal";
+  }
+
+  function representativeAspectRatio(gallery) {
+    if (gallery.kind !== "mixed") {
+      return undefined;
+    }
+    const ratios = imageDimensions(gallery)
+      .filter(({ height, width }) => height > 0 && width > 0)
+      .map(({ height, width }) => width / height)
+      .sort((left, right) => left - right);
+    return ratios.length > 0 ? ratios[Math.floor(ratios.length / 2)] : undefined;
+  }
+
   function pageSizeFor(gallery) {
-    const size = Number(window.PortfolioStage.getPageSize(
-      gallery.kind || gallery.viewId,
+    const kind = resolvedGalleryKind(gallery);
+    const rect = gallery.root.getBoundingClientRect?.() || {};
+    const bounds = {
+      aspectRatio: representativeAspectRatio(gallery),
+      height: Number(rect.height) || undefined,
+      width: Number(rect.width) || undefined,
+    };
+    const layout = typeof window.PortfolioStage.getGalleryLayout === "function"
+      ? window.PortfolioStage.getGalleryLayout(kind, window.innerWidth, window.innerHeight, bounds)
+      : null;
+    const size = Number(layout?.pageSize || window.PortfolioStage.getPageSize(
+      kind,
       window.innerWidth,
       window.innerHeight,
+      bounds,
     ));
+    gallery.resolvedKind = layout?.kind || kind;
+    gallery.root.dataset.stageLayoutKind = gallery.resolvedKind;
+    gallery.root.style?.setProperty("--stage-gallery-columns", String(layout?.columns || size || 1));
+    if (layout?.itemWidth) {
+      gallery.root.style.setProperty("--stage-item-width", `${layout.itemWidth}px`);
+      gallery.root.style.setProperty("--stage-item-height", `${layout.itemHeight}px`);
+    }
     return Number.isInteger(size) && size >= 1 ? size : 1;
   }
 
@@ -426,11 +548,11 @@
         type: "SET_PAGE",
         page: requestedPage,
       }, limits);
-      applyState(desiredState);
+      applyState(desiredState, { notify: false });
       writeHistory(desiredState, "replace");
     } else {
       gallery.page = Math.min(Math.max(gallery.page || 1, 1), gallery.pageCount);
-      renderGallery(gallery, gallery.page);
+      renderGallery(gallery, gallery.page, isAppliedView);
     }
     return true;
   }
@@ -450,9 +572,24 @@
       page: 1,
       pageSize: 1,
       pageCount: 1,
+      prefetched: new Set(),
+      resolvedKind: String(options.kind || view),
     });
+    galleryViewByRoot.set(galleryRoot, view);
+    galleryResizeObserver?.observe(galleryRoot);
     return refreshGallery(view, false);
   }
+
+  const galleryResizeObserver = typeof window.ResizeObserver === "function"
+    ? new window.ResizeObserver((entries) => {
+      entries.forEach((entry) => {
+        const view = galleryViewByRoot.get(entry.target);
+        if (view) {
+          refreshGallery(view, true);
+        }
+      });
+    })
+    : null;
 
   function registerDeclarativeGalleries() {
     panels.forEach((panel) => {

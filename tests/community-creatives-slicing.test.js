@@ -34,7 +34,10 @@ assert.ok(html.includes("#lili-tangquan"), "NO.3 nav should link to the lili tan
 assert.ok(js.includes("sourceGroups"), "NO.3 detail script should render thumbnails from a source manifest");
 assert.ok(js.includes(".detail-shot-label"), "generated NO.3 thumbnails should keep the lightbox caption hook");
 assert.ok(js.includes('loading="lazy" decoding="async"'), "generated NO.3 thumbnails should be lazy and async decoded");
-assert.ok(js.includes("IntersectionObserver"), "NO.3 galleries should render only when their section is near the viewport");
+assert.ok(js.includes("portfolio:stagechange"), "NO.3 galleries should render when their hidden stage panel becomes active");
+assert.ok(!js.includes("IntersectionObserver"), "NO.3 gallery rendering should not depend on hidden-panel intersection");
+assert.ok(js.includes("DetailStage?.registerGallery(group.key"), "NO.3 galleries should register after batched rendering");
+assert.ok(js.includes('kind: "mixed"'), "NO.3 galleries should derive layout from their image orientations");
 assert.ok(js.includes("RENDER_BATCH_SIZE"), "NO.3 galleries should render thumbnails in batches");
 
 groups.forEach(([folder, label, count]) => {

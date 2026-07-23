@@ -97,7 +97,7 @@ videoFiles.forEach((file) => {
 const script = read("script.js");
 const swPath = path.join(root, "sw.js");
 assert.ok(fs.existsSync(swPath), "service worker should exist");
-assert.ok(script.includes('navigator.serviceWorker.register("sw.js?v=click-stage-2")'), "shared script should register the versioned service worker");
+assert.ok(script.includes('navigator.serviceWorker.register("sw.js?v=click-stage-5")'), "shared script should register the versioned service worker");
 const serviceWorker = read("sw.js");
 assert.ok(serviceWorker.includes("staleWhileRevalidate"), "service worker should cache repeat static requests");
 assert.ok(serviceWorker.includes("networkFirst"), "service worker should keep HTML network-first");

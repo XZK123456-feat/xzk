@@ -134,10 +134,11 @@ function renderLightboxStrip(previews, currentIndex) {
   previews.forEach((preview, index) => {
     const image = preview.querySelector("img");
     const thumb = document.createElement("button");
+    const thumbSource = image?.currentSrc || image?.getAttribute("src") || "";
     thumb.className = `lightbox-thumb${index === currentIndex ? " active" : ""}`;
     thumb.type = "button";
     thumb.setAttribute("aria-label", `切换到${preview.querySelector(".detail-shot-label")?.textContent || image?.alt || "作品"}`);
-    thumb.innerHTML = `<img src="${image?.currentSrc || image?.src || ""}" alt="" /><span>${String(index + 1).padStart(2, "0")}</span>`;
+    thumb.innerHTML = `${thumbSource ? `<img src="${thumbSource}" alt="" />` : ""}<span>${String(index + 1).padStart(2, "0")}</span>`;
     thumb.addEventListener("click", () => openPreview(preview));
     lightboxStrip.append(thumb);
   });
@@ -185,6 +186,28 @@ function openPreview(button) {
 
 previewButtons.forEach((button) => {
   button.addEventListener("click", () => openPreview(button));
+});
+
+const mobileGallery = document.querySelector(".mobile-gallery");
+const pcGallery = document.querySelector(".pc-gallery");
+
+if (mobileGallery?.querySelector("[data-detail-preview]")) {
+  window.DetailStage?.registerGallery("mobile", mobileGallery, {
+    kind: "vertical",
+  });
+}
+if (pcGallery?.querySelector("[data-detail-preview]")) {
+  window.DetailStage?.registerGallery("pc", pcGallery, {
+    kind: "horizontal",
+  });
+}
+
+document.addEventListener("portfolio:stagechange", (event) => {
+  if (event.detail?.view === "mobile") {
+    window.DetailStage?.refreshGallery("mobile");
+  } else if (event.detail?.view === "pc") {
+    window.DetailStage?.refreshGallery("pc");
+  }
 });
 
 closeButton?.addEventListener("click", closePreview);

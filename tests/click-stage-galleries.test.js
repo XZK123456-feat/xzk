@@ -14,9 +14,9 @@ const pages = {
       ["pc", "PC 端"],
       ["vibecoding", "VibeCoding"],
     ],
-    galleries: [
-      ["mobile", "vertical", "[data-detail-preview]"],
-      ["pc", "horizontal", "[data-detail-preview]"],
+    scriptGalleries: [
+      ["mobile", "vertical"],
+      ["pc", "horizontal"],
     ],
   },
   "ua-creatives.html": {
@@ -28,10 +28,10 @@ const pages = {
       ["vertical", "竖图素材"],
       ["nine-grid", "九图素材"],
     ],
-    galleries: [
-      ["horizontal", "horizontal", "[data-detail-preview]"],
-      ["vertical", "vertical", "[data-detail-preview]"],
-      ["nine-grid", "vertical", "[data-detail-preview]"],
+    scriptGalleries: [
+      ["horizontal", "horizontal"],
+      ["vertical", "vertical"],
+      ["nine-grid", "square"],
     ],
   },
   "community-creatives.html": {
@@ -43,10 +43,10 @@ const pages = {
       ["ulala-all", "不休的乌拉拉"],
       ["lili-tangquan", "狸狸汤泉"],
     ],
-    galleries: [
-      ["party-all", "vertical", "[data-detail-preview]"],
-      ["ulala-all", "vertical", "[data-detail-preview]"],
-      ["lili-tangquan", "vertical", "[data-detail-preview]"],
+    scriptGalleries: [
+      ["party-all", "mixed"],
+      ["ulala-all", "mixed"],
+      ["lili-tangquan", "mixed"],
     ],
   },
   "video-design.html": {
@@ -57,7 +57,7 @@ const pages = {
       ["community-video", "运营社群视频"],
       ["video", "买量视频混剪"],
     ],
-    galleries: [
+    declarativeGalleries: [
       ["community-video", "video", ".community-video-card"],
     ],
   },
@@ -93,7 +93,7 @@ Object.entries(pages).forEach(([file, contract]) => {
     assert.ok(tab.includes(`>${label}</a>`), `${file} ${view} should use the required label`);
   });
 
-  contract.galleries.forEach(([view, kind, itemSelector]) => {
+  (contract.declarativeGalleries || []).forEach(([view, kind, itemSelector]) => {
     const gallery = html.match(new RegExp(`<[^>]+\\bdata-stage-gallery="${view}"[^>]*>`))?.[0] || "";
     assert.ok(gallery, `${file} should declaratively register the ${view} gallery`);
     assert.match(
@@ -106,6 +106,14 @@ Object.entries(pages).forEach(([file, contract]) => {
       `${file} ${view} should declare its paged item selector`,
     );
   });
+
+  if (contract.scriptGalleries) {
+    assert.doesNotMatch(
+      html,
+      /\bdata-stage-gallery(?:=|\s)/,
+      `${file} should leave registration to its page script without declarative duplicates`,
+    );
+  }
 
   assert.match(
     html,
@@ -124,30 +132,77 @@ Object.entries(pages).forEach(([file, contract]) => {
   assert.strictEqual((html.match(/\bclass="[^"]*\bdetail-directory\b[^"]*"/g) || []).length, 1, `${file} should not retain a second standalone directory`);
   assert.ok(html.includes(`class="brand-pill back-brand" href="${contract.back}"`), `${file} should use the mission-specific top back target`);
   assert.ok(html.includes(`class="back-link" href="${contract.back}"`) || file === "video-design.html", `${file} should use the mission-specific section back target`);
-  assert.ok(html.includes('href="click-stage.css?v=click-stage-4"'), `${file} should request click-stage.css release 4`);
-  assert.ok(html.includes('src="click-stage.js?v=click-stage-2"'), `${file} should preserve the shared utility release`);
+  assert.ok(html.includes('href="click-stage.css?v=click-stage-5"'), `${file} should request click-stage.css release 5`);
+  assert.ok(html.includes('src="click-stage.js?v=click-stage-5"'), `${file} should request click-stage.js release 5`);
   assert.ok(
-    html.indexOf('src="detail-stage.js?v=click-stage-4"') > html.indexOf('src="click-stage.js?v=click-stage-2"'),
+    html.indexOf('src="detail-stage.js?v=click-stage-5"') > html.indexOf('src="click-stage.js?v=click-stage-5"'),
     `${file} should load detail-stage.js after click-stage.js`,
   );
 
   const pageSpecificScript = html.search(/src="(?:website-design|ua-creatives|community-creatives)\.js\?/);
   if (pageSpecificScript >= 0) {
     assert.ok(
-      html.indexOf('src="detail-stage.js?v=click-stage-4"') < pageSpecificScript,
+      html.indexOf('src="detail-stage.js?v=click-stage-5"') < pageSpecificScript,
       `${file} should initialize the stage before its gallery script`,
     );
   }
 });
 
 const homepage = read("index.html");
-assert.ok(homepage.includes('href="click-stage.css?v=click-stage-4"'), "index.html should request click-stage.css release 4");
-assert.ok(homepage.includes('src="click-stage.js?v=click-stage-2"'), "index.html should keep click-stage.js release 2");
+assert.ok(homepage.includes('href="click-stage.css?v=click-stage-5"'), "index.html should request click-stage.css release 5");
+assert.ok(homepage.includes('src="click-stage.js?v=click-stage-5"'), "index.html should request click-stage.js release 5");
 assert.ok(homepage.includes('src="home-stage.js?v=click-stage-2"'), "index.html should keep home-stage.js release 2");
+
+const websiteScript = read("website-design.js");
+const uaScript = read("ua-creatives.js");
+const communityScript = read("community-creatives.js");
+
+assert.match(websiteScript, /DetailStage\?\.registerGallery\("mobile"[\s\S]*?kind:\s*"vertical"/);
+assert.match(websiteScript, /DetailStage\?\.registerGallery\("pc"[\s\S]*?kind:\s*"horizontal"/);
+assert.doesNotMatch(
+  websiteScript,
+  /registerGallery\("vibecoding"/,
+  "the placeholder-only VibeCoding panel must not be registered as an empty gallery",
+);
+assert.match(websiteScript, /portfolio:stagechange/, "website galleries should refresh after their panel becomes measurable");
+
+assert.match(uaScript, /portfolio:stagechange/, "UA galleries should render from stage activation");
+assert.match(uaScript, /DetailStage\?\.registerGallery\(configKey/);
+assert.match(uaScript, /DetailStage\?\.refreshGallery\(configKey\)/);
+assert.match(uaScript, /configKey === "nine-grid"\s*\?\s*"square"/);
+assert.doesNotMatch(
+  uaScript,
+  /IntersectionObserver/,
+  "hidden UA panels must not rely on viewport intersection to render",
+);
+
+assert.match(communityScript, /portfolio:stagechange/, "community galleries should render from stage activation");
+assert.match(communityScript, /DetailStage\?\.registerGallery\(group\.key[\s\S]*?kind:\s*"mixed"/);
+assert.match(communityScript, /DetailStage\?\.refreshGallery\(group\.key\)/);
+assert.doesNotMatch(
+  communityScript,
+  /IntersectionObserver/,
+  "hidden community panels must not rely on viewport intersection to render",
+);
+
+[uaScript, communityScript].forEach((script) => {
+  assert.match(script, /data-stage-thumb-src/, "generated images should defer thumbnail URLs to the stage controller");
+  assert.match(script, /data-stage-thumb-srcset/, "generated responsive thumbnails should be restored only when visible");
+});
 
 const css = read("click-stage.css");
 assert.match(css, /body\.stage-ready \[data-detail-stage\]\s*\{[^}]*position:\s*fixed;[^}]*display:\s*grid;[^}]*grid-template-rows:[^;}]*minmax\(0,\s*1fr\)[^;}]*;/s);
 assert.match(css, /body\.stage-ready \[data-stage-view\]\s*\{[^}]*min-width:\s*0;[^}]*min-height:\s*0;[^}]*overflow:\s*hidden;/s);
+assert.match(
+  css,
+  /body\.stage-ready \[data-stage-view\] \.detail-board\s*\{[^}]*display:\s*grid;[^}]*grid-template-rows:\s*auto auto minmax\(0,\s*1fr\);/s,
+  "gallery boards should reserve a bounded row for thumbnails",
+);
+assert.match(
+  css,
+  /body\.stage-ready \[data-stage-view\] \.detail-gallery\s*\{[^}]*height:\s*100%;[^}]*grid-template-columns:\s*repeat\(var\(--stage-gallery-columns\),\s*var\(--stage-item-width\)\);/s,
+  "measured gallery dimensions should drive a centered contained grid",
+);
 assert.match(css, /body\.stage-ready \[data-task-rail\][\s\S]*?width:\s*34px;/);
 assert.match(css, /max-width:\s*220px;/, "expanded mobile task rail should stay compact");
 assert.match(

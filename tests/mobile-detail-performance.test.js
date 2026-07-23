@@ -23,11 +23,13 @@ assert.ok(css.includes(".lightbox-strip {\n    max-width: calc(100vw - 24px);"),
 assert.ok(css.includes(".lightbox-meta {\n    max-width: calc(100vw - 24px);"), "mobile lightbox metadata should fit within the viewport");
 assert.ok(css.includes(".website-lightbox .lightbox-close {\n    right: 12px;"), "mobile lightbox close button should stay inside the viewport");
 
-assert.ok(uaJs.includes("IntersectionObserver"), "NO.2 should defer gallery rendering until near viewport");
+assert.ok(uaJs.includes("portfolio:stagechange"), "NO.2 should defer gallery rendering until its stage category is selected");
+assert.ok(!uaJs.includes("IntersectionObserver"), "NO.2 hidden stage panels should not depend on viewport intersection");
 assert.ok(uaJs.includes("RENDER_BATCH_SIZE"), "NO.2 should batch large gallery rendering");
 assert.ok(uaJs.includes('loading="lazy" decoding="async"'), "NO.2 generated thumbnails should use lazy loading");
 
-assert.ok(communityJs.includes("IntersectionObserver"), "NO.3 should defer gallery rendering until near viewport");
+assert.ok(communityJs.includes("portfolio:stagechange"), "NO.3 should defer gallery rendering until its stage category is selected");
+assert.ok(!communityJs.includes("IntersectionObserver"), "NO.3 hidden stage panels should not depend on viewport intersection");
 assert.ok(communityJs.includes("RENDER_BATCH_SIZE"), "NO.3 should batch large gallery rendering");
 assert.ok(communityJs.includes('loading="lazy" decoding="async"'), "NO.3 generated thumbnails should use lazy loading");
 

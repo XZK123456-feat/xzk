@@ -38,7 +38,10 @@ assert.ok(js.includes("九图6") && js.includes("count: 1"), "extra nine-grid so
 assert.ok(js.includes("九图7") && js.includes("count: 1"), "extra nine-grid source should render as one grouped thumbnail");
 assert.ok(js.includes(".detail-shot-label"), "generated thumbnails should keep the lightbox caption hook");
 assert.ok(js.includes('loading="lazy" decoding="async"'), "generated thumbnails should be lazy and async decoded");
-assert.ok(js.includes("IntersectionObserver"), "UA galleries should render only when their section is near the viewport");
+assert.ok(js.includes("portfolio:stagechange"), "UA galleries should render when their hidden stage panel becomes active");
+assert.ok(!js.includes("IntersectionObserver"), "UA gallery rendering should not depend on hidden-panel intersection");
+assert.ok(js.includes("DetailStage?.registerGallery(configKey"), "UA galleries should register after batched rendering");
+assert.ok(js.includes('configKey === "nine-grid" ? "square"'), "nine-grid work should use square pagination geometry");
 assert.ok(js.includes("RENDER_BATCH_SIZE"), "UA galleries should render thumbnails in batches");
 assert.ok(
   css.includes(".ua-horizontal-gallery {\n  width: 100%;\n  grid-template-columns: repeat(auto-fit, minmax(clamp(190px, 17vw, 270px), 1fr));"),
