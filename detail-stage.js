@@ -456,7 +456,15 @@
 
     const stored = event?.type === "popstate" ? readStoredState(event.state) : null;
     const restored = stored || parse(window.location.hash, allowedViews, defaultView);
-    desiredState = reduce(restored, { type: "SET_PAGE", page: restored.page }, limits);
+    const normalized = reduce(restored, { type: "SET_PAGE", page: restored.page }, limits);
+    const shouldCanonicalize = !stored && window.location.hash !== format(normalized);
+    desiredState = normalized;
+    if (appliedState && statesEqual(appliedState, normalized)) {
+      if (shouldCanonicalize) {
+        writeHistory(normalized, "replace");
+      }
+      return;
+    }
     applyState(desiredState);
     if (!stored) {
       writeHistory(desiredState, "replace");
@@ -539,19 +547,21 @@
     gallery.pageSize = pageSizeFor(gallery);
     gallery.pageCount = Math.max(1, Math.ceil(gallery.items.length / gallery.pageSize));
     limits[gallery.viewId] = gallery.pageCount;
+    const requestedPage = preserveFirst
+      ? Math.floor(firstVisibleIndex / gallery.pageSize) + 1
+      : (canApplyGallery ? desiredState.page : pagesByView[gallery.viewId] || gallery.page);
+    const remappedPage = Math.min(Math.max(requestedPage || 1, 1), gallery.pageCount);
+    gallery.page = remappedPage;
+    pagesByView[gallery.viewId] = remappedPage;
 
     if (canApplyGallery) {
-      const requestedPage = preserveFirst
-        ? Math.floor(firstVisibleIndex / gallery.pageSize) + 1
-        : desiredState.page;
       desiredState = reduce(desiredState, {
         type: "SET_PAGE",
-        page: requestedPage,
+        page: remappedPage,
       }, limits);
       applyState(desiredState, { notify: false });
       writeHistory(desiredState, "replace");
     } else {
-      gallery.page = Math.min(Math.max(gallery.page || 1, 1), gallery.pageCount);
       renderGallery(gallery, gallery.page, isAppliedView);
     }
     return true;

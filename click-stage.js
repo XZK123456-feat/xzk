@@ -63,7 +63,7 @@
       Number(bounds.height) || Math.max(1, viewportHeight - (viewportWidth <= 620 ? 184 : 220)),
     );
     const gap = 10;
-    const forceSingle = viewportWidth <= 900 || viewportHeight <= 700;
+    const forceSingle = viewportWidth <= 900;
     let columns = 1;
 
     if (!forceSingle) {

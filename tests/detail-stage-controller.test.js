@@ -436,16 +436,16 @@ function createHarness(initialHash = "#overview", options = {}) {
     ResizeObserver,
     document,
     history,
-    innerHeight: 844,
-    innerWidth: 390,
+    innerHeight: options.initialHeight || 844,
+    innerWidth: options.initialWidth || 390,
     location,
     PortfolioStage: {
       formatHash(view, page) {
         return `#${view}${page > 1 ? `-p${page}` : ""}`;
       },
-      getPageSize(kind) {
+      getPageSize(kind, width, height) {
         pageSizeKinds.push(kind);
-        return options.pageSize || 1;
+        return options.pageSizeForViewport?.(kind, width, height) || options.pageSize || 1;
       },
       ...(options.layoutFromBounds ? {
         getGalleryLayout(kind, _width, _height, bounds) {
@@ -531,6 +531,11 @@ function createHarness(initialHash = "#overview", options = {}) {
         ".website-lightbox.is-open, .resume-overlay.is-open, [role=\"dialog\"].is-open",
         open ? lightbox : null,
       );
+    },
+    resize(width, height) {
+      window.innerWidth = width;
+      window.innerHeight = height;
+      dispatchWindow({ type: "resize" });
     },
     keydown(key, target = body) {
       return document.dispatchEvent({
@@ -730,7 +735,13 @@ assert.strictEqual(harness.status.textContent, "01 / 02", "popstate should resto
 harness.history.forward();
 assert.strictEqual(harness.location.hash, "#vertical-p2");
 assert.strictEqual(harness.status.textContent, "02 / 02", "forward navigation should restore the exact stored page");
+const stageChangesBeforeBack = harness.stageChangeCount;
 harness.history.back();
+assert.strictEqual(
+  harness.stageChangeCount,
+  stageChangesBeforeBack + 1,
+  "one history traversal should restore and broadcast the target state only once",
+);
 harness.history.manualHash("#not-a-real-view-p8");
 assert.strictEqual(harness.location.hash, "#overview", "invalid manual hashes should safely replace with the fallback");
 assert.strictEqual(harness.panels[0].hidden, false);
@@ -792,6 +803,48 @@ assert.strictEqual(
 assert.deepStrictEqual(memoryHarness.history.state, {
   portfolioDetailState: { view: "horizontal", page: 2 },
 });
+
+const hiddenResizeHarness = createHarness("#horizontal", {
+  initialHeight: 900,
+  initialWidth: 1440,
+  pageSizeForViewport(_kind, width) {
+    return width > 900 ? 3 : 1;
+  },
+});
+const hiddenResizeHorizontalItems = Array.from(
+  { length: 12 },
+  () => new FakeElement(hiddenResizeHarness.document, { tagName: "button" }),
+);
+const hiddenResizeHorizontalRoot = new FakeElement(hiddenResizeHarness.document);
+hiddenResizeHorizontalRoot.queryAllMap.set(".item", hiddenResizeHorizontalItems);
+hiddenResizeHarness.window.DetailStage.registerGallery(
+  "horizontal",
+  hiddenResizeHorizontalRoot,
+  { kind: "horizontal", itemSelector: ".item" },
+);
+const hiddenResizeVerticalItems = Array.from(
+  { length: 6 },
+  () => new FakeElement(hiddenResizeHarness.document, { tagName: "button" }),
+);
+const hiddenResizeVerticalRoot = new FakeElement(hiddenResizeHarness.document);
+hiddenResizeVerticalRoot.queryAllMap.set(".item", hiddenResizeVerticalItems);
+hiddenResizeHarness.window.DetailStage.registerGallery(
+  "vertical",
+  hiddenResizeVerticalRoot,
+  { kind: "vertical", itemSelector: ".item" },
+);
+hiddenResizeHarness.next.click();
+assert.strictEqual(hiddenResizeHarness.status.textContent, "02 / 04");
+hiddenResizeHarness.tabs[2].click();
+hiddenResizeHarness.timers.advance(280);
+hiddenResizeHarness.resize(390, 844);
+hiddenResizeHarness.tabs[1].click();
+hiddenResizeHarness.timers.advance(280);
+assert.strictEqual(
+  hiddenResizeHarness.status.textContent,
+  "04 / 12",
+  "a hidden gallery should remap its remembered page to keep the same first artwork after resize",
+);
 
 const pendingPageHarness = createHarness("#overview");
 const pendingHorizontalItems = Array.from(

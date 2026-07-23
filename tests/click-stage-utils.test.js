@@ -60,6 +60,20 @@ assert.strictEqual(
   "measured gallery height should cap the page before thumbnails become unreadably small",
 );
 
+const layoutAt700 = getGalleryLayout("horizontal", 1366, 700, {
+  width: 1146,
+  height: 480,
+});
+const layoutAt701 = getGalleryLayout("horizontal", 1366, 701, {
+  width: 1146,
+  height: 481,
+});
+assert.strictEqual(
+  layoutAt700.pageSize,
+  layoutAt701.pageSize,
+  "a one-pixel viewport-height change must not abruptly change a gallery from one item to a dense row",
+);
+
 assert.strictEqual(
   resolveGalleryKind("mixed", [
     { width: 600, height: 900 },

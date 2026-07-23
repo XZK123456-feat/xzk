@@ -801,7 +801,12 @@ function markLoadedImage(image) {
 
 function initImageLoadStates(root = document) {
   root.querySelectorAll(".detail-shot img").forEach((image) => {
-    if (image.complete) {
+    const hasLoadedSource = Boolean(
+      (image.currentSrc || image.getAttribute("src"))
+      && image.complete
+      && image.naturalWidth > 0
+    );
+    if (hasLoadedSource) {
       markLoadedImage(image);
       return;
     }
@@ -1387,6 +1392,6 @@ initCommunityVideoCards();
 
 if ("serviceWorker" in navigator && /^https?:$/.test(window.location.protocol)) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=click-stage-5").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=click-stage-6").catch(() => {});
   });
 }
