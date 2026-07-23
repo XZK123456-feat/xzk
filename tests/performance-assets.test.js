@@ -36,8 +36,8 @@ assert.ok(!css.includes("AlibabaPuHuiTi-3-85-Bold.woff2"), "production CSS shoul
 pages.forEach((page) => {
   const html = read(page);
   assert.ok(html.includes('href="assets/fonts/ZHYuwanPortfolio-subset.woff2"'), `${page} should preload the subset font`);
-  assert.ok(html.includes('styles.css?v=stability-1'), `${page} should cache-bust optimized styles`);
-  assert.ok(html.includes('script.js?v=stability-7'), `${page} should cache-bust optimized scripts`);
+  assert.ok(html.includes('styles.css?v=stability-2'), `${page} should cache-bust optimized styles`);
+  assert.ok(html.includes('script.js?v=stability-8'), `${page} should cache-bust optimized scripts`);
 });
 
 const sourceText = productionSources.map(read).join("\n");
@@ -69,9 +69,11 @@ assert.ok(responsiveSources.includes("sizes="), "responsive thumbnails should te
 assert.ok(responsiveSources.includes("width="), "thumbnail markup should reserve intrinsic width");
 assert.ok(responsiveSources.includes("height="), "thumbnail markup should reserve intrinsic height");
 assert.ok(read("website-design.html").includes("data-full-small="), "static previews should expose a mobile lightbox candidate");
-["website-design.js", "ua-creatives.js", "community-creatives.js"].forEach((file) => {
-  assert.ok(read(file).includes("lightboxImage.srcset"), `${file} should select a responsive lightbox image`);
-});
+assert.ok(
+  read("click-stage.js").includes('"srcset"')
+    && read("click-stage.js").includes('"sizes"'),
+  "the shared Lightbox controller should select a responsive image candidate",
+);
 assert.ok(read("ua-creatives.js").includes("fullSmallSrc"), "dynamic UA previews should expose mobile full-image candidates");
 assert.ok(read("community-creatives.js").includes("fullSmallSrc"), "dynamic community previews should expose mobile full-image candidates");
 
@@ -97,7 +99,7 @@ videoFiles.forEach((file) => {
 const script = read("script.js");
 const swPath = path.join(root, "sw.js");
 assert.ok(fs.existsSync(swPath), "service worker should exist");
-assert.ok(script.includes('navigator.serviceWorker.register("sw.js?v=click-stage-9")'), "shared script should register the versioned service worker");
+assert.ok(script.includes('navigator.serviceWorker.register("sw.js?v=click-stage-10")'), "shared script should register the versioned service worker");
 const serviceWorker = read("sw.js");
 assert.ok(serviceWorker.includes("staleWhileRevalidate"), "service worker should cache repeat static requests");
 assert.ok(serviceWorker.includes("networkFirst"), "service worker should keep HTML network-first");

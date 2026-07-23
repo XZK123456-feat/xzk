@@ -14,24 +14,27 @@ const pages = [
 const detailPages = ["website-design.html", "ua-creatives.html", "community-creatives.html"];
 const detailScripts = ["website-design.js", "ua-creatives.js", "community-creatives.js"];
 const script = read("script.js");
+const clickStage = read("click-stage.js");
 const css = read("styles.css");
 const serviceWorker = read("sw.js");
-const styleRelease = "stability-1";
-const sharedRelease = "stability-7";
-const stageRelease = "click-stage-9";
+const styleRelease = "stability-2";
+const sharedRelease = "stability-8";
+const stageRelease = "click-stage-10";
 
 detailScripts.forEach((file) => {
   const source = read(file);
   assert.ok(!source.includes("encodeURI(fullSmallSource)"), `${file} must not double-encode prepared image URLs`);
   assert.ok(!source.includes("encodeURI(fullSource)"), `${file} must not double-encode prepared image URLs`);
-  assert.ok(source.includes("window.activateModalDialog?.(lightbox, button)"), `${file} should activate shared dialog focus handling`);
-  assert.ok(source.includes("window.deactivateModalDialog?.(lightbox)"), `${file} should restore focus after closing`);
+  assert.ok(source.includes("window.activateModalDialog?.(dialog, opener)"), `${file} should activate shared dialog focus handling`);
+  assert.ok(source.includes("window.deactivateModalDialog?.(dialog)"), `${file} should restore focus after closing`);
+  assert.ok(source.includes("window.PortfolioLightbox?.createController"), `${file} should use the shared Lightbox controller`);
 });
 
 assert.ok(
-  script.includes('lightbox.querySelectorAll(".lightbox-thumb")') && script.includes("findIndex"),
-  "arrow navigation should derive its index from the active lightbox thumbnail",
+  script.includes("lightbox.portfolioLightboxController?.navigate(direction)"),
+  "arrow navigation should delegate to the idempotent shared controller",
 );
+assert.ok(clickStage.includes("getAdjacentSources"), "the shared Lightbox controller should own bounded prefetching");
 assert.ok(script.includes("function activateModalDialog"), "shared script should activate modal semantics and focus containment");
 assert.ok(script.includes("function deactivateModalDialog"), "shared script should restore the opener after closing");
 assert.ok(script.includes("function trapModalFocus"), "shared script should keep Tab navigation inside an open modal");

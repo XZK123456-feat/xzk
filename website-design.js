@@ -7,8 +7,6 @@ const lightboxCounter = lightbox?.querySelector(".lightbox-counter");
 const lightboxStrip = lightbox?.querySelector(".lightbox-strip");
 
 let zoomState = { scale: 1, x: 0, y: 0, dragging: false, lastX: 0, lastY: 0 };
-let lastPreviewIndex = -1;
-const LIGHTBOX_BACKDROP_SAFE_GAP = 28;
 
 function enhanceShotMarkup(button) {
   if (button.querySelector(".detail-shot-frame")) {
@@ -46,58 +44,6 @@ function applyZoom() {
 function resetZoom() {
   zoomState = { scale: 1, x: 0, y: 0, dragging: false, lastX: 0, lastY: 0 };
   applyZoom();
-}
-
-function closePreview() {
-  if (!lightbox) {
-    return;
-  }
-
-  const wasOpen = lightbox.classList.contains("is-open");
-  lightbox.classList.remove("is-open");
-  lightbox.setAttribute("aria-hidden", "true");
-  if (wasOpen) {
-    window.unlockPreviewScroll?.();
-    window.deactivateModalDialog?.(lightbox);
-  }
-  lightbox?.removeAttribute("data-direction");
-  resetZoom();
-}
-
-function isWithinExpandedRect(event, element, gap = 0) {
-  if (!element) {
-    return false;
-  }
-
-  const rect = element.getBoundingClientRect();
-  return (
-    event.clientX >= rect.left - gap &&
-    event.clientX <= rect.right + gap &&
-    event.clientY >= rect.top - gap &&
-    event.clientY <= rect.bottom + gap
-  );
-}
-
-function shouldCloseFromBackdropClick(event) {
-  if (!lightbox || event.defaultPrevented) {
-    return false;
-  }
-
-  if (event.target.closest(".lightbox-image-row, .lightbox-meta, .lightbox-strip, .lightbox-arrow, .lightbox-close")) {
-    return false;
-  }
-
-  const figure = lightbox.querySelector("figure");
-  if (isWithinExpandedRect(event, figure, LIGHTBOX_BACKDROP_SAFE_GAP)) {
-    return false;
-  }
-
-  return event.target === lightbox || !figure;
-}
-
-function getPreviewGroup(button) {
-  const gallery = button.closest(".detail-gallery");
-  return gallery ? Array.from(gallery.querySelectorAll("[data-detail-preview]")) : previewButtons;
 }
 
 function getLightboxStripKey(previews) {
@@ -146,42 +92,35 @@ function renderLightboxStrip(previews, currentIndex) {
   updateLightboxStrip(currentIndex);
 }
 
+const lightboxController = window.PortfolioLightbox?.createController({
+  activateModal: (dialog, opener) => window.activateModalDialog?.(dialog, opener),
+  deactivateModal: (dialog) => window.deactivateModalDialog?.(dialog),
+  image: lightboxImage,
+  lightbox,
+  lockScroll: () => window.lockPreviewScroll?.(),
+  onClose: resetZoom,
+  onRender({ index: currentIndex, item: button, items: previews, presentation }) {
+    resetZoom();
+    lightboxCaption.textContent = button.querySelector(".detail-shot-label")?.textContent || presentation.alt;
+    if (lightboxCounter) {
+      lightboxCounter.textContent = `${String(currentIndex + 1).padStart(2, "0")} / ${String(previews.length).padStart(2, "0")}`;
+    }
+    renderLightboxStrip(previews, currentIndex);
+    lightbox.scrollTop = 0;
+  },
+  unlockScroll: () => window.unlockPreviewScroll?.(),
+});
+
 function openPreview(button) {
-  const image = button.querySelector("img");
+  lightboxController?.open(button);
+}
 
-  if (!lightbox || !lightboxImage || !lightboxCaption || !image) {
-    return;
-  }
+function closePreview() {
+  lightboxController?.close();
+}
 
-  const wasOpen = lightbox.classList.contains("is-open");
-  const previews = getPreviewGroup(button);
-  const currentIndex = Math.max(0, previews.indexOf(button));
-  lightbox.dataset.direction = lastPreviewIndex <= currentIndex ? "next" : "prev";
-  lastPreviewIndex = currentIndex;
-  resetZoom();
-  const fullSource = button.dataset.full || image.currentSrc || image.src;
-  const fullSmallSource = button.dataset.fullSmall;
-  if (fullSmallSource && button.dataset.fullWidth) {
-    lightboxImage.srcset = `${fullSmallSource} 480w, ${fullSource} ${button.dataset.fullWidth}w`;
-    lightboxImage.sizes = "100vw";
-  } else {
-    lightboxImage.removeAttribute("srcset");
-    lightboxImage.removeAttribute("sizes");
-  }
-  lightboxImage.src = fullSource;
-  lightboxImage.alt = image.alt;
-  lightboxCaption.textContent = button.querySelector(".detail-shot-label")?.textContent || image.alt;
-  if (lightboxCounter) {
-    lightboxCounter.textContent = `${String(currentIndex + 1).padStart(2, "0")} / ${String(previews.length).padStart(2, "0")}`;
-  }
-  renderLightboxStrip(previews, currentIndex);
-  lightbox.scrollTop = 0;
-  lightbox.classList.add("is-open");
-  lightbox.setAttribute("aria-hidden", "false");
-  if (!wasOpen) {
-    window.lockPreviewScroll?.();
-    window.activateModalDialog?.(lightbox, button);
-  }
+function shouldCloseFromBackdropClick(event) {
+  return lightboxController?.shouldCloseFromBackdropClick(event) || false;
 }
 
 previewButtons.forEach((button) => {

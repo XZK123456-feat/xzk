@@ -18,6 +18,7 @@ const htmlByPage = Object.fromEntries(
 );
 const css = normalize(fs.readFileSync(path.join(root, "styles.css"), "utf8"));
 const script = normalize(fs.readFileSync(path.join(root, "script.js"), "utf8"));
+const clickStageScript = normalize(fs.readFileSync(path.join(root, "click-stage.js"), "utf8"));
 const websiteScript = normalize(fs.readFileSync(path.join(root, "website-design.js"), "utf8"));
 const uaScript = normalize(fs.readFileSync(path.join(root, "ua-creatives.js"), "utf8"));
 const communityScript = normalize(fs.readFileSync(path.join(root, "community-creatives.js"), "utf8"));
@@ -54,9 +55,7 @@ assert.ok(!script.includes("navigateFrameLocked"), "lightbox arrow navigation sh
 assert.ok(websiteScript.includes("renderLightboxStrip"), "website lightbox should render a thumbnail strip");
 assert.ok(uaScript.includes("renderLightboxStrip"), "UA lightbox should render a thumbnail strip");
 assert.ok(communityScript.includes("renderLightboxStrip"), "community lightbox should render a thumbnail strip");
-assert.ok(websiteScript.includes("lightbox.dataset.direction"), "website lightbox should expose navigation direction for motion");
-assert.ok(uaScript.includes("lightbox.dataset.direction"), "UA lightbox should expose navigation direction for motion");
-assert.ok(communityScript.includes("lightbox.dataset.direction"), "community lightbox should expose navigation direction for motion");
+assert.ok(clickStageScript.includes("lightbox.dataset.direction = direction"), "shared Lightbox should expose navigation direction for motion");
 assert.ok(websiteScript.includes("updateLightboxStrip"), "website lightbox should update thumbnail active state without rebuilding every arrow click");
 assert.ok(uaScript.includes("updateLightboxStrip"), "UA lightbox should update thumbnail active state without rebuilding every arrow click");
 assert.ok(communityScript.includes("updateLightboxStrip"), "community lightbox should update thumbnail active state without rebuilding every arrow click");
@@ -71,15 +70,15 @@ assert.ok(websiteScript.includes("shouldCloseFromBackdropClick"), "website light
 assert.ok(uaScript.includes("shouldCloseFromBackdropClick"), "UA lightbox should use a narrow backdrop close guard");
 assert.ok(communityScript.includes("shouldCloseFromBackdropClick"), "community lightbox should use a narrow backdrop close guard");
 assert.ok(
-  [websiteScript, uaScript, communityScript].every((detailScript) =>
-    detailScript.includes(".lightbox-image-row, .lightbox-meta, .lightbox-strip, .lightbox-arrow, .lightbox-close"),
-  ),
+  clickStageScript.includes(".lightbox-image-row")
+    && clickStageScript.includes(".lightbox-meta")
+    && clickStageScript.includes(".lightbox-strip")
+    && clickStageScript.includes(".lightbox-arrow")
+    && clickStageScript.includes(".lightbox-close"),
   "lightbox backdrop close should exclude the image, controls, metadata, thumbnails, arrows, and close button",
 );
 assert.ok(
-  [websiteScript, uaScript, communityScript].every((detailScript) =>
-    detailScript.includes("LIGHTBOX_BACKDROP_SAFE_GAP"),
-  ),
+  clickStageScript.includes("shouldCloseFromBackdropClick(event, gap = 28)"),
   "lightbox backdrop close should keep a safety gap around the figure content",
 );
 assert.ok(!websiteScript.includes("zoom-hint"), "website lightbox should not render the old zoom hint pill");

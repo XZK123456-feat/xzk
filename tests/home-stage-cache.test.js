@@ -18,15 +18,15 @@ const sharedSource = read("script.js");
 pages.forEach((page) => {
   const html = read(page);
   assert.ok(
-    html.includes('href="click-stage.css?v=click-stage-9"'),
+    html.includes('href="click-stage.css?v=click-stage-10"'),
     `${page} should request click-stage.css with the current stage release`,
   );
   assert.ok(
-    html.includes('src="click-stage.js?v=click-stage-8"'),
+    html.includes('src="click-stage.js?v=click-stage-10"'),
     `${page} should request click-stage.js with the current stage release`,
   );
   assert.ok(
-    html.includes('src="script.js?v=stability-7"'),
+    html.includes('src="script.js?v=stability-8"'),
     `${page} should request script.js with the current shared release`,
   );
 });
@@ -36,22 +36,22 @@ assert.ok(
   "index.html should request home-stage.js with the current stage release",
 );
 assert.ok(
-  sharedSource.includes('navigator.serviceWorker.register("sw.js?v=click-stage-9")'),
+  sharedSource.includes('navigator.serviceWorker.register("sw.js?v=click-stage-10")'),
   "the shared controller should register the current service worker release",
 );
 assert.ok(
-  serviceWorkerSource.includes('const CACHE_VERSION = "zk-portfolio-click-stage-9"'),
+  serviceWorkerSource.includes('const CACHE_VERSION = "zk-portfolio-click-stage-10"'),
   "the service worker should use the current stage cache generation",
 );
 [
-  "./script.js?v=stability-7",
-  "./click-stage.css?v=click-stage-9",
-  "./click-stage.js?v=click-stage-8",
+  "./script.js?v=stability-8",
+  "./click-stage.css?v=click-stage-10",
+  "./click-stage.js?v=click-stage-10",
   "./home-stage.js?v=click-stage-2",
-  "./detail-stage.js?v=click-stage-8",
-  "./website-design.js?v=click-stage-6",
-  "./ua-creatives.js?v=click-stage-6",
-  "./community-creatives.js?v=click-stage-6",
+  "./detail-stage.js?v=click-stage-10",
+  "./website-design.js?v=click-stage-10",
+  "./ua-creatives.js?v=click-stage-10",
+  "./community-creatives.js?v=click-stage-10",
 ].forEach((asset) => {
   assert.ok(serviceWorkerSource.includes(`"${asset}"`), `the service worker should precache ${asset}`);
 });

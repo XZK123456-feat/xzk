@@ -1146,51 +1146,8 @@ if (resumeOverlay) {
   const nextBtn = lightbox.querySelector(".lightbox-next");
   if (!prevBtn || !nextBtn) return;
 
-  let currentButton = null;
-
-  // Track which button opened the lightbox, prevent old-image flash
-  document.addEventListener("click", function(e) {
-    const previewBtn = e.target.closest("[data-detail-preview]");
-    if (previewBtn) {
-      currentButton = previewBtn;
-      var img = lightbox.querySelector("img");
-      if (img) {
-        img.style.opacity = "0";
-        img.style.transition = "opacity 0.12s ease";
-      }
-    }
-  }, true);
-
-  var lbImg = lightbox.querySelector("img");
-  if (lbImg) {
-    lbImg.addEventListener("load", function() {
-      this.style.opacity = "1";
-    });
-    lbImg.addEventListener("error", function() {
-      this.style.opacity = "1";
-    });
-  }
-
-  function getAllPreviews() {
-    if (!currentButton) return [];
-    const gallery = currentButton.closest(".detail-gallery");
-    if (!gallery) return [];
-    return Array.from(gallery.querySelectorAll("[data-detail-preview]"));
-  }
-
   function navigate(direction) {
-    if (!lightbox.classList.contains("is-open")) return;
-    const all = getAllPreviews();
-    if (all.length === 0) return;
-    const activeThumbIndex = Array.from(lightbox.querySelectorAll(".lightbox-thumb"))
-      .findIndex((thumb) => thumb.classList.contains("active"));
-    const idx = activeThumbIndex >= 0 ? activeThumbIndex : all.indexOf(currentButton);
-    if (idx === -1) return;
-    const nextIdx = idx + direction;
-    if (nextIdx < 0 || nextIdx >= all.length) return;
-
-    currentButton = all[nextIdx];
-    currentButton.click();
+    lightbox.portfolioLightboxController?.navigate(direction);
   }
 
   prevBtn.addEventListener("click", function(e) {
@@ -1319,13 +1276,7 @@ if (resumeOverlay) {
     touchCount = e.touches.length;
   });
 
-  // Reset zoom when opening a new image
-  document.addEventListener("click", function(e) {
-    var previewBtn = e.target.closest("[data-detail-preview]");
-    if (previewBtn) {
-      resetTouchZoom();
-    }
-  }, true);
+  lightbox.addEventListener("portfolio:lightboxchange", resetTouchZoom);
 })();
 
 /* ── Video Playback ── */
@@ -1535,6 +1486,6 @@ document.addEventListener("portfolio:stagechange", resetPortfolioVideoUi);
 
 if ("serviceWorker" in navigator && /^https?:$/.test(window.location.protocol)) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=click-stage-9").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=click-stage-10").catch(() => {});
   });
 }
