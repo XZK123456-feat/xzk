@@ -1343,6 +1343,10 @@ function pauseOtherVideos(activeVideo) {
   });
 }
 
+function pauseAllPortfolioVideos() {
+  pauseOtherVideos(null);
+}
+
 if (playBtn && heroVideo) {
   playBtn.addEventListener("click", () => {
     playBtn.classList.add("is-hidden");
@@ -1400,8 +1404,18 @@ function initCommunityVideoCards() {
 
 initCommunityVideoCards();
 
+const communityVideoGrid = document.querySelector(".community-video-grid");
+if (communityVideoGrid) {
+  window.DetailStage?.registerGallery("community-video", communityVideoGrid, {
+    kind: "video",
+    itemSelector: "[data-video-page-item]",
+  });
+}
+
+document.addEventListener("portfolio:stagechange", pauseAllPortfolioVideos);
+
 if ("serviceWorker" in navigator && /^https?:$/.test(window.location.protocol)) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=click-stage-6").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=click-stage-7").catch(() => {});
   });
 }

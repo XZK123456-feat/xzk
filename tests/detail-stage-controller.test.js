@@ -684,6 +684,10 @@ assert.ok(
 );
 
 loadingHarness.next.click();
+assert.ok(
+  loadingHarness.video.pauseCount >= 1,
+  "a pager action should pause media before the next page is applied",
+);
 assert.strictEqual(loadingRecords[0].image.getAttribute("src"), null);
 assert.strictEqual(loadingRecords[2].image.getAttribute("src"), "thumb-3.webp");
 assert.strictEqual(loadingRecords[3].image.getAttribute("src"), "thumb-4.webp");

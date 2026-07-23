@@ -37,7 +37,7 @@ pages.forEach((page) => {
   const html = read(page);
   assert.ok(html.includes('href="assets/fonts/ZHYuwanPortfolio-subset.woff2"'), `${page} should preload the subset font`);
   assert.ok(html.includes('styles.css?v=stability-1'), `${page} should cache-bust optimized styles`);
-  assert.ok(html.includes('script.js?v=stability-4'), `${page} should cache-bust optimized scripts`);
+  assert.ok(html.includes('script.js?v=stability-5'), `${page} should cache-bust optimized scripts`);
 });
 
 const sourceText = productionSources.map(read).join("\n");
@@ -97,7 +97,7 @@ videoFiles.forEach((file) => {
 const script = read("script.js");
 const swPath = path.join(root, "sw.js");
 assert.ok(fs.existsSync(swPath), "service worker should exist");
-assert.ok(script.includes('navigator.serviceWorker.register("sw.js?v=click-stage-6")'), "shared script should register the versioned service worker");
+assert.ok(script.includes('navigator.serviceWorker.register("sw.js?v=click-stage-7")'), "shared script should register the versioned service worker");
 const serviceWorker = read("sw.js");
 assert.ok(serviceWorker.includes("staleWhileRevalidate"), "service worker should cache repeat static requests");
 assert.ok(serviceWorker.includes("networkFirst"), "service worker should keep HTML network-first");
