@@ -97,5 +97,13 @@ assert.match(
   /body\.stage-ready #data \.battle-board\s*{[^}]*border:\s*0;[^}]*background:\s*transparent;[^}]*box-shadow:\s*none;/,
   "the enhanced data board should be an unframed layout",
 );
+assert.ok(
+  css.includes("@media (min-width: 621px) and (max-height: 520px)"),
+  "the mission stage should include a compact landscape-height layout",
+);
+assert.ok(
+  css.includes("@media (max-width: 620px) and (max-height: 700px)"),
+  "the data stage should include a compact short-phone layout",
+);
 
 console.log(`click stage structure checks passed (${pages.length} pages)`);

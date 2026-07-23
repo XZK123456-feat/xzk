@@ -1,6 +1,112 @@
 (function (window, document) {
   "use strict";
 
+  const DEFAULT_STATE = Object.freeze({
+    panel: "missions",
+    mission: 1,
+    dataPage: 1,
+  });
+
+  function normalizeState(state) {
+    const mission = Number(state?.mission);
+    const dataPage = Number(state?.dataPage);
+
+    return {
+      panel: state?.panel === "data" ? "data" : "missions",
+      mission: Number.isInteger(mission) && mission >= 1 && mission <= 4 ? mission : 1,
+      dataPage: dataPage === 2 ? 2 : 1,
+    };
+  }
+
+  function parseHash(hash) {
+    const value = String(hash || "");
+    const missionMatch = value.match(/^#contents-m([2-4])$/);
+
+    if (value === "#contents") {
+      return { ...DEFAULT_STATE };
+    }
+
+    if (missionMatch) {
+      return {
+        panel: "missions",
+        mission: Number(missionMatch[1]),
+        dataPage: 1,
+      };
+    }
+
+    if (value === "#data" || value === "#data-p2") {
+      return {
+        panel: "data",
+        mission: 1,
+        dataPage: value === "#data-p2" ? 2 : 1,
+      };
+    }
+
+    return { ...DEFAULT_STATE };
+  }
+
+  function formatHash(state) {
+    const normalized = normalizeState(state);
+
+    if (normalized.panel === "data") {
+      return normalized.dataPage === 2 ? "#data-p2" : "#data";
+    }
+
+    return normalized.mission === 1
+      ? "#contents"
+      : `#contents-m${normalized.mission}`;
+  }
+
+  function reduce(state, action) {
+    const current = normalizeState(state);
+
+    switch (action?.type) {
+      case "selectMission":
+        return normalizeState({
+          ...current,
+          panel: "missions",
+          mission: action.mission,
+        });
+      case "selectPanel":
+        return normalizeState({
+          ...current,
+          panel: action.panel,
+        });
+      case "selectDataPage":
+        return normalizeState({
+          ...current,
+          panel: "data",
+          dataPage: action.dataPage,
+        });
+      case "restore":
+        return normalizeState(action.state);
+      default:
+        return current;
+    }
+  }
+
+  function statesEqual(left, right) {
+    const normalizedLeft = normalizeState(left);
+    const normalizedRight = normalizeState(right);
+
+    return normalizedLeft.panel === normalizedRight.panel
+      && normalizedLeft.mission === normalizedRight.mission
+      && normalizedLeft.dataPage === normalizedRight.dataPage;
+  }
+
+  window.HomeStageState = Object.freeze({
+    DEFAULT_STATE,
+    normalizeState,
+    parseHash,
+    formatHash,
+    reduce,
+    statesEqual,
+  });
+
+  if (!document?.body || typeof document.querySelector !== "function") {
+    return;
+  }
+
   const MISSIONS = [
     {
       number: "01",
@@ -83,36 +189,41 @@
     panelControls.length !== 2 ||
     dataPages.length !== 2 ||
     typeof window.lockPreviewScroll !== "function" ||
-    typeof window.activateModalDialog !== "function"
+    typeof window.activateModalDialog !== "function" ||
+    typeof window.history?.pushState !== "function" ||
+    typeof window.history?.replaceState !== "function"
   ) {
     return;
   }
 
-  let activeMission = 0;
-  let activeDataPage = 0;
+  let desiredState = parseHash(window.location.hash);
+  let renderedPanel = desiredState.panel;
+  let pendingPanel = null;
   let wipeRun = 0;
+  let wipeMidpointTimer = null;
+  let wipeEndTimer = null;
 
-  function renderMission(index) {
-    const mission = MISSIONS[index];
+  function renderMission(missionNumber) {
+    const missionIndex = missionNumber - 1;
+    const mission = MISSIONS[missionIndex];
     if (!mission) {
       return;
     }
 
-    activeMission = index;
     missionKicker.textContent = `MISSION ${mission.number} / ${mission.label}`;
     missionTitle.textContent = mission.title;
     missionDescription.textContent = mission.description;
     missionEnter.setAttribute("href", mission.href);
 
     missionControls.forEach((control, controlIndex) => {
-      const isActive = controlIndex === activeMission;
+      const isActive = controlIndex === missionIndex;
       control.classList.toggle("is-active", isActive);
       control.setAttribute("aria-selected", String(isActive));
       control.setAttribute("tabindex", isActive ? "0" : "-1");
     });
 
     missionPreviews.forEach((preview, previewIndex) => {
-      const isActive = previewIndex === activeMission;
+      const isActive = previewIndex === missionIndex;
       preview.classList.toggle("is-active", isActive);
       preview.hidden = !isActive;
       if (isActive) {
@@ -125,16 +236,16 @@
     });
   }
 
-  function renderDataPage(index) {
-    activeDataPage = Math.max(0, Math.min(dataPages.length - 1, index));
-    dataPages.forEach((page, pageIndex) => {
-      const isActive = pageIndex === activeDataPage;
+  function renderDataPage(pageNumber) {
+    const pageIndex = pageNumber - 1;
+    dataPages.forEach((page, currentPageIndex) => {
+      const isActive = currentPageIndex === pageIndex;
       page.hidden = !isActive;
       page.setAttribute("aria-hidden", String(!isActive));
     });
-    dataPrevious.disabled = activeDataPage === 0;
-    dataNext.disabled = activeDataPage === dataPages.length - 1;
-    dataStatus.textContent = `${String(activeDataPage + 1).padStart(2, "0")} / ${String(dataPages.length).padStart(2, "0")}`;
+    dataPrevious.disabled = pageNumber === 1;
+    dataNext.disabled = pageNumber === dataPages.length;
+    dataStatus.textContent = `${String(pageNumber).padStart(2, "0")} / ${String(dataPages.length).padStart(2, "0")}`;
   }
 
   function updatePanelNavigation(panelName) {
@@ -161,8 +272,42 @@
     updatePanelNavigation(body.dataset.homePanel);
   }
 
-  function runWipe(label, action) {
+  function renderState(state) {
+    const normalized = normalizeState(state);
+    renderMission(normalized.mission);
+    renderDataPage(normalized.dataPage);
+    showPanel(normalized.panel);
+    renderedPanel = normalized.panel;
+  }
+
+  function writeHistory(state, mode) {
+    const hash = formatHash(state);
+    if (window.location.hash === hash) {
+      return;
+    }
+
+    if (mode === "push") {
+      window.history.pushState({ homeStage: true }, "", hash);
+    } else {
+      window.history.replaceState({ homeStage: true }, "", hash);
+    }
+  }
+
+  function cancelWipe() {
     wipeRun += 1;
+    if (wipeMidpointTimer !== null) {
+      window.clearTimeout(wipeMidpointTimer);
+      wipeMidpointTimer = null;
+    }
+    if (wipeEndTimer !== null) {
+      window.clearTimeout(wipeEndTimer);
+      wipeEndTimer = null;
+    }
+    stageWipe.classList.remove("is-running");
+  }
+
+  function runWipe(label, action) {
+    cancelWipe();
     const currentRun = wipeRun;
     stageWipeLabel.textContent = label;
 
@@ -171,20 +316,66 @@
       return;
     }
 
-    stageWipe.classList.remove("is-running");
     void stageWipe.offsetWidth;
     stageWipe.classList.add("is-running");
 
-    window.setTimeout(() => {
+    wipeMidpointTimer = window.setTimeout(() => {
+      wipeMidpointTimer = null;
       if (currentRun === wipeRun) {
         action();
       }
     }, 285);
-    window.setTimeout(() => {
+    wipeEndTimer = window.setTimeout(() => {
+      wipeEndTimer = null;
       if (currentRun === wipeRun) {
         stageWipe.classList.remove("is-running");
       }
     }, 570);
+  }
+
+  function renderDesiredState(animatePanel) {
+    if (!animatePanel || desiredState.panel === renderedPanel) {
+      cancelWipe();
+      pendingPanel = null;
+      renderState(desiredState);
+      return;
+    }
+
+    pendingPanel = desiredState.panel;
+    runWipe(
+      desiredState.panel === "data" ? "RESULT BOARD" : "MISSION SELECT",
+      () => {
+        if (pendingPanel !== desiredState.panel) {
+          return;
+        }
+        renderState(desiredState);
+        pendingPanel = null;
+      },
+    );
+  }
+
+  function commitAction(action, options = {}) {
+    const nextState = reduce(desiredState, action);
+    if (statesEqual(nextState, desiredState)) {
+      return false;
+    }
+
+    desiredState = nextState;
+    writeHistory(desiredState, "push");
+    renderDesiredState(options.animatePanel === true);
+    return true;
+  }
+
+  function restoreFromLocation() {
+    const restoredState = parseHash(window.location.hash);
+    cancelWipe();
+    pendingPanel = null;
+    desiredState = reduce(desiredState, {
+      type: "restore",
+      state: restoredState,
+    });
+    renderState(desiredState);
+    writeHistory(desiredState, "replace");
   }
 
   function openResume() {
@@ -200,33 +391,44 @@
   }
 
   missionControls.forEach((control, index) => {
-    control.addEventListener("click", () => renderMission(index));
+    control.addEventListener("click", () => {
+      commitAction({
+        type: "selectMission",
+        mission: index + 1,
+      });
+    });
     control.addEventListener("keydown", (event) => {
       if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") {
         return;
       }
       event.preventDefault();
       const direction = event.key === "ArrowRight" ? 1 : -1;
-      const nextIndex = (index + direction + MISSIONS.length) % MISSIONS.length;
-      renderMission(nextIndex);
-      missionControls[nextIndex].focus();
+      const nextMission = ((desiredState.mission - 1 + direction + MISSIONS.length) % MISSIONS.length) + 1;
+      commitAction({
+        type: "selectMission",
+        mission: nextMission,
+      });
+      missionControls[nextMission - 1].focus();
     });
   });
 
   missionEnter.addEventListener("click", (event) => {
     event.preventDefault();
-    const href = MISSIONS[activeMission].href;
+    const href = MISSIONS[desiredState.mission - 1].href;
+    pendingPanel = null;
     runWipe("ENTER MISSION", () => window.location.assign(href));
   });
 
   panelControls.forEach((control) => {
     control.addEventListener("click", (event) => {
       event.preventDefault();
-      const panelName = control.dataset.homePanelOpen;
-      if (panelName === body.dataset.homePanel) {
-        return;
-      }
-      runWipe(panelName === "data" ? "RESULT BOARD" : "MISSION SELECT", () => showPanel(panelName));
+      commitAction(
+        {
+          type: "selectPanel",
+          panel: control.dataset.homePanelOpen,
+        },
+        { animatePanel: true },
+      );
     });
   });
 
@@ -237,18 +439,31 @@
 
   brandControl?.addEventListener("click", (event) => {
     event.preventDefault();
-    if (body.dataset.homePanel !== "missions") {
-      runWipe("MISSION SELECT", () => showPanel("missions"));
-    }
+    commitAction(
+      {
+        type: "selectPanel",
+        panel: "missions",
+      },
+      { animatePanel: true },
+    );
   });
 
-  dataPrevious.addEventListener("click", () => renderDataPage(activeDataPage - 1));
-  dataNext.addEventListener("click", () => renderDataPage(activeDataPage + 1));
+  dataPrevious.addEventListener("click", () => {
+    commitAction({
+      type: "selectDataPage",
+      dataPage: desiredState.dataPage - 1,
+    });
+  });
+  dataNext.addEventListener("click", () => {
+    commitAction({
+      type: "selectDataPage",
+      dataPage: desiredState.dataPage + 1,
+    });
+  });
 
-  renderMission(0);
-  renderDataPage(0);
-  stage.hidden = false;
-  stage.removeAttribute("aria-hidden");
-  showPanel(window.location.hash === "#data" ? "data" : "missions");
+  renderState(desiredState);
+  writeHistory(desiredState, "replace");
+  window.addEventListener("popstate", restoreFromLocation);
+  window.addEventListener("hashchange", restoreFromLocation);
   body.classList.add("stage-ready");
 })(window, document);

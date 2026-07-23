@@ -874,6 +874,10 @@ function setActiveNav(id) {
 }
 
 function setActiveFromScroll() {
+  if (document.body.classList.contains("stage-ready")) {
+    return;
+  }
+
   const probeY = window.scrollY + window.innerHeight * 0.42;
   let current = sections[0];
 
@@ -905,6 +909,10 @@ const observer = new IntersectionObserver(
 
 sections.forEach((section) => observer.observe(section));
 function syncHashTarget() {
+  if (document.body.classList.contains("stage-ready")) {
+    return;
+  }
+
   const id = window.location.hash.slice(1);
   const target = id ? document.getElementById(id) : null;
 
