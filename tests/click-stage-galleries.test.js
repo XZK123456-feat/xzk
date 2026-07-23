@@ -11,8 +11,12 @@ const pages = {
     views: [
       ["overview", "项目概览"],
       ["mobile", "移动端"],
-      ["pc", "PC端"],
-      ["vibecoding", "AI官网设计"],
+      ["pc", "PC 端"],
+      ["vibecoding", "VibeCoding"],
+    ],
+    galleries: [
+      ["mobile", "vertical", "[data-detail-preview]"],
+      ["pc", "horizontal", "[data-detail-preview]"],
     ],
   },
   "ua-creatives.html": {
@@ -24,6 +28,11 @@ const pages = {
       ["vertical", "竖图素材"],
       ["nine-grid", "九图素材"],
     ],
+    galleries: [
+      ["horizontal", "horizontal", "[data-detail-preview]"],
+      ["vertical", "vertical", "[data-detail-preview]"],
+      ["nine-grid", "vertical", "[data-detail-preview]"],
+    ],
   },
   "community-creatives.html": {
     back: "index.html#contents-m3",
@@ -34,6 +43,11 @@ const pages = {
       ["ulala-all", "不休的乌拉拉"],
       ["lili-tangquan", "狸狸汤泉"],
     ],
+    galleries: [
+      ["party-all", "vertical", "[data-detail-preview]"],
+      ["ulala-all", "vertical", "[data-detail-preview]"],
+      ["lili-tangquan", "vertical", "[data-detail-preview]"],
+    ],
   },
   "video-design.html": {
     back: "index.html#contents-m4",
@@ -42,6 +56,9 @@ const pages = {
       ["overview", "项目概览"],
       ["community-video", "运营社群视频"],
       ["video", "买量视频混剪"],
+    ],
+    galleries: [
+      ["community-video", "video", ".community-video-card"],
     ],
   },
 };
@@ -76,6 +93,20 @@ Object.entries(pages).forEach(([file, contract]) => {
     assert.ok(tab.includes(`>${label}</a>`), `${file} ${view} should use the required label`);
   });
 
+  contract.galleries.forEach(([view, kind, itemSelector]) => {
+    const gallery = html.match(new RegExp(`<[^>]+\\bdata-stage-gallery="${view}"[^>]*>`))?.[0] || "";
+    assert.ok(gallery, `${file} should declaratively register the ${view} gallery`);
+    assert.match(
+      gallery,
+      new RegExp(`\\bdata-stage-gallery-kind="${kind}"`),
+      `${file} ${view} should use the ${kind} page-size contract`,
+    );
+    assert.ok(
+      gallery.includes(`data-stage-gallery-items="${itemSelector}"`),
+      `${file} ${view} should declare its paged item selector`,
+    );
+  });
+
   assert.match(
     html,
     /<div\b[^>]*data-stage-pager[^>]*\bhidden[^>]*>[\s\S]*data-stage-previous[\s\S]*data-stage-status[\s\S]*data-stage-next[\s\S]*<\/div>/,
@@ -93,24 +124,24 @@ Object.entries(pages).forEach(([file, contract]) => {
   assert.strictEqual((html.match(/\bclass="[^"]*\bdetail-directory\b[^"]*"/g) || []).length, 1, `${file} should not retain a second standalone directory`);
   assert.ok(html.includes(`class="brand-pill back-brand" href="${contract.back}"`), `${file} should use the mission-specific top back target`);
   assert.ok(html.includes(`class="back-link" href="${contract.back}"`) || file === "video-design.html", `${file} should use the mission-specific section back target`);
-  assert.ok(html.includes('href="click-stage.css?v=click-stage-3"'), `${file} should request click-stage.css release 3`);
+  assert.ok(html.includes('href="click-stage.css?v=click-stage-4"'), `${file} should request click-stage.css release 4`);
   assert.ok(html.includes('src="click-stage.js?v=click-stage-2"'), `${file} should preserve the shared utility release`);
   assert.ok(
-    html.indexOf('src="detail-stage.js?v=click-stage-3"') > html.indexOf('src="click-stage.js?v=click-stage-2"'),
+    html.indexOf('src="detail-stage.js?v=click-stage-4"') > html.indexOf('src="click-stage.js?v=click-stage-2"'),
     `${file} should load detail-stage.js after click-stage.js`,
   );
 
   const pageSpecificScript = html.search(/src="(?:website-design|ua-creatives|community-creatives)\.js\?/);
   if (pageSpecificScript >= 0) {
     assert.ok(
-      html.indexOf('src="detail-stage.js?v=click-stage-3"') < pageSpecificScript,
+      html.indexOf('src="detail-stage.js?v=click-stage-4"') < pageSpecificScript,
       `${file} should initialize the stage before its gallery script`,
     );
   }
 });
 
 const homepage = read("index.html");
-assert.ok(homepage.includes('href="click-stage.css?v=click-stage-3"'), "index.html should request click-stage.css release 3");
+assert.ok(homepage.includes('href="click-stage.css?v=click-stage-4"'), "index.html should request click-stage.css release 4");
 assert.ok(homepage.includes('src="click-stage.js?v=click-stage-2"'), "index.html should keep click-stage.js release 2");
 assert.ok(homepage.includes('src="home-stage.js?v=click-stage-2"'), "index.html should keep home-stage.js release 2");
 
@@ -119,12 +150,62 @@ assert.match(css, /body\.stage-ready \[data-detail-stage\]\s*\{[^}]*position:\s*
 assert.match(css, /body\.stage-ready \[data-stage-view\]\s*\{[^}]*min-width:\s*0;[^}]*min-height:\s*0;[^}]*overflow:\s*hidden;/s);
 assert.match(css, /body\.stage-ready \[data-task-rail\][\s\S]*?width:\s*34px;/);
 assert.match(css, /max-width:\s*220px;/, "expanded mobile task rail should stay compact");
+assert.match(
+  css,
+  /body\.stage-ready \[data-stage-view="overview"\] \.detail-hero-card\s*\{[^}]*background:\s*var\(--ink\);[^}]*color:\s*white;/s,
+  "overview title/date should sit on an explicit readable band",
+);
+assert.match(
+  css,
+  /body\.stage-ready \[data-stage-view="overview"\] \.detail-summary\s*\{[^}]*background:\s*var\(--ink\);[^}]*color:\s*white;/s,
+  "overview summary text should sit on an explicit readable band",
+);
+assert.match(
+  css,
+  /body\.stage-ready \[data-stage-view="overview"\] \.back-link\s*\{[^}]*background:\s*var\(--yellow\);[^}]*color:\s*var\(--ink\);/s,
+  "overview back links should retain high contrast",
+);
+assert.doesNotMatch(
+  css,
+  /body\.stage-ready \[data-task-rail\] \.directory-item\[aria-current="page"\]\s*\{[^}]*pointer-events:\s*none;/s,
+  "the current task must remain clickable so it can close the rail",
+);
+assert.match(
+  css,
+  /body\.stage-ready \[data-task-rail\] \.directory-item\[aria-current="page"\]\s*\{[^}]*pointer-events:\s*auto;/s,
+  "the enhanced current task should override the legacy inactive-link rule",
+);
 assert.ok(css.includes("@media (max-height: 390px)"), "CSS should include a compact 844x390 treatment");
 assert.ok(css.includes("@media (max-width: 375px) and (max-height: 667px)"), "CSS should include a compact 375x667 treatment");
 assert.match(
   css,
-  /@media \(max-width:\s*375px\)[\s\S]*?body\.stage-ready \.topbar \.nav-pill\s*\{[^}]*font-size:\s*10px;[^}]*overflow:\s*hidden;/,
+  /@media \(max-height:\s*390px\)[\s\S]*?body\.stage-ready \[data-detail-stage\]\s*\{[^}]*top:\s*56px;/,
+  "compact landscape stages should start below the measured topbar",
+);
+assert.match(
+  css,
+  /@media \(max-width:\s*375px\) and \(max-height:\s*667px\)[\s\S]*?body\.stage-ready \[data-detail-stage\]\s*\{[^}]*top:\s*56px;/,
+  "short-phone stages should start below the measured topbar",
+);
+assert.match(
+  css,
+  /@media \(max-width:\s*620px\)[\s\S]*?\.detail-stage-pager\s*\{[^}]*padding-bottom:\s*env\(safe-area-inset-bottom\);/s,
+  "the mobile pager should reserve the bottom safe area inside the stage grid",
+);
+assert.match(
+  css,
+  /@media \(max-width:\s*420px\)[\s\S]*?body\.stage-ready \.topbar \.nav-pill\s*\{[^}]*font-size:\s*10px;/,
+  "compact detail tabs should fit the longest category label",
+);
+assert.match(
+  css,
+  /@media \(max-width:\s*375px\)[\s\S]*?body\.stage-ready \.topbar \.nav-pill\s*\{[^}]*font-size:\s*8px;[^}]*overflow:\s*hidden;/,
   "small-phone detail tabs should keep long labels inside their controls",
+);
+assert.match(
+  css,
+  /@media \(max-width:\s*340px\)[\s\S]*?body\.stage-ready \.topbar \.nav-pill\s*\{[^}]*padding:\s*0;[^}]*font-size:\s*8px;/,
+  "the narrowest required viewport should further compact long detail labels",
 );
 assert.ok(
   css.lastIndexOf("@media (max-width: 375px)") > css.lastIndexOf("@media (max-width: 620px)"),

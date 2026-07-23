@@ -11,16 +11,14 @@
     return { views, fallbackView };
   }
 
-  function parseState(hash, allowedViews, fallback = "overview") {
+  function parse(hash, allowedViews, fallback = "overview") {
     const { views, fallbackView } = normalizeAllowedViews(allowedViews, fallback);
     const rawValue = String(hash || "").replace(/^#/, "");
     const rawMatch = rawValue.match(/^(.*)-p(\d+)$/);
-    const parsed = window.PortfolioStage?.parseHash
-      ? window.PortfolioStage.parseHash(hash, fallbackView)
-      : {
-        view: rawMatch ? rawMatch[1] : (rawValue || fallbackView),
-        page: rawMatch ? Number(rawMatch[2]) : 1,
-      };
+    const parsed = {
+      view: rawMatch ? rawMatch[1] : (rawValue || fallbackView),
+      page: rawMatch ? Number(rawMatch[2]) : 1,
+    };
     const view = views.includes(parsed?.view) ? parsed.view : fallbackView;
     const page = Number(parsed?.page);
 
@@ -30,11 +28,11 @@
     };
   }
 
-  function formatState(state) {
+  function format(state) {
     const view = String(state?.view || "overview");
     const page = Number(state?.page);
     const normalizedPage = Number.isInteger(page) && page >= 1 ? page : 1;
-    return window.PortfolioStage.formatHash(view, normalizedPage);
+    return `#${view}${normalizedPage > 1 ? `-p${normalizedPage}` : ""}`;
   }
 
   function pageLimitFor(view, limits) {
@@ -48,7 +46,7 @@
     return Math.min(Math.max(normalized, 1), limit);
   }
 
-  function reduceState(state, action, limits = {}) {
+  function reduce(state, action, limits = {}) {
     const currentView = String(state?.view || "overview");
     const current = {
       view: currentView,
@@ -88,9 +86,9 @@
   }
 
   window.DetailStageState = Object.freeze({
-    parseState,
-    formatState,
-    reduceState,
+    parse,
+    format,
+    reduce,
   });
 
   let controller = null;
@@ -148,7 +146,6 @@
     && taskLinks.length === 4
     && allowedViews.includes(defaultView)
     && allowedViews.every((view) => tabByView.has(view))
-    && typeof window.PortfolioStage?.formatHash === "function"
     && typeof window.PortfolioStage?.getPageSize === "function"
     && typeof window.history?.pushState === "function"
     && typeof window.history?.replaceState === "function"
@@ -161,12 +158,14 @@
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const galleries = new Map();
   const limits = {};
+  const pagesByView = Object.fromEntries(allowedViews.map((view) => [view, 1]));
   let desiredState;
   let appliedState = null;
   let wipeGeneration = 0;
   let wipeMidpointTimer = null;
   let wipeEndTimer = null;
   let pageTimer = null;
+  let pendingCategoryView = null;
 
   function isStoredStateValid(value) {
     return Boolean(
@@ -183,7 +182,7 @@
   }
 
   function writeHistory(state, mode) {
-    const normalized = reduceState(state, { type: "SET_PAGE", page: state.page }, limits);
+    const normalized = reduce(state, { type: "SET_PAGE", page: state.page }, limits);
     const historyState = {
       portfolioDetailState: {
         view: normalized.view,
@@ -193,7 +192,7 @@
     window.history[mode === "push" ? "pushState" : "replaceState"](
       historyState,
       "",
-      formatState(normalized),
+      format(normalized),
     );
   }
 
@@ -247,7 +246,7 @@
   }
 
   function applyState(state) {
-    const normalized = reduceState(state, { type: "SET_PAGE", page: state.page }, limits);
+    const normalized = reduce(state, { type: "SET_PAGE", page: state.page }, limits);
     if (appliedState && !statesEqual(appliedState, normalized)) {
       pauseAllVideos();
     }
@@ -271,6 +270,7 @@
       renderGallery(gallery, normalized.page);
     }
     renderPager(normalized);
+    pagesByView[normalized.view] = normalized.page;
     desiredState = normalized;
     appliedState = normalized;
     dispatchStageChange(normalized);
@@ -329,10 +329,10 @@
   }
 
   function commitCategory(view) {
-    const nextState = reduceState(desiredState, {
+    const nextState = reduce(desiredState, {
       type: "SELECT_VIEW",
       view,
-      page: 1,
+      page: pagesByView[view] || 1,
     }, limits);
     if (statesEqual(nextState, desiredState)) {
       return false;
@@ -340,12 +340,19 @@
 
     desiredState = nextState;
     writeHistory(nextState, "push");
-    runWipe(tabByView.get(view)?.textContent || "MISSION SWITCH", () => applyState(desiredState));
+    pendingCategoryView = view;
+    runWipe(tabByView.get(view)?.textContent || "MISSION SWITCH", () => {
+      pendingCategoryView = null;
+      applyState(desiredState);
+    });
     return true;
   }
 
   function commitPage(action) {
-    const nextState = reduceState(desiredState, action, limits);
+    if (pendingCategoryView !== null) {
+      return false;
+    }
+    const nextState = reduce(desiredState, action, limits);
     if (statesEqual(nextState, desiredState)) {
       return false;
     }
@@ -368,6 +375,7 @@
 
   function restoreLocation(event) {
     cancelWipe();
+    pendingCategoryView = null;
     if (pageTimer !== null) {
       window.clearTimeout(pageTimer);
       pageTimer = null;
@@ -375,8 +383,8 @@
     }
 
     const stored = event?.type === "popstate" ? readStoredState(event.state) : null;
-    const restored = stored || parseState(window.location.hash, allowedViews, defaultView);
-    desiredState = reduceState(restored, { type: "SET_PAGE", page: restored.page }, limits);
+    const restored = stored || parse(window.location.hash, allowedViews, defaultView);
+    desiredState = reduce(restored, { type: "SET_PAGE", page: restored.page }, limits);
     applyState(desiredState);
     if (!stored) {
       writeHistory(desiredState, "replace");
@@ -399,18 +407,22 @@
     }
 
     const previousSize = gallery.pageSize || 1;
-    const previousPage = gallery.viewId === desiredState.view ? desiredState.page : gallery.page;
+    const isAppliedView = gallery.viewId === appliedState?.view;
+    const canApplyGallery = pendingCategoryView === null
+      && isAppliedView
+      && gallery.viewId === desiredState.view;
+    const previousPage = isAppliedView ? appliedState.page : gallery.page;
     const firstVisibleIndex = Math.max(0, (previousPage - 1) * previousSize);
     gallery.items = Array.from(gallery.root.querySelectorAll(gallery.itemSelector) || []);
     gallery.pageSize = pageSizeFor(gallery);
     gallery.pageCount = Math.max(1, Math.ceil(gallery.items.length / gallery.pageSize));
     limits[gallery.viewId] = gallery.pageCount;
 
-    if (gallery.viewId === desiredState.view) {
+    if (canApplyGallery) {
       const requestedPage = preserveFirst
         ? Math.floor(firstVisibleIndex / gallery.pageSize) + 1
         : desiredState.page;
-      desiredState = reduceState(desiredState, {
+      desiredState = reduce(desiredState, {
         type: "SET_PAGE",
         page: requestedPage,
       }, limits);
@@ -440,6 +452,40 @@
       pageCount: 1,
     });
     return refreshGallery(view, false);
+  }
+
+  function registerDeclarativeGalleries() {
+    panels.forEach((panel) => {
+      const galleryRoot = panel.querySelector("[data-stage-gallery]");
+      if (!galleryRoot) {
+        return;
+      }
+      const view = galleryRoot.dataset.stageGallery || panel.dataset.stageView;
+      const options = {
+        kind: galleryRoot.dataset.stageGalleryKind,
+        itemSelector: galleryRoot.dataset.stageGalleryItems,
+      };
+      const syncGallery = () => {
+        const itemSelector = options.itemSelector || "[data-detail-preview]";
+        if (
+          galleryRoot.classList.contains("is-gallery-loading")
+          || galleryRoot.querySelectorAll(itemSelector).length === 0
+        ) {
+          return;
+        }
+        if (galleries.has(view)) {
+          refreshGallery(view);
+        } else {
+          registerGallery(view, galleryRoot, options);
+        }
+      };
+
+      syncGallery();
+      if (typeof window.MutationObserver === "function") {
+        const observer = new window.MutationObserver(syncGallery);
+        observer.observe(galleryRoot, { childList: true });
+      }
+    });
   }
 
   controller = {
@@ -479,11 +525,11 @@
     link.addEventListener("click", (event) => {
       if (link.getAttribute("aria-current") === "page") {
         event.preventDefault();
-        closeRail(false);
+        closeRail(true);
         return;
       }
       event.preventDefault();
-      closeRail(false);
+      closeRail(true);
       const href = link.getAttribute("href");
       runWipe(link.textContent || "MISSION SWITCH", () => window.location.assign(href));
     });
@@ -527,7 +573,7 @@
   });
 
   desiredState = readStoredState(window.history.state)
-    || parseState(window.location.hash, allowedViews, defaultView);
+    || parse(window.location.hash, allowedViews, defaultView);
   applyState(desiredState);
   writeHistory(desiredState, "replace");
   body.classList.add("stage-ready");
@@ -535,4 +581,5 @@
   pendingGalleries.splice(0).forEach(([viewId, galleryRoot, options]) => {
     registerGallery(viewId, galleryRoot, options);
   });
+  registerDeclarativeGalleries();
 })(window, document);

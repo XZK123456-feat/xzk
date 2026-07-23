@@ -18,7 +18,7 @@ const sharedSource = read("script.js");
 pages.forEach((page) => {
   const html = read(page);
   assert.ok(
-    html.includes('href="click-stage.css?v=click-stage-3"'),
+    html.includes('href="click-stage.css?v=click-stage-4"'),
     `${page} should request click-stage.css with the current stage release`,
   );
   assert.ok(
@@ -45,10 +45,10 @@ assert.ok(
 );
 [
   "./script.js?v=stability-2",
-  "./click-stage.css?v=click-stage-3",
+  "./click-stage.css?v=click-stage-4",
   "./click-stage.js?v=click-stage-2",
   "./home-stage.js?v=click-stage-2",
-  "./detail-stage.js?v=click-stage-3",
+  "./detail-stage.js?v=click-stage-4",
 ].forEach((asset) => {
   assert.ok(serviceWorkerSource.includes(`"${asset}"`), `the service worker should precache ${asset}`);
 });
