@@ -301,6 +301,8 @@ assert.equal((home.match(/data-mission-select=/g) || []).length, 4, "home expose
 assert.equal((home.match(/data-mission-preview=/g) || []).length, 4, "home includes four real preview images");
 assert.ok(home.includes('src="home-stage.js?v=click-stage-1"'), "home loads its controller");
 assert.ok(home.includes('data-stage-panel="data"'), "home keeps data in a full-screen panel");
+assert.equal((home.match(/data-data-page=/g) || []).length, 2, "home data panel uses two fixed pages");
+assert.ok(home.includes("data-home-fallback"), "home keeps the legacy flow for no-JavaScript access");
 ```
 
 - [ ] **Step 2: Run the structure test**
@@ -310,7 +312,7 @@ Expected: FAIL on `data-home-stage`.
 
 - [ ] **Step 3: Replace the home main area with the mission stage**
 
-Use this structure and the existing representative assets:
+Insert this enhanced structure before the existing sections and keep the legacy `#home`, `#contents` and `#data` sections in the DOM. Mark the existing main flow with `data-home-fallback`; JavaScript hides only the legacy `#home` and `#contents` after successful initialization. Use:
 
 ```html
 <main class="home-stage" data-home-stage>
@@ -334,12 +336,10 @@ Use this structure and the existing representative assets:
       <button role="tab" aria-selected="false" data-mission-select="3">04</button>
     </div>
   </section>
-  <section class="home-full-panel" data-stage-panel="data" hidden><!-- retain current data content --></section>
-  <section class="home-full-panel" data-stage-panel="resume" hidden><!-- retain current resume UI and PDF link --></section>
 </main>
 ```
 
-Move the existing data markup into `data-stage-panel="data"` without changing metrics or copy. Keep the existing PDF link in the resume panel.
+Enhance the existing `#data` section as `data-stage-panel="data"` without changing metrics or copy. Wrap the production overview in `data-data-page="1"` and the channel results/summary in `data-data-page="2"`. Add fixed previous/next controls and an `aria-live` page status. Keep the existing resume overlay and PDF link; add a top-level resume trigger that opens the existing overlay.
 
 - [ ] **Step 4: Implement mission selection and M1 entry**
 
@@ -360,6 +360,8 @@ Move the existing data markup into `data-stage-panel="data"` without changing me
   const kicker = root.querySelector("[data-mission-kicker]");
   const description = root.querySelector("[data-mission-description]");
   const enter = root.querySelector("[data-mission-enter]");
+  const dataPages = [...document.querySelectorAll("[data-data-page]")];
+  let dataPage = 0;
 
   function select(index) {
     const mission = missions[index];
@@ -376,6 +378,16 @@ Move the existing data markup into `data-stage-panel="data"` without changing me
     document.querySelector(".stage-wipe")?.classList.add("is-running");
     window.setTimeout(() => { window.location.href = enter.href; }, 285);
   });
+  document.querySelector("[data-data-next]")?.addEventListener("click", () => {
+    dataPage = Math.min(dataPages.length - 1, dataPage + 1);
+    dataPages.forEach((page, index) => { page.hidden = index !== dataPage; });
+  });
+  document.querySelector("[data-data-prev]")?.addEventListener("click", () => {
+    dataPage = Math.max(0, dataPage - 1);
+    dataPages.forEach((page, index) => { page.hidden = index !== dataPage; });
+  });
+  document.querySelector("[data-home-fallback]")?.classList.add("is-enhanced");
+  root.hidden = false;
   select(0);
   document.body.classList.add("stage-ready");
 })();
