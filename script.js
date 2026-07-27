@@ -1530,6 +1530,6 @@ document.addEventListener("portfolio:stagechange", resetPortfolioVideoUi);
 
 if ("serviceWorker" in navigator && /^https?:$/.test(window.location.protocol)) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=click-stage-10").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=click-stage-11").catch(() => {});
   });
 }

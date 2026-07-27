@@ -91,9 +91,164 @@
     reduce,
   });
 
+  const mediaRecoveryRoots = new WeakSet();
+
+  function mediaRecoveryFrame(media, root) {
+    return media?.closest?.(
+      ".detail-shot, .community-video-stage, .video-stage, .lightbox-image-row, [data-media-frame]",
+    ) || media?.parentElement || root;
+  }
+
+  function clearMediaError(media, frame) {
+    if (!frame) {
+      return;
+    }
+
+    frame.classList?.remove("has-media-error");
+    media?.removeAttribute?.("aria-invalid");
+    const control = frame.querySelector?.("[data-media-retry]");
+    if (frame.dataset?.mediaRetry !== undefined) {
+      delete frame.dataset.mediaRetry;
+      const originalLabel = frame.dataset.mediaRetryLabel;
+      if (originalLabel) {
+        frame.setAttribute?.("aria-label", originalLabel);
+      }
+      delete frame.dataset.mediaRetryLabel;
+    } else {
+      control?.remove?.();
+    }
+  }
+
+  function rememberMediaSource(media) {
+    if (!media?.dataset) {
+      return;
+    }
+
+    const source = media.getAttribute?.("src") || media.getAttribute?.("data-src") || "";
+    const srcset = media.getAttribute?.("srcset") || "";
+    if (source && !media.dataset.mediaRetrySrc) {
+      media.dataset.mediaRetrySrc = source;
+    }
+    if (srcset && !media.dataset.mediaRetrySrcset) {
+      media.dataset.mediaRetrySrcset = srcset;
+    }
+  }
+
+  function showMediaError(media, frame) {
+    if (!frame || frame.classList?.contains("has-media-error")) {
+      return;
+    }
+
+    rememberMediaSource(media);
+    frame.classList?.add("has-media-error");
+    media.setAttribute?.("aria-invalid", "true");
+
+    if (String(frame.tagName || "").toUpperCase() === "BUTTON") {
+      const originalLabel = frame.getAttribute?.("aria-label") || "作品图片";
+      frame.dataset.mediaRetry = "";
+      frame.dataset.mediaRetryLabel = originalLabel;
+      frame.setAttribute?.("aria-label", `${originalLabel}，加载失败，点击重试`);
+      return;
+    }
+
+    const ownerDocument = frame.ownerDocument || media.ownerDocument;
+    if (!ownerDocument?.createElement || frame.querySelector?.("[data-media-retry]")) {
+      return;
+    }
+    const retry = ownerDocument.createElement("button");
+    retry.type = "button";
+    retry.className = "media-retry-control";
+    retry.dataset.mediaRetry = "";
+    retry.textContent = "重新加载";
+    retry.setAttribute("aria-label", "媒体加载失败，重新加载");
+    retry._mediaRetryTarget = media;
+    frame.appendChild?.(retry);
+  }
+
+  function retryMedia(media) {
+    if (!media) {
+      return;
+    }
+
+    rememberMediaSource(media);
+    const tagName = String(media.tagName || "").toUpperCase();
+    if (tagName === "VIDEO") {
+      const source = media.dataset?.mediaRetrySrc || media.getAttribute?.("data-src") || "";
+      if (source) {
+        media.setAttribute?.("src", source);
+      }
+      media.load?.();
+      return;
+    }
+
+    const source = media.dataset?.mediaRetrySrc || "";
+    const srcset = media.dataset?.mediaRetrySrcset || "";
+    media.removeAttribute?.("src");
+    media.removeAttribute?.("srcset");
+    const ownerWindow = media.ownerDocument?.defaultView
+      || mediaRecoveryFrame(media)?.ownerDocument?.defaultView;
+    const requestFrame = ownerWindow?.requestAnimationFrame || ((callback) => callback());
+    requestFrame(() => {
+      if (source) media.setAttribute?.("src", source);
+      if (srcset) media.setAttribute?.("srcset", srcset);
+    });
+  }
+
+  function installMediaRecovery(recoveryRoot) {
+    if (
+      !recoveryRoot
+      || typeof recoveryRoot.addEventListener !== "function"
+      || mediaRecoveryRoots.has(recoveryRoot)
+    ) {
+      return false;
+    }
+
+    mediaRecoveryRoots.add(recoveryRoot);
+    recoveryRoot.addEventListener("error", (event) => {
+      const media = event.target;
+      const tagName = String(media?.tagName || "").toUpperCase();
+      if (tagName !== "IMG" && tagName !== "VIDEO") {
+        return;
+      }
+      showMediaError(media, mediaRecoveryFrame(media, recoveryRoot));
+    }, true);
+
+    const clearLoadedMedia = (event) => {
+      const media = event.target;
+      const tagName = String(media?.tagName || "").toUpperCase();
+      if (tagName !== "IMG" && tagName !== "VIDEO") {
+        return;
+      }
+      clearMediaError(media, mediaRecoveryFrame(media, recoveryRoot));
+    };
+    recoveryRoot.addEventListener("load", clearLoadedMedia, true);
+    recoveryRoot.addEventListener("loadeddata", clearLoadedMedia, true);
+
+    recoveryRoot.addEventListener("click", (event) => {
+      const control = event.target?.closest?.("[data-media-retry]");
+      if (!control || !recoveryRoot.contains?.(control)) {
+        return;
+      }
+      const frame = control.classList?.contains("has-media-error")
+        ? control
+        : control.parentElement;
+      const media = control._mediaRetryTarget
+        || frame?.querySelector?.('img[aria-invalid="true"], video[aria-invalid="true"]')
+        || frame?.querySelector?.("img, video");
+      if (!media) {
+        return;
+      }
+      event.preventDefault?.();
+      event.stopImmediatePropagation?.();
+      retryMedia(media);
+    }, true);
+    return true;
+  }
+
   let controller = null;
   const pendingGalleries = [];
   const publicApi = {
+    installMediaRecovery,
     registerGallery(viewId, root, options = {}) {
       if (controller) {
         return controller.registerGallery(viewId, root, options);
@@ -122,6 +277,8 @@
   const previous = pager?.querySelector("[data-stage-previous]");
   const status = pager?.querySelector("[data-stage-status]");
   const next = pager?.querySelector("[data-stage-next]");
+  const liveRegion = root?.querySelector("[data-stage-live]")
+    || document.querySelector("[data-stage-live]");
   const railToggle = rail?.querySelector("[data-task-rail-toggle]");
   const taskLinks = Array.from(rail?.querySelectorAll(".directory-item") || []);
   const stageWipeLabel = stageWipe?.querySelector("span");
@@ -306,6 +463,16 @@
     status.textContent = `${String(state.page).padStart(2, "0")} / ${String(pageCount).padStart(2, "0")}`;
   }
 
+  function announceState(state) {
+    if (!liveRegion) {
+      return;
+    }
+    const gallery = galleries.get(state.view);
+    const pageCount = gallery?.pageCount || 1;
+    const label = tabByView.get(state.view)?.textContent?.trim() || state.view;
+    liveRegion.textContent = `${label}，第 ${state.page} 页，共 ${pageCount} 页`;
+  }
+
   function dispatchStageChange(state) {
     document.dispatchEvent(new window.CustomEvent("portfolio:stagechange", {
       detail: {
@@ -340,6 +507,7 @@
       renderGallery(gallery, normalized.page, true);
     }
     renderPager(normalized);
+    announceState(normalized);
     pagesByView[normalized.view] = normalized.page;
     desiredState = normalized;
     appliedState = normalized;
@@ -724,6 +892,7 @@
   applyState(desiredState);
   writeHistory(desiredState, "replace");
   body.classList.add("stage-ready");
+  installMediaRecovery(body);
 
   pendingGalleries.splice(0).forEach(([viewId, galleryRoot, options]) => {
     registerGallery(viewId, galleryRoot, options);

@@ -15,11 +15,11 @@ pages.forEach((page) => {
   const html = fs.readFileSync(path.join(root, page), "utf8");
 
   assert.ok(
-    html.includes('href="click-stage.css?v=click-stage-10"'),
+    html.includes('href="click-stage.css?v=click-stage-11"'),
     `${page} should load the click-stage stylesheet`,
   );
   assert.ok(
-    html.includes('src="click-stage.js?v=click-stage-10"'),
+    html.includes('src="click-stage.js?v=click-stage-11"'),
     `${page} should load the click-stage script`,
   );
   assert.ok(html.includes('class="stage-wipe"'), `${page} should include the shared stage wipe`);
@@ -46,7 +46,7 @@ missionPreviews.forEach((preview, index) => {
 });
 assert.ok(
   homepage.indexOf('src="home-stage.js?v=click-stage-2"') >
-    homepage.indexOf('src="click-stage.js?v=click-stage-10"'),
+    homepage.indexOf('src="click-stage.js?v=click-stage-11"'),
   "index.html should load home-stage.js after click-stage.js",
 );
 assert.ok(
