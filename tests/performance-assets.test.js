@@ -37,7 +37,7 @@ pages.forEach((page) => {
   const html = read(page);
   assert.ok(html.includes('href="assets/fonts/ZHYuwanPortfolio-subset.woff2"'), `${page} should preload the subset font`);
   assert.ok(html.includes('styles.css?v=stability-3'), `${page} should cache-bust optimized styles`);
-  assert.ok(html.includes('script.js?v=stability-9'), `${page} should cache-bust optimized scripts`);
+  assert.ok(html.includes('script.js?v=stability-8'), `${page} should cache-bust optimized scripts`);
 });
 
 const sourceText = productionSources.map(read).join("\n");

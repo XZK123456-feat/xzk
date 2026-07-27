@@ -9,7 +9,7 @@ const CORE_ASSETS = [
   "./community-creatives.html",
   "./video-design.html",
   "./styles.css?v=stability-3",
-  "./script.js?v=stability-9",
+  "./script.js?v=stability-8",
   "./click-stage.css?v=click-stage-10",
   "./click-stage.js?v=click-stage-10",
   "./home-stage.js?v=click-stage-2",

@@ -46,7 +46,7 @@ for (const page of pages) {
   assert.ok(html.includes('data-loading-label>LOADING</span>'), `${page} should expose a mutable loading label`);
   assert.ok(html.includes('data-loading-retry'), `${page} should expose a retry control for critical loading failures`);
   assert.ok(html.includes('<link rel="stylesheet" href="styles.css?v=stability-3"'), `${page} should cache-bust the optimized styles`);
-  assert.ok(html.includes('<script src="script.js?v=stability-9"></script>'), `${page} should cache-bust the optimized shared controller`);
+  assert.ok(html.includes('<script src="script.js?v=stability-8"></script>'), `${page} should cache-bust the optimized shared controller`);
 
   const loaderBlock = html.match(/<div class="page-loader"[\s\S]*?<\/div>\s*(?=<div class="page-shell")/)?.[0];
   assert.ok(loaderBlock, `${page} should include the complete loader markup`);
@@ -258,11 +258,7 @@ function createFonts(ready = Promise.resolve(), load = () => Promise.resolve()) 
 function createResource(options = {}) {
   const resource = new FakeEventTarget();
   Object.assign(resource, options);
-  const attributes = new Map();
   resource.dataset = options.dataset || {};
-  resource.getAttribute = (name) => attributes.get(name) ?? null;
-  resource.removeAttribute = (name) => attributes.delete(name);
-  resource.setAttribute = (name, value) => attributes.set(name, String(value));
   resource.getBoundingClientRect = options.getBoundingClientRect
     || (() => options.rect || { top: 0, bottom: 100 });
   return resource;
@@ -301,7 +297,6 @@ function createLoaderHarness(options = {}) {
   const pageShell = createStateElement();
   const stylesheets = options.stylesheets || [];
   const images = options.images || [];
-  const criticalRoots = options.criticalRoots || [];
   const windowTarget = new FakeEventTarget();
   const scrollState = {
     appliedScrollToCalls: 0,
@@ -343,12 +338,7 @@ function createLoaderHarness(options = {}) {
       if (selector === ".page-shell") return pageShell;
       return null;
     },
-    querySelectorAll: (selector) => {
-      if (selector === 'link[rel="stylesheet"]') return stylesheets;
-      if (selector === "img[data-loader-critical-image]") return options.criticalImages || document.images;
-      if (selector === "[data-loader-critical-image-root]") return criticalRoots;
-      return [];
-    },
+    querySelectorAll: (selector) => selector === 'link[rel="stylesheet"]' ? stylesheets : [],
   });
   const context = vm.createContext({
     clearTimeout: (id) => clock.clearTimeout(id),
@@ -474,7 +464,6 @@ async function testOffscreenEagerImageDoesNotDelayAfterDomReady() {
     rect: { top: 1800, bottom: 2100 },
   });
   harness = createLoaderHarness({
-    criticalImages: [],
     fonts: createFonts(),
     images: [offscreenEagerImage],
     readyState: "loading",
@@ -801,13 +790,13 @@ async function testExplicitFontAndVisibleImageDecode() {
   await advance(harness, 16);
   assert.deepEqual(
     fontCalls.map((call) => call.descriptor),
-    [400, 700, 900].map((weight) => `${weight} 1em ZHYuwanPortfolio`),
-    "loader should explicitly request the three production portfolio font weights",
+    [400, 500, 700, 800, 900].map((weight) => `${weight} 16px "ZHYuwanPortfolio"`),
+    "loader should explicitly request every critical portfolio font weight",
   );
   fontCalls.forEach((call) => {
     assert.ok(call.sample.includes("肖子康"), "each font request should include representative Chinese glyphs");
   });
-  assert.equal(fontsReadyReads, 1, "fonts.ready should participate in the same real-resource progress group");
+  assert.equal(fontsReadyReads, 0, "loader should wait for the explicit font request before reading fonts.ready");
   assert.equal(visibleLazyImage.loading, "lazy", "priority image discovery should wait for final font layout");
   assert.equal(visibleDecodeCalls, 0, "priority image decode should not start before font readiness");
   assert.equal(farLazyImage.loading, "lazy", "offscreen image should stay lazy");
@@ -815,7 +804,7 @@ async function testExplicitFontAndVisibleImageDecode() {
 
   fontLoad.resolve();
   await flushMicrotasks();
-  assert.equal(fontsReadyReads, 1, "the loader should read fonts.ready only once");
+  assert.equal(fontsReadyReads, 1, "loader should await fonts.ready after the explicit request settles");
   fontsReady.resolve();
   await flushMicrotasks();
   await advance(harness, 16);

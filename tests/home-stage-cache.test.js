@@ -26,7 +26,7 @@ pages.forEach((page) => {
     `${page} should request click-stage.js with the current stage release`,
   );
   assert.ok(
-    html.includes('src="script.js?v=stability-9"'),
+    html.includes('src="script.js?v=stability-8"'),
     `${page} should request script.js with the current shared release`,
   );
 });
@@ -44,7 +44,7 @@ assert.ok(
   "the service worker should use the current stage cache generation",
 );
 [
-  "./script.js?v=stability-9",
+  "./script.js?v=stability-8",
   "./click-stage.css?v=click-stage-10",
   "./click-stage.js?v=click-stage-10",
   "./home-stage.js?v=click-stage-2",

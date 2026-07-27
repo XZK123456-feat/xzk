@@ -18,7 +18,7 @@ const clickStage = read("click-stage.js");
 const css = read("styles.css");
 const serviceWorker = read("sw.js");
 const styleRelease = "stability-3";
-const sharedRelease = "stability-9";
+const sharedRelease = "stability-8";
 const stageRelease = "click-stage-10";
 
 detailScripts.forEach((file) => {
