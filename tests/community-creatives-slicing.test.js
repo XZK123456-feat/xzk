@@ -26,8 +26,7 @@ const groups = [
   ["lili-tangquan", "狸狸汤泉", 20],
 ];
 
-assert.ok(html.includes("社群视觉 / 活动运营"), "NO.3 overview should retain concise project scope metadata");
-assert.ok(html.includes('class="overview-entry-strip"'), "NO.3 overview should expose the three verified gallery groups");
+assert.ok(html.includes("运营图84张 · 小恐龙派对40张 · 乌拉拉24张 · 狸狸汤泉20张"), "NO.3 summary should reflect sliced community assets");
 assert.ok(html.includes("data-community-gallery"), "NO.3 detail should render galleries from named hooks");
 assert.ok(html.includes("#party-all"), "NO.3 nav should link to the party section");
 assert.ok(html.includes("#ulala-all"), "NO.3 nav should link to the ULaLa section");

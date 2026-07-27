@@ -25,8 +25,7 @@ function listImages(folder) {
   return fs.readdirSync(folder).filter((name) => /\.(png|jpg)$/i.test(name)).sort();
 }
 
-assert.ok(html.includes("600+ 图片素材"), "UA overview should retain concise total-output metadata");
-assert.ok(html.includes('class="overview-entry-strip"'), "UA overview should expose all verified gallery groups");
+assert.ok(html.includes("横图90 · 竖图54 · 九图20组 = 共164个缩略图"), "UA detail summary should count nine-grid creatives by 3x3 groups");
 assert.ok(html.includes('data-ua-gallery="horizontal"'), "horizontal gallery should be generated from a named hook");
 assert.ok(html.includes('data-ua-gallery="vertical"'), "vertical gallery should be generated from a named hook");
 assert.ok(html.includes('data-ua-gallery="nine-grid"'), "nine-grid gallery should be generated from a named hook");

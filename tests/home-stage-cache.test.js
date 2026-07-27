@@ -18,11 +18,11 @@ const sharedSource = read("script.js");
 pages.forEach((page) => {
   const html = read(page);
   assert.ok(
-    html.includes('href="click-stage.css?v=click-stage-12"'),
+    html.includes('href="click-stage.css?v=click-stage-11"'),
     `${page} should request click-stage.css with the current stage release`,
   );
   assert.ok(
-    html.includes('src="click-stage.js?v=click-stage-12"'),
+    html.includes('src="click-stage.js?v=click-stage-11"'),
     `${page} should request click-stage.js with the current stage release`,
   );
   assert.ok(
@@ -36,22 +36,22 @@ assert.ok(
   "index.html should request home-stage.js with the current stage release",
 );
 assert.ok(
-  sharedSource.includes('navigator.serviceWorker.register("sw.js?v=click-stage-12")'),
+  sharedSource.includes('navigator.serviceWorker.register("sw.js?v=click-stage-11")'),
   "the shared controller should register the current service worker release",
 );
 assert.ok(
-  serviceWorkerSource.includes('const CACHE_VERSION = "zk-portfolio-click-stage-12"'),
+  serviceWorkerSource.includes('const CACHE_VERSION = "zk-portfolio-click-stage-11"'),
   "the service worker should use the current stage cache generation",
 );
 [
   "./script.js?v=stability-9",
-  "./click-stage.css?v=click-stage-12",
-  "./click-stage.js?v=click-stage-12",
+  "./click-stage.css?v=click-stage-11",
+  "./click-stage.js?v=click-stage-11",
   "./home-stage.js?v=click-stage-2",
-  "./detail-stage.js?v=click-stage-12",
-  "./website-design.js?v=click-stage-12",
-  "./ua-creatives.js?v=click-stage-12",
-  "./community-creatives.js?v=click-stage-12",
+  "./detail-stage.js?v=click-stage-11",
+  "./website-design.js?v=click-stage-11",
+  "./ua-creatives.js?v=click-stage-11",
+  "./community-creatives.js?v=click-stage-11",
 ].forEach((asset) => {
   assert.ok(serviceWorkerSource.includes(`"${asset}"`), `the service worker should precache ${asset}`);
 });

@@ -274,7 +274,6 @@
   const stageWipe = document.querySelector(".stage-wipe");
   const panels = Array.from(root?.querySelectorAll("[data-stage-view]") || []);
   const tabs = Array.from(tablist?.querySelectorAll("[data-stage-tab]") || []);
-  const entries = Array.from(document.querySelectorAll("[data-stage-entry]") || []);
   const previous = pager?.querySelector("[data-stage-previous]");
   const status = pager?.querySelector("[data-stage-status]");
   const next = pager?.querySelector("[data-stage-next]");
@@ -808,17 +807,6 @@
     registerGallery,
     refreshGallery,
   };
-
-  entries.forEach((entry) => {
-    entry.addEventListener("click", (event) => {
-      const view = entry.dataset.stageEntry;
-      if (!view || !allowedViews.includes(view)) {
-        return;
-      }
-      event.preventDefault();
-      commitCategory(view);
-    });
-  });
 
   tabs.forEach((tab, index) => {
     tab.addEventListener("click", (event) => {

@@ -283,20 +283,6 @@ function createHarness(initialHash = "#overview", options = {}) {
     dataset: { stageView: view },
     parentElement: main,
   }));
-  const overviewEntries = [
-    new FakeElement(document, {
-      tagName: "a",
-      attributes: { href: "#horizontal" },
-      dataset: { stageEntry: "horizontal" },
-      parentElement: panels[0],
-    }),
-    new FakeElement(document, {
-      tagName: "a",
-      attributes: { href: "#missing" },
-      dataset: { stageEntry: "missing" },
-      parentElement: panels[0],
-    }),
-  ];
   if (options.declarativeGallery) {
     declarativeGallery = new FakeElement(document, {
       classes: options.declarativeGalleryLoading ? ["is-gallery-loading"] : [],
@@ -354,7 +340,6 @@ function createHarness(initialHash = "#overview", options = {}) {
   document.queryMap.set("[data-task-rail]", options.invalid ? null : rail);
   document.queryMap.set(".stage-wipe", wipe);
   document.queryMap.set(".website-lightbox.is-open, .resume-overlay.is-open, [role=\"dialog\"].is-open", null);
-  document.queryAllMap.set("[data-stage-entry]", overviewEntries);
   document.queryAllMap.set("video", [video]);
 
   const location = {
@@ -499,7 +484,6 @@ function createHarness(initialHash = "#overview", options = {}) {
     location,
     main,
     next,
-    overviewEntries,
     pager,
     panels,
     pageSizeKinds,
@@ -583,16 +567,6 @@ assert.deepStrictEqual(plain(state.reduce({ view: "horizontal", page: -4 }, { ty
 
 const invalidHarness = createHarness("#overview", { invalid: true });
 assert.strictEqual(invalidHarness.body.classList.contains("stage-ready"), false, "stage-ready should not be added when validation fails");
-
-const entryHarness = createHarness("#overview");
-const validEntryEvent = entryHarness.overviewEntries[0].click();
-assert.strictEqual(validEntryEvent.defaultPrevented, true, "valid overview entries should stay inside stage navigation");
-assert.strictEqual(entryHarness.location.hash, "#horizontal", "overview entries should push the selected view hash");
-entryHarness.timers.advance(280);
-assert.strictEqual(entryHarness.panels[1].hidden, false, "overview entries should apply at the wipe midpoint");
-const invalidEntryEvent = entryHarness.overviewEntries[1].click();
-assert.strictEqual(invalidEntryEvent.defaultPrevented, false, "invalid overview entries should retain native hash behavior");
-assert.strictEqual(entryHarness.location.hash, "#horizontal", "invalid overview entries should not change stage state");
 
 const declarativeHarness = createHarness("#horizontal-p2", {
   declarativeGallery: true,
