@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://xzk123456-feat.github.io/xzk/sitemap.xml

@@ -2,12 +2,7 @@
 const PAGE_LOADER_MIN_MS = 350;
 const PAGE_LOADER_TIMEOUT_MS = 12000;
 const PAGE_LOADER_EXIT_MS = 400;
-const PAGE_LOADER_FONT_WEIGHTS = [400, 500, 700, 800, 900];
-const PAGE_LOADER_PROGRESS_WEIGHTS = {
-  styles: 25,
-  fonts: 50,
-  priorityImage: 11,
-};
+const PAGE_LOADER_MEDIA_VIEWPORT_FACTOR = 1.5;
 
 let activePageLoaderRun = null;
 let pageLoaderUnlockTimer = null;
@@ -17,7 +12,6 @@ function createPageLoaderRun() {
     active: true,
     lifecycleSettlers: new Set(),
     preparedImages: new WeakSet(),
-    progressSettlers: new Set(),
     resourceSettlers: new Set(),
     timerIds: new Set(),
   };
@@ -53,10 +47,6 @@ function settlePageLoaderLifecycle(run) {
   [...run.lifecycleSettlers].forEach((settle) => settle());
 }
 
-function settlePageLoaderProgress(run) {
-  [...run.progressSettlers].forEach((settle) => settle());
-}
-
 function invalidatePageLoaderRun(run) {
   if (!run || !run.active) {
     return;
@@ -67,7 +57,6 @@ function invalidatePageLoaderRun(run) {
   run.timerIds.forEach((timerId) => window.clearTimeout(timerId));
   run.timerIds.clear();
   settlePageLoaderResources(run);
-  settlePageLoaderProgress(run);
 }
 
 function cleanupActivePageLoaderRun() {
@@ -165,63 +154,28 @@ function waitForPageLoaderFrame(run) {
   });
 }
 
-function waitForStylesheets(run, onProgress = () => {}) {
+function waitForStylesheets(run) {
   const stylesheets = Array.from(document.querySelectorAll('link[rel="stylesheet"]'));
-  if (stylesheets.length === 0) {
-    onProgress(1, 1);
-    return Promise.resolve([]);
-  }
-
-  let completed = 0;
-  const reportSettlement = () => {
-    completed += 1;
-    onProgress(completed, stylesheets.length);
-  };
 
   return Promise.allSettled(stylesheets.map((link) => {
     if (link.sheet || link.dataset.loaderState === "loaded" || link.dataset.loaderState === "error") {
-      return Promise.resolve().then(reportSettlement);
+      return Promise.resolve();
     }
 
-    return waitForResourceSettlement(link, run).then(reportSettlement);
+    return waitForResourceSettlement(link, run);
   }));
 }
 
-function waitForPortfolioFonts(onProgress = () => {}) {
+function waitForPortfolioFonts() {
   if (!document.fonts || typeof document.fonts.load !== "function") {
-    onProgress(1, 1);
-    return Promise.resolve(true);
+    return Promise.resolve();
   }
 
-  const sample = "肖子康作品集 目录 数据 图片 视频";
-  let completed = 0;
-  onProgress(1, PAGE_LOADER_FONT_WEIGHTS.length);
-  const requests = PAGE_LOADER_FONT_WEIGHTS.map((weight) => Promise.resolve()
-    .then(() => document.fonts.load(`${weight} 16px "ZHYuwanPortfolio"`, sample))
-    .then(() => true, () => false)
-    .then((loaded) => {
-      completed += 1;
-      onProgress(completed, PAGE_LOADER_FONT_WEIGHTS.length);
-      return loaded;
-    }));
+  const request = Promise.resolve()
+    .then(() => document.fonts.load('800 16px "ZHYuwanPortfolio"', "肖子康作品集 目录 数据"))
+    .catch(() => undefined);
 
-  return Promise.all(requests)
-    .then((results) => {
-      if (!results.every(Boolean)) {
-        return false;
-      }
-
-      return document.fonts.ready.then(() => {
-        if (typeof document.fonts.check !== "function") {
-          return true;
-        }
-
-        return PAGE_LOADER_FONT_WEIGHTS.every((weight) => document.fonts.check(
-          `${weight} 16px "ZHYuwanPortfolio"`,
-          sample,
-        ));
-      }, () => false);
-    });
+  return request.then(() => document.fonts.ready.catch(() => undefined));
 }
 
 function getPageLoaderHashTarget() {
@@ -241,12 +195,12 @@ function getPageLoaderHashTarget() {
     || (decodedId !== rawId ? document.getElementById(rawId) : null);
 }
 
-function preparePriorityImage(run, onProgress = () => {}) {
+function prepareFirstViewImages(run) {
   if (!isCurrentPageLoaderRun(run)) {
     return Promise.resolve([]);
   }
 
-  const firstViewLimit = window.innerHeight;
+  const firstViewLimit = window.innerHeight * PAGE_LOADER_MEDIA_VIEWPORT_FACTOR;
   const hashTarget = getPageLoaderHashTarget();
   const hashTargetRect = hashTarget && typeof hashTarget.getBoundingClientRect === "function"
     ? hashTarget.getBoundingClientRect()
@@ -266,14 +220,8 @@ function preparePriorityImage(run, onProgress = () => {}) {
     const projectedTop = rect.top - hashTargetRect.top;
     const projectedBottom = rect.bottom - hashTargetRect.top;
     return projectedTop < firstViewLimit && projectedBottom > 0;
-  }).sort((left, right) => left.getBoundingClientRect().top - right.getBoundingClientRect().top).slice(0, 1);
+  });
 
-  if (images.length === 0) {
-    onProgress(1, 1);
-    return Promise.resolve([]);
-  }
-
-  let completed = 0;
   images.forEach((image) => run.preparedImages.add(image));
   return Promise.allSettled(images.map((image) => {
     if (image.loading === "lazy") {
@@ -284,111 +232,24 @@ function preparePriorityImage(run, onProgress = () => {}) {
       ? Promise.resolve(true)
       : waitForResourceSettlement(image, run);
 
-    return loaded.then((resourceCompleted) => {
-      if (!resourceCompleted || !isCurrentPageLoaderRun(run) || typeof image.decode !== "function") {
+    return loaded.then((completed) => {
+      if (!completed || !isCurrentPageLoaderRun(run) || typeof image.decode !== "function") {
         return undefined;
       }
 
       return image.decode().catch(() => undefined);
-    }).finally(() => {
-      completed += 1;
-      onProgress(completed, images.length);
     });
   }));
 }
 
-function waitForPriorityImage(run, onProgress = () => {}) {
+function waitForInitialFirstViewImages(run) {
   return waitForDomReady(run)
     .then((loaded) => loaded && isCurrentPageLoaderRun(run)
       ? waitForPageLoaderFrame(run)
       : false)
     .then((frameRendered) => frameRendered && isCurrentPageLoaderRun(run)
-      ? preparePriorityImage(run, onProgress)
+      ? prepareFirstViewImages(run)
       : []);
-}
-
-function createPageLoaderProgress(run, fill, percent) {
-  const prefersReducedMotion = typeof window.matchMedia === "function"
-    && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  let displayed = 8;
-  let target = 8;
-  let frameTimerId = null;
-  let finishing = false;
-  const finishWaiters = new Set();
-
-  const render = () => {
-    const rounded = Math.round(displayed);
-    if (fill) {
-      fill.style.transform = `scaleX(${displayed / 100})`;
-    }
-    if (percent) {
-      percent.textContent = `${String(rounded).padStart(2, "0")}%`;
-    }
-  };
-
-  const settleFinishWaiters = (completed) => {
-    [...finishWaiters].forEach((resolve) => resolve(completed));
-    finishWaiters.clear();
-  };
-
-  const tick = () => {
-    frameTimerId = null;
-    if (!isCurrentPageLoaderRun(run)) {
-      settleFinishWaiters(false);
-      return;
-    }
-
-    const remaining = target - displayed;
-    displayed = remaining <= 0.4
-      ? target
-      : Math.min(target, displayed + Math.max(finishing ? 3 : 0.75, remaining * 0.28));
-    render();
-
-    if (displayed < target) {
-      frameTimerId = schedulePageLoaderTimer(run, tick, 16);
-    } else if (displayed >= 100) {
-      settleFinishWaiters(true);
-    }
-  };
-
-  const setTarget = (nextTarget) => {
-    target = Math.max(target, Math.min(100, nextTarget));
-    if (prefersReducedMotion) {
-      displayed = target;
-      render();
-      if (displayed >= 100) {
-        settleFinishWaiters(true);
-      }
-      return;
-    }
-
-    if (frameTimerId === null && displayed < target) {
-      frameTimerId = schedulePageLoaderTimer(run, tick, 16);
-    }
-  };
-
-  const cancel = () => {
-    if (frameTimerId !== null) {
-      clearPageLoaderTimer(run, frameTimerId);
-      frameTimerId = null;
-    }
-    run.progressSettlers.delete(cancel);
-    settleFinishWaiters(false);
-  };
-  run.progressSettlers.add(cancel);
-  render();
-
-  return {
-    finish: () => {
-      finishing = true;
-      setTarget(100);
-      if (displayed >= 100) {
-        return Promise.resolve(true);
-      }
-      return new Promise((resolve) => finishWaiters.add(resolve));
-    },
-    setTarget,
-  };
 }
 
 function cancelPageLoaderWatchdog() {
@@ -407,33 +268,6 @@ function releasePageLoadingState(loader) {
   document.documentElement.removeAttribute("aria-busy");
   document.body.classList.remove("is-page-loading");
   document.body.removeAttribute("aria-busy");
-}
-
-function showPageLoaderError(run, loader) {
-  if (!isCurrentPageLoaderRun(run) || !loader) {
-    return;
-  }
-
-  cancelPageLoaderWatchdog();
-  settlePageLoaderLifecycle(run);
-  settlePageLoaderResources(run);
-  loader.dataset.state = "error";
-  loader.setAttribute("role", "alert");
-  loader.setAttribute("aria-label", "页面加载未完成，请重新加载");
-  const label = loader.querySelector("[data-loading-label]");
-  const retry = loader.querySelector("[data-loading-retry]");
-  if (label) {
-    label.textContent = "加载未完成";
-  }
-  if (retry) {
-    retry.hidden = false;
-    retry.onclick = () => window.location.reload();
-  }
-
-  invalidatePageLoaderRun(run);
-  if (activePageLoaderRun === run) {
-    activePageLoaderRun = null;
-  }
 }
 
 function dismissPageLoader(run, loader) {
@@ -489,34 +323,23 @@ function initPageLoader() {
   const startedAt = performance.now();
   const fill = loader.querySelector(".page-loader__fill");
   const percent = loader.querySelector("[data-loading-percent]");
-  const label = loader.querySelector("[data-loading-label]");
-  const retry = loader.querySelector("[data-loading-retry]");
-  delete loader.dataset.state;
-  loader.setAttribute("role", "status");
-  loader.setAttribute("aria-label", "页面正在加载");
-  if (label) {
-    label.textContent = "LOADING";
-  }
-  if (retry) {
-    retry.hidden = true;
-    retry.onclick = null;
-  }
-  const progress = createPageLoaderProgress(run, fill, percent);
-  const resourceProgress = {
-    styles: 0,
-    fonts: 0,
-    priorityImage: 0,
-  };
-  const reportResourceProgress = (key, completed, total) => {
+  let currentProgress = 8;
+
+  const setProgress = (nextProgress) => {
     if (!isCurrentPageLoaderRun(run)) {
       return;
     }
 
-    const fraction = total > 0 ? Math.min(1, completed / total) : 1;
-    resourceProgress[key] = Math.max(resourceProgress[key], fraction);
-    const nextProgress = 8 + Object.entries(PAGE_LOADER_PROGRESS_WEIGHTS)
-      .reduce((sum, [resourceKey, weight]) => sum + resourceProgress[resourceKey] * weight, 0);
-    progress.setTarget(nextProgress);
+    currentProgress = Math.max(currentProgress, Math.min(100, nextProgress));
+    const normalizedProgress = currentProgress / 100;
+
+    if (fill) {
+      fill.style.transform = `scaleX(${normalizedProgress})`;
+    }
+
+    if (percent) {
+      percent.textContent = `${String(Math.round(currentProgress)).padStart(2, "0")}%`;
+    }
   };
 
   document.documentElement.classList.add("is-page-loading");
@@ -524,50 +347,47 @@ function initPageLoader() {
   document.documentElement.setAttribute("aria-busy", "true");
   document.body.setAttribute("aria-busy", "true");
   loader.removeAttribute("aria-hidden");
+  setProgress(8);
 
-  const stylesReady = waitForStylesheets(run, (completed, total) => {
-    reportResourceProgress("styles", completed, total);
-  });
-  const fontsReady = waitForPortfolioFonts((completed, total) => {
-    reportResourceProgress("fonts", completed, total);
-  });
-  const priorityImageReady = Promise.all([stylesReady, fontsReady])
-    .then(([, fontReady]) => {
-      if (!fontReady || !isCurrentPageLoaderRun(run)) {
+  const stylesReady = waitForStylesheets(run).then(() => setProgress(38));
+  const fontsReady = waitForPortfolioFonts().then(() => setProgress(68));
+  const initialImagesReady = waitForInitialFirstViewImages(run);
+  const imagesReady = Promise.allSettled([stylesReady, fontsReady, initialImagesReady])
+    .then(() => isCurrentPageLoaderRun(run) ? waitForPageLoaderFrame(run) : false)
+    .then((frameRendered) => {
+      if (!frameRendered || !isCurrentPageLoaderRun(run)) {
         return false;
       }
 
-      return waitForPriorityImage(run, (completed, total) => {
-        reportResourceProgress("priorityImage", completed, total);
-      }).then(() => true);
+      return prepareFirstViewImages(run).then(() => true);
+    })
+    .then((finalScanCompleted) => {
+      if (finalScanCompleted) {
+        setProgress(92);
+      }
     });
-  const combinedReadiness = Promise.all([stylesReady, fontsReady, priorityImageReady])
-    .then(([, fontReady]) => ({ kind: fontReady ? "ready" : "font-error" }));
+  const combinedReadiness = Promise.allSettled([stylesReady, fontsReady, imagesReady]);
   let hardTimeoutId = null;
   const hardTimeout = new Promise((resolve) => {
-    hardTimeoutId = schedulePageLoaderTimer(run, () => resolve({ kind: "timeout" }), PAGE_LOADER_TIMEOUT_MS);
+    hardTimeoutId = schedulePageLoaderTimer(run, resolve, PAGE_LOADER_TIMEOUT_MS);
   });
 
   Promise.race([combinedReadiness, hardTimeout])
-    .then((outcome) => {
+    .then(() => {
       if (!isCurrentPageLoaderRun(run)) {
         return false;
       }
 
       clearPageLoaderTimer(run, hardTimeoutId);
-      cancelPageLoaderWatchdog();
-      if (outcome.kind !== "ready") {
-        showPageLoaderError(run, loader);
-        return false;
-      }
-
+      settlePageLoaderLifecycle(run);
+      settlePageLoaderResources(run);
+      setProgress(100);
       const elapsed = performance.now() - startedAt;
       const remaining = Math.max(0, PAGE_LOADER_MIN_MS - elapsed);
-      const minimumDuration = new Promise((resolve) => {
+
+      return new Promise((resolve) => {
         schedulePageLoaderTimer(run, () => resolve(true), remaining);
       });
-      return Promise.all([progress.finish(), minimumDuration])
-        .then(([progressCompleted]) => progressCompleted);
     })
     .then((shouldDismiss) => {
       if (!shouldDismiss || !isCurrentPageLoaderRun(run)) {
@@ -669,88 +489,6 @@ function unlockPreviewScroll() {
 
 window.lockPreviewScroll = lockPreviewScroll;
 window.unlockPreviewScroll = unlockPreviewScroll;
-
-const modalDialogStates = new WeakMap();
-const MODAL_FOCUSABLE_SELECTOR = [
-  "a[href]",
-  "button:not([disabled])",
-  "input:not([disabled])",
-  "select:not([disabled])",
-  "textarea:not([disabled])",
-  "[tabindex]:not([tabindex='-1'])",
-].join(",");
-
-function getModalFocusables(dialog) {
-  return Array.from(dialog.querySelectorAll(MODAL_FOCUSABLE_SELECTOR))
-    .filter((element) => !element.hidden && getComputedStyle(element).visibility !== "hidden");
-}
-
-function activateModalDialog(dialog, opener = document.activeElement) {
-  if (!dialog || modalDialogStates.has(dialog)) {
-    return;
-  }
-
-  dialog.removeAttribute("inert");
-  const inertElements = Array.from(document.body.children)
-    .filter((element) => element !== dialog && !element.matches("script, .page-loader"))
-    .map((element) => ({ element, wasInert: element.hasAttribute("inert") }));
-
-  inertElements.forEach(({ element }) => element.setAttribute("inert", ""));
-  modalDialogStates.set(dialog, { opener, inertElements });
-  const focusTarget = getModalFocusables(dialog)[0];
-  focusTarget?.focus({ preventScroll: true });
-}
-
-function deactivateModalDialog(dialog) {
-  const state = dialog ? modalDialogStates.get(dialog) : null;
-  if (!state) {
-    return;
-  }
-
-  state.inertElements.forEach(({ element, wasInert }) => {
-    if (!wasInert) {
-      element.removeAttribute("inert");
-    }
-  });
-  modalDialogStates.delete(dialog);
-  dialog.setAttribute("inert", "");
-  if (state.opener?.isConnected) {
-    state.opener.focus({ preventScroll: true });
-  }
-}
-
-function trapModalFocus(event, dialog) {
-  if (event.key !== "Tab" || !dialog) {
-    return;
-  }
-
-  const focusable = getModalFocusables(dialog);
-  if (focusable.length === 0) {
-    event.preventDefault();
-    return;
-  }
-
-  const first = focusable[0];
-  const last = focusable[focusable.length - 1];
-  const active = document.activeElement;
-  if (event.shiftKey && (active === first || !dialog.contains(active))) {
-    event.preventDefault();
-    last.focus({ preventScroll: true });
-  } else if (!event.shiftKey && active === last) {
-    event.preventDefault();
-    first.focus({ preventScroll: true });
-  }
-}
-
-document.addEventListener("keydown", (event) => {
-  const openDialog = document.querySelector(".website-lightbox.is-open, .resume-overlay.is-open");
-  if (openDialog) {
-    trapModalFocus(event, openDialog);
-  }
-});
-
-window.activateModalDialog = activateModalDialog;
-window.deactivateModalDialog = deactivateModalDialog;
 
 function initBackToTop() {
   if (!backToTopButton) {
@@ -1065,9 +803,7 @@ function openResume(e) {
   resumeOverlay.classList.add("is-open");
   resumeOverlay.setAttribute("aria-hidden", "false");
   if (!wasOpen) {
-    resumeOverlay.removeAttribute("inert");
     lockPreviewScroll();
-    activateModalDialog(resumeOverlay, resumeOpenBtn);
   }
   resumeOverlay.querySelector(".resume-modal").scrollTop = 0;
 }
@@ -1079,8 +815,6 @@ function closeResume() {
   resumeOverlay.setAttribute("aria-hidden", "true");
   if (wasOpen) {
     unlockPreviewScroll();
-    deactivateModalDialog(resumeOverlay);
-    resumeOverlay.setAttribute("inert", "");
   }
 }
 
@@ -1151,9 +885,7 @@ if (resumeOverlay) {
     if (!lightbox.classList.contains("is-open")) return;
     const all = getAllPreviews();
     if (all.length === 0) return;
-    const activeThumbIndex = Array.from(lightbox.querySelectorAll(".lightbox-thumb"))
-      .findIndex((thumb) => thumb.classList.contains("active"));
-    const idx = activeThumbIndex >= 0 ? activeThumbIndex : all.indexOf(currentButton);
+    const idx = all.indexOf(currentButton);
     if (idx === -1) return;
     const nextIdx = idx + direction;
     if (nextIdx < 0 || nextIdx >= all.length) return;
@@ -1368,9 +1100,3 @@ function initCommunityVideoCards() {
 }
 
 initCommunityVideoCards();
-
-if ("serviceWorker" in navigator && /^https?:$/.test(window.location.protocol)) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=stability-1").catch(() => {});
-  });
-}

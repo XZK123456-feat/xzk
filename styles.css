@@ -24,47 +24,16 @@
 
 @font-face {
   font-family: "ZHYuwanPortfolio";
-  src: url("assets/fonts/ZHYuwanPortfolio-subset.woff2") format("woff2");
-  font-weight: 400;
-  font-style: normal;
-  font-display: block;
-}
-
-@font-face {
-  font-family: "ZHYuwanPortfolio";
-  src: url("assets/fonts/ZHYuwanPortfolio-subset.woff2") format("woff2");
-  font-weight: 500;
-  font-style: normal;
-  font-display: block;
-}
-
-@font-face {
-  font-family: "ZHYuwanPortfolio";
-  src: url("assets/fonts/ZHYuwanPortfolio-subset.woff2") format("woff2");
-  font-weight: 700;
-  font-style: normal;
-  font-display: block;
-}
-
-@font-face {
-  font-family: "ZHYuwanPortfolio";
-  src: url("assets/fonts/ZHYuwanPortfolio-subset.woff2") format("woff2");
-  font-weight: 800;
-  font-style: normal;
-  font-display: block;
-}
-
-@font-face {
-  font-family: "ZHYuwanPortfolio";
-  src: url("assets/fonts/ZHYuwanPortfolio-subset.woff2") format("woff2");
-  font-weight: 900;
+  src: url("assets/fonts/ZHYuwanPortfolio.woff2") format("woff2"),
+       url("assets/fonts/ZHYuwanPortfolio.ttf") format("truetype");
+  font-weight: 400 900;
   font-style: normal;
   font-display: block;
 }
 
 @font-face {
   font-family: "Alibaba PuHuiTi";
-  src: url("assets/fonts/AlibabaPuHuiTi-Bold-subset.woff2") format("woff2");
+  src: url("assets/fonts/AlibabaPuHuiTi-3-85-Bold.woff2") format("woff2");
   font-weight: 800;
   font-style: normal;
   font-display: swap;
@@ -134,7 +103,7 @@ body.is-page-loading .page-shell {
   background: var(--yellow);
   transform: scaleX(0.08);
   transform-origin: left center;
-  transition: none;
+  transition: transform 180ms ease-out;
 }
 
 .page-loader__meta {
@@ -147,30 +116,6 @@ body.is-page-loading .page-shell {
   font-weight: 800;
   line-height: 1.2;
   letter-spacing: 0;
-}
-
-.page-loader__retry {
-  display: none;
-  width: 100%;
-  min-height: 38px;
-  margin-top: 16px;
-  border: 2px solid var(--yellow);
-  border-radius: 4px;
-  color: var(--ink);
-  background: var(--yellow);
-  font-family: "Microsoft YaHei", Arial, sans-serif;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0;
-  cursor: pointer;
-}
-
-.page-loader[data-state="error"] .page-loader__track {
-  opacity: 0.45;
-}
-
-.page-loader[data-state="error"] .page-loader__retry {
-  display: block;
 }
 
 @media (max-width: 620px) {
@@ -992,7 +937,7 @@ body.motion-ready .hero-card.is-revealed .hero-stat:nth-child(3) {
   left: 120px;
   top: 0;
   bottom: 0;
-  border-left: 1px solid rgba(16, 16, 16, 0.22);
+  border-left: 4px dashed rgba(16, 16, 16, 0.35);
 }
 
 .mission-list {
@@ -1060,7 +1005,7 @@ body.motion-ready .hero-card.is-revealed .hero-stat:nth-child(3) {
   content: "";
   position: absolute;
   inset: 14px;
-  border: 0;
+  border: 3px dashed rgba(16, 16, 16, 0.28);
   border-radius: 18px;
   pointer-events: none;
 }
@@ -1145,7 +1090,7 @@ body.motion-ready .hero-card.is-revealed .hero-stat:nth-child(3) {
   content: "";
   position: absolute;
   inset: 18px;
-  border: 0;
+  border: 4px dashed rgba(16, 16, 16, 0.28);
   border-radius: 28px;
   pointer-events: none;
 }
@@ -1244,7 +1189,7 @@ body.motion-ready .hero-card.is-revealed .hero-stat:nth-child(3) {
   content: "";
   position: absolute;
   inset: 18px;
-  border: 0;
+  border: 4px dashed var(--ink);
   border-radius: 32px;
   pointer-events: none;
 }
@@ -1309,7 +1254,7 @@ body.motion-ready .hero-card.is-revealed .hero-stat:nth-child(3) {
   content: "";
   position: absolute;
   inset: 14px;
-  border: 0;
+  border: 3px dashed rgba(16, 16, 16, 0.28);
   border-radius: 20px;
   pointer-events: none;
 }
@@ -1520,7 +1465,7 @@ button::before {
   content: "";
   position: absolute;
   inset: 20px;
-  border: 0;
+  border: 4px dashed var(--ink);
   border-radius: 22px;
   pointer-events: none;
 }
@@ -1648,7 +1593,7 @@ dd:first-of-type {
   align-items: center;
   min-height: 112px;
   padding-right: 30px;
-  border-right: 1px solid rgba(255, 255, 255, 0.22);
+  border-right: 4px dashed rgba(255, 255, 255, 0.4);
 }
 
 .summary-item:last-child {
@@ -1718,35 +1663,6 @@ body.is-previewing {
   white-space: nowrap;
   flex-shrink: 0;
   line-height: normal;
-}
-
-@media (min-width: 1101px) and (max-width: 1320px) {
-  .topbar {
-    gap: 12px;
-    padding: 0 24px;
-  }
-
-  .brand-pill {
-    min-width: 240px;
-    padding: 0 24px;
-    font-size: 24px;
-  }
-
-  .vibecoding-tag {
-    margin-left: 0;
-    padding: 0 20px;
-    font-size: 15px;
-  }
-
-  .nav-pills {
-    gap: 10px;
-  }
-
-  .nav-pill {
-    min-width: 100px;
-    padding: 0 18px;
-    font-size: 18px;
-  }
 }
 
 @media (max-width: 1100px) {
@@ -2209,9 +2125,8 @@ body.is-previewing {
   padding: 54px;
   background: rgba(16, 16, 16, 0.86);
   opacity: 0;
-  visibility: hidden;
   pointer-events: none;
-  transition: opacity 180ms ease, visibility 0s linear 180ms;
+  transition: opacity 180ms ease;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.28) transparent;
@@ -2237,9 +2152,7 @@ body.is-previewing {
 
 .website-lightbox.is-open {
   opacity: 1;
-  visibility: visible;
   pointer-events: auto;
-  transition-delay: 0s;
 }
 
 .website-lightbox figure {
@@ -2509,7 +2422,7 @@ body.is-previewing {
   gap: 16px;
   justify-items: center;
   padding: 60px 32px;
-  border: 2px solid var(--ink);
+  border: 3px dashed var(--ink);
   border-radius: 20px;
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent 30%),
@@ -2523,7 +2436,7 @@ body.is-previewing {
   content: "";
   position: absolute;
   inset: 0;
-  background: url("assets/website-design/pc/20260123-182955-delivery.webp") center/cover no-repeat;
+  background: url("assets/website-design/pc/20260123-182955.jpg") center/cover no-repeat;
   opacity: 0.3;
   border-radius: 20px;
   z-index: 0;
@@ -2883,7 +2796,7 @@ body.is-previewing {
 
   .summary-item {
     border-right: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.22);
+    border-bottom: 4px dashed rgba(255, 255, 255, 0.4);
     padding-bottom: 26px;
   }
 
@@ -3326,17 +3239,14 @@ body.is-previewing {
   padding: 40px;
   background: rgba(16, 16, 16, 0.88);
   opacity: 0;
-  visibility: hidden;
   pointer-events: none;
-  transition: opacity 240ms ease, visibility 0s linear 240ms;
+  transition: opacity 240ms ease;
   overflow-y: auto;
 }
 
 .resume-overlay.is-open {
   opacity: 1;
-  visibility: visible;
   pointer-events: auto;
-  transition-delay: 0s;
 }
 
 .resume-modal {
@@ -3370,7 +3280,7 @@ body.is-previewing {
   content: "";
   position: absolute;
   inset: 14px;
-  border: 0;
+  border: 4px dashed rgba(16, 16, 16, 0.24);
   border-radius: 28px;
   pointer-events: none;
 }

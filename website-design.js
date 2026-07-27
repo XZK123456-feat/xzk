@@ -58,7 +58,6 @@ function closePreview() {
   lightbox.setAttribute("aria-hidden", "true");
   if (wasOpen) {
     window.unlockPreviewScroll?.();
-    window.deactivateModalDialog?.(lightbox);
   }
   lightbox?.removeAttribute("data-direction");
   resetZoom();
@@ -158,16 +157,7 @@ function openPreview(button) {
   lightbox.dataset.direction = lastPreviewIndex <= currentIndex ? "next" : "prev";
   lastPreviewIndex = currentIndex;
   resetZoom();
-  const fullSource = button.dataset.full || image.currentSrc || image.src;
-  const fullSmallSource = button.dataset.fullSmall;
-  if (fullSmallSource && button.dataset.fullWidth) {
-    lightboxImage.srcset = `${fullSmallSource} 480w, ${fullSource} ${button.dataset.fullWidth}w`;
-    lightboxImage.sizes = "100vw";
-  } else {
-    lightboxImage.removeAttribute("srcset");
-    lightboxImage.removeAttribute("sizes");
-  }
-  lightboxImage.src = fullSource;
+  lightboxImage.src = button.dataset.full || image.currentSrc || image.src;
   lightboxImage.alt = image.alt;
   lightboxCaption.textContent = button.querySelector(".detail-shot-label")?.textContent || image.alt;
   if (lightboxCounter) {
@@ -179,8 +169,8 @@ function openPreview(button) {
   lightbox.setAttribute("aria-hidden", "false");
   if (!wasOpen) {
     window.lockPreviewScroll?.();
-    window.activateModalDialog?.(lightbox, button);
   }
+  closeButton?.focus();
 }
 
 previewButtons.forEach((button) => {
