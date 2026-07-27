@@ -131,7 +131,7 @@ Object.entries(pages).forEach(([file, contract]) => {
   );
   assert.strictEqual((html.match(/\bclass="[^"]*\bdetail-directory\b[^"]*"/g) || []).length, 1, `${file} should not retain a second standalone directory`);
   assert.ok(html.includes(`class="brand-pill back-brand" href="${contract.back}"`), `${file} should use the mission-specific top back target`);
-  assert.ok(html.includes(`class="back-link" href="${contract.back}"`) || file === "video-design.html", `${file} should use the mission-specific section back target`);
+  assert.ok(html.includes('class="overview-entry-strip"'), `${file} should expose work categories inside the overview`);
   assert.ok(html.includes('href="click-stage.css?v=click-stage-11"'), `${file} should request click-stage.css release 11`);
   assert.ok(html.includes('src="click-stage.js?v=click-stage-11"'), `${file} should request click-stage.js release 11`);
   assert.ok(
@@ -207,18 +207,18 @@ assert.match(css, /body\.stage-ready \[data-task-rail\][\s\S]*?width:\s*34px;/);
 assert.match(css, /max-width:\s*220px;/, "expanded mobile task rail should stay compact");
 assert.match(
   css,
-  /body\.stage-ready \[data-stage-view="overview"\] \.detail-hero-card\s*\{[^}]*background:\s*var\(--ink\);[^}]*color:\s*white;/s,
-  "overview title/date should sit on an explicit readable band",
+  /\.overview-identity\s*\{[^}]*background:\s*var\(--ink\);[^}]*color:\s*white;/s,
+  "overview identity should sit on an explicit readable band",
 );
 assert.match(
   css,
-  /body\.stage-ready \[data-stage-view="overview"\] \.detail-summary\s*\{[^}]*background:\s*var\(--ink\);[^}]*color:\s*white;/s,
-  "overview summary text should sit on an explicit readable band",
+  /\.overview-preview\s*\{[^}]*border:\s*3px solid var\(--ink\);[^}]*background:\s*#171717;/s,
+  "overview representative work should have a stable high-contrast frame",
 );
 assert.match(
   css,
-  /body\.stage-ready \[data-stage-view="overview"\] \.back-link\s*\{[^}]*background:\s*var\(--yellow\);[^}]*color:\s*var\(--ink\);/s,
-  "overview back links should retain high contrast",
+  /\.overview-entry:hover,\s*\.overview-entry:focus-visible\s*\{[^}]*background:\s*var\(--yellow\);/s,
+  "overview work entries should expose a yellow interaction state",
 );
 assert.doesNotMatch(
   css,

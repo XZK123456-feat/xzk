@@ -5,13 +5,15 @@ const assert = require("assert");
 const root = path.resolve(__dirname, "..");
 const normalize = (content) => content.replace(/\r\n/g, "\n");
 const css = normalize(fs.readFileSync(path.join(root, "styles.css"), "utf8"));
+const stageCss = normalize(fs.readFileSync(path.join(root, "click-stage.css"), "utf8"));
 const uaJs = normalize(fs.readFileSync(path.join(root, "ua-creatives.js"), "utf8"));
 const communityJs = normalize(fs.readFileSync(path.join(root, "community-creatives.js"), "utf8"));
 const websiteHtml = normalize(fs.readFileSync(path.join(root, "website-design.html"), "utf8"));
 
 assert.ok(css.includes("@media (max-width: 620px)"), "mobile-specific layout overrides should exist");
-assert.ok(css.includes(".detail-ticket {\n    justify-self: center;"), "mobile detail tickets should stay inside the viewport");
-assert.ok(css.includes("width: calc(100% - 8px);"), "mobile detail tickets should reserve room for their comic shadow");
+assert.ok(stageCss.includes("@media (max-width: 760px)"), "overview screens should have a portrait-mobile layout");
+assert.ok(stageCss.includes('grid-template-areas:\n      "identity"\n      "preview"\n      "entries";'), "mobile overviews should keep work entries below the preview");
+assert.ok(!stageCss.includes('[data-stage-view="overview"] .detail-ticket'), "enhanced overview screens should not use detached mobile tickets");
 assert.ok(css.includes("content-visibility: auto;"), "offscreen detail sections should avoid eager rendering work");
 assert.ok(css.includes(".detail-gallery.is-gallery-loading::after"), "lazy galleries should show a lightweight loading state");
 assert.ok(css.includes(".website-lightbox .lightbox-image-row {\n    display: grid;"), "mobile lightbox should stop using a horizontal arrow/image row");
