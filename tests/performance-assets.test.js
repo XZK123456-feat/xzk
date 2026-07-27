@@ -36,7 +36,7 @@ assert.ok(!css.includes("AlibabaPuHuiTi-3-85-Bold.woff2"), "production CSS shoul
 pages.forEach((page) => {
   const html = read(page);
   assert.ok(html.includes('href="assets/fonts/ZHYuwanPortfolio-subset.woff2"'), `${page} should preload the subset font`);
-  assert.ok(html.includes('styles.css?v=stability-2'), `${page} should cache-bust optimized styles`);
+  assert.ok(html.includes('styles.css?v=stability-3'), `${page} should cache-bust optimized styles`);
   assert.ok(html.includes('script.js?v=stability-8'), `${page} should cache-bust optimized scripts`);
 });
 

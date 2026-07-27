@@ -17,7 +17,7 @@ const script = read("script.js");
 const clickStage = read("click-stage.js");
 const css = read("styles.css");
 const serviceWorker = read("sw.js");
-const styleRelease = "stability-2";
+const styleRelease = "stability-3";
 const sharedRelease = "stability-8";
 const stageRelease = "click-stage-10";
 

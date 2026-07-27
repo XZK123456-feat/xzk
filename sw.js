@@ -8,7 +8,7 @@ const CORE_ASSETS = [
   "./ua-creatives.html",
   "./community-creatives.html",
   "./video-design.html",
-  "./styles.css?v=stability-2",
+  "./styles.css?v=stability-3",
   "./script.js?v=stability-8",
   "./click-stage.css?v=click-stage-10",
   "./click-stage.js?v=click-stage-10",
