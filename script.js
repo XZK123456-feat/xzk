@@ -2,11 +2,11 @@
 const PAGE_LOADER_MIN_MS = 350;
 const PAGE_LOADER_TIMEOUT_MS = 12000;
 const PAGE_LOADER_EXIT_MS = 400;
-const PAGE_LOADER_FONT_WEIGHTS = [400, 500, 700, 800, 900];
+const PAGE_LOADER_FONT_WEIGHTS = [400, 700, 900];
 const PAGE_LOADER_PROGRESS_WEIGHTS = {
-  styles: 25,
-  fonts: 50,
-  priorityImage: 11,
+  styles: 24,
+  fonts: 48,
+  priorityImage: 12,
 };
 
 let activePageLoaderRun = null;
@@ -195,50 +195,56 @@ function waitForPortfolioFonts(onProgress = () => {}) {
 
   const sample = "肖子康作品集 目录 数据 图片 视频";
   let completed = 0;
-  onProgress(1, PAGE_LOADER_FONT_WEIGHTS.length);
-  const requests = PAGE_LOADER_FONT_WEIGHTS.map((weight) => Promise.resolve()
-    .then(() => document.fonts.load(`${weight} 16px "ZHYuwanPortfolio"`, sample))
-    .then(() => true, () => false)
-    .then((loaded) => {
-      completed += 1;
-      onProgress(completed, PAGE_LOADER_FONT_WEIGHTS.length);
-      return loaded;
-    }));
+  const requests = [
+    Promise.resolve(document.fonts.ready),
+    Promise.resolve().then(() => document.fonts.load("400 1em ZHYuwanPortfolio", sample)),
+    Promise.resolve().then(() => document.fonts.load("700 1em ZHYuwanPortfolio", sample)),
+    Promise.resolve().then(() => document.fonts.load("900 1em ZHYuwanPortfolio", sample)),
+  ];
+  onProgress(0, requests.length);
 
-  return Promise.all(requests)
-    .then((results) => {
-      if (!results.every(Boolean)) {
-        return false;
-      }
+  return Promise.allSettled(requests.map((request) => request.finally(() => {
+    completed += 1;
+    onProgress(completed, requests.length);
+  }))).then((results) => {
+    if (!results.every((result) => result.status === "fulfilled")) {
+      return false;
+    }
 
-      return document.fonts.ready.then(() => {
-        if (typeof document.fonts.check !== "function") {
-          return true;
-        }
+    if (typeof document.fonts.check !== "function") {
+      return true;
+    }
 
-        return PAGE_LOADER_FONT_WEIGHTS.every((weight) => document.fonts.check(
-          `${weight} 16px "ZHYuwanPortfolio"`,
-          sample,
-        ));
-      }, () => false);
-    });
+    return PAGE_LOADER_FONT_WEIGHTS.every((weight) => document.fonts.check(
+      `${weight} 1em ZHYuwanPortfolio`,
+      sample,
+    ));
+  });
 }
 
-function getPageLoaderHashTarget() {
-  if (!window.location || !window.location.hash || typeof document.getElementById !== "function") {
-    return null;
+function isLoaderCriticalElementActive(element) {
+  let current = element;
+  while (current && current !== document.body) {
+    if (current.hidden || current.getAttribute?.("aria-hidden") === "true") {
+      return false;
+    }
+    current = current.parentElement;
   }
+  return true;
+}
 
-  const rawId = window.location.hash.slice(1);
-  let decodedId = rawId;
-  try {
-    decodedId = decodeURIComponent(rawId);
-  } catch (_error) {
-    // Keep the raw fragment when percent-decoding fails.
-  }
+function getLoaderCriticalImages() {
+  const explicitImages = Array.from(
+    document.querySelectorAll("img[data-loader-critical-image]"),
+  ).filter(isLoaderCriticalElementActive);
+  const generatedImages = Array.from(
+    document.querySelectorAll("[data-loader-critical-image-root]"),
+  )
+    .filter(isLoaderCriticalElementActive)
+    .map((root) => root.querySelector("img"))
+    .filter(Boolean);
 
-  return document.getElementById(decodedId)
-    || (decodedId !== rawId ? document.getElementById(rawId) : null);
+  return [...new Set([...explicitImages, ...generatedImages])].slice(0, 1);
 }
 
 function preparePriorityImage(run, onProgress = () => {}) {
@@ -246,27 +252,8 @@ function preparePriorityImage(run, onProgress = () => {}) {
     return Promise.resolve([]);
   }
 
-  const firstViewLimit = window.innerHeight;
-  const hashTarget = getPageLoaderHashTarget();
-  const hashTargetRect = hashTarget && typeof hashTarget.getBoundingClientRect === "function"
-    ? hashTarget.getBoundingClientRect()
-    : null;
-  const images = Array.from(document.images).filter((image) => {
-    if (run.preparedImages.has(image)) {
-      return false;
-    }
-
-    const rect = image.getBoundingClientRect();
-    const isCurrentlyVisible = rect.top < firstViewLimit && rect.bottom > 0;
-    if (isCurrentlyVisible || !hashTargetRect || typeof hashTarget.contains !== "function"
-      || !hashTarget.contains(image)) {
-      return isCurrentlyVisible;
-    }
-
-    const projectedTop = rect.top - hashTargetRect.top;
-    const projectedBottom = rect.bottom - hashTargetRect.top;
-    return projectedTop < firstViewLimit && projectedBottom > 0;
-  }).sort((left, right) => left.getBoundingClientRect().top - right.getBoundingClientRect().top).slice(0, 1);
+  const images = getLoaderCriticalImages()
+    .filter((image) => !run.preparedImages.has(image));
 
   if (images.length === 0) {
     onProgress(1, 1);
@@ -305,6 +292,50 @@ function waitForPriorityImage(run, onProgress = () => {}) {
     .then((frameRendered) => frameRendered && isCurrentPageLoaderRun(run)
       ? preparePriorityImage(run, onProgress)
       : []);
+}
+
+function waitForStageReadyPaint(run) {
+  return waitForDomReady(run)
+    .then((domReady) => {
+      if (!domReady || !isCurrentPageLoaderRun(run)) {
+        return false;
+      }
+
+      const stageRoot = document.querySelector("[data-home-stage], [data-detail-stage]");
+      if (!stageRoot || document.body.classList.contains("stage-ready")) {
+        return true;
+      }
+
+      if (typeof window.MutationObserver !== "function") {
+        return waitForPageLoaderFrame(run)
+          .then(() => document.body.classList.contains("stage-ready"));
+      }
+
+      return new Promise((resolve) => {
+        let settled = false;
+        const observer = new window.MutationObserver(() => {
+          if (document.body.classList.contains("stage-ready")) {
+            finish(true);
+          }
+        });
+        const finish = (completed) => {
+          if (settled) {
+            return;
+          }
+          settled = true;
+          observer.disconnect();
+          run.lifecycleSettlers.delete(cancel);
+          resolve(completed);
+        };
+        const cancel = () => finish(false);
+
+        run.lifecycleSettlers.add(cancel);
+        observer.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+      });
+    })
+    .then((stageReady) => stageReady && isCurrentPageLoaderRun(run)
+      ? waitForPageLoaderFrame(run)
+      : false);
 }
 
 function createPageLoaderProgress(run, fill, percent) {
@@ -541,8 +572,21 @@ function initPageLoader() {
         reportResourceProgress("priorityImage", completed, total);
       }).then(() => true);
     });
-  const combinedReadiness = Promise.all([stylesReady, fontsReady, priorityImageReady])
-    .then(([, fontReady]) => ({ kind: fontReady ? "ready" : "font-error" }));
+  const criticalResourcesSettled = Promise.allSettled([
+    stylesReady,
+    fontsReady,
+    priorityImageReady,
+  ]);
+  const combinedReadiness = criticalResourcesSettled.then((results) => {
+    const fontResult = results[1];
+    const fontReady = fontResult.status === "fulfilled" && fontResult.value;
+    if (!fontReady) {
+      return { kind: "font-error" };
+    }
+
+    return waitForStageReadyPaint(run)
+      .then((painted) => ({ kind: painted ? "ready" : "stage-error" }));
+  });
   let hardTimeoutId = null;
   const hardTimeout = new Promise((resolve) => {
     hardTimeoutId = schedulePageLoaderTimer(run, () => resolve({ kind: "timeout" }), PAGE_LOADER_TIMEOUT_MS);
