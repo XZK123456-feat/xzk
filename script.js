@@ -799,29 +799,14 @@ function markLoadedImage(image) {
   image.closest(".detail-shot")?.classList.add("is-loaded");
 }
 
-const pendingImageLoadStates = new WeakSet();
-
 function initImageLoadStates(root = document) {
   root.querySelectorAll(".detail-shot img").forEach((image) => {
-    const hasLoadedSource = Boolean(
-      (image.currentSrc || image.getAttribute("src"))
-      && image.complete
-      && image.naturalWidth > 0
-    );
-    if (hasLoadedSource) {
+    if (image.complete) {
       markLoadedImage(image);
       return;
     }
 
-    if (pendingImageLoadStates.has(image)) {
-      return;
-    }
-
-    pendingImageLoadStates.add(image);
-    image.addEventListener("load", () => {
-      pendingImageLoadStates.delete(image);
-      markLoadedImage(image);
-    }, { once: true });
+    image.addEventListener("load", () => markLoadedImage(image), { once: true });
   });
 }
 
@@ -883,20 +868,12 @@ if (prefersReducedMotion) {
 }
 
 function setActiveNav(id) {
-  if (document.body.classList.contains("stage-ready")) {
-    return;
-  }
-
   navLinks.forEach((link) => {
     link.classList.toggle("active", link.getAttribute("href") === `#${id}`);
   });
 }
 
 function setActiveFromScroll() {
-  if (document.body.classList.contains("stage-ready")) {
-    return;
-  }
-
   const probeY = window.scrollY + window.innerHeight * 0.42;
   let current = sections[0];
 
@@ -912,10 +889,6 @@ function setActiveFromScroll() {
 
 const observer = new IntersectionObserver(
   (entries) => {
-    if (document.body.classList.contains("stage-ready")) {
-      return;
-    }
-
     const visible = entries
       .filter((entry) => entry.isIntersecting)
       .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
@@ -932,10 +905,6 @@ const observer = new IntersectionObserver(
 
 sections.forEach((section) => observer.observe(section));
 function syncHashTarget() {
-  if (document.body.classList.contains("stage-ready")) {
-    return;
-  }
-
   const id = window.location.hash.slice(1);
   const target = id ? document.getElementById(id) : null;
 
@@ -1146,8 +1115,51 @@ if (resumeOverlay) {
   const nextBtn = lightbox.querySelector(".lightbox-next");
   if (!prevBtn || !nextBtn) return;
 
+  let currentButton = null;
+
+  // Track which button opened the lightbox, prevent old-image flash
+  document.addEventListener("click", function(e) {
+    const previewBtn = e.target.closest("[data-detail-preview]");
+    if (previewBtn) {
+      currentButton = previewBtn;
+      var img = lightbox.querySelector("img");
+      if (img) {
+        img.style.opacity = "0";
+        img.style.transition = "opacity 0.12s ease";
+      }
+    }
+  }, true);
+
+  var lbImg = lightbox.querySelector("img");
+  if (lbImg) {
+    lbImg.addEventListener("load", function() {
+      this.style.opacity = "1";
+    });
+    lbImg.addEventListener("error", function() {
+      this.style.opacity = "1";
+    });
+  }
+
+  function getAllPreviews() {
+    if (!currentButton) return [];
+    const gallery = currentButton.closest(".detail-gallery");
+    if (!gallery) return [];
+    return Array.from(gallery.querySelectorAll("[data-detail-preview]"));
+  }
+
   function navigate(direction) {
-    lightbox.portfolioLightboxController?.navigate(direction);
+    if (!lightbox.classList.contains("is-open")) return;
+    const all = getAllPreviews();
+    if (all.length === 0) return;
+    const activeThumbIndex = Array.from(lightbox.querySelectorAll(".lightbox-thumb"))
+      .findIndex((thumb) => thumb.classList.contains("active"));
+    const idx = activeThumbIndex >= 0 ? activeThumbIndex : all.indexOf(currentButton);
+    if (idx === -1) return;
+    const nextIdx = idx + direction;
+    if (nextIdx < 0 || nextIdx >= all.length) return;
+
+    currentButton = all[nextIdx];
+    currentButton.click();
   }
 
   prevBtn.addEventListener("click", function(e) {
@@ -1276,7 +1288,13 @@ if (resumeOverlay) {
     touchCount = e.touches.length;
   });
 
-  lightbox.addEventListener("portfolio:lightboxchange", resetTouchZoom);
+  // Reset zoom when opening a new image
+  document.addEventListener("click", function(e) {
+    var previewBtn = e.target.closest("[data-detail-preview]");
+    if (previewBtn) {
+      resetTouchZoom();
+    }
+  }, true);
 })();
 
 /* ── Video Playback ── */
@@ -1284,137 +1302,36 @@ const videoStage = document.getElementById("videoStage");
 const heroVideo = document.getElementById("heroVideo");
 const playBtn = document.getElementById("playBtn");
 const videoLoading = document.getElementById("videoLoading");
-const communityVideoStates = new WeakMap();
-let heroPlayAttempt = 0;
-
-function setVideoControlsAccess(video, isActive) {
-  if (!video) return;
-  video.controls = isActive;
-  video.tabIndex = isActive ? 0 : -1;
-  video.setAttribute("aria-hidden", isActive ? "false" : "true");
-}
-
-function rewindVideo(video) {
-  try {
-    video.currentTime = 0;
-  } catch (error) {
-    // Media without loaded metadata cannot always be seeked.
-  }
-}
-
-function unloadVideoSource(video) {
-  if (!video?.getAttribute("src")) return;
-  video.removeAttribute("src");
-  video.load();
-}
-
-function getCommunityVideoState(video) {
-  let state = communityVideoStates.get(video);
-  if (!state) {
-    state = { attempt: 0 };
-    communityVideoStates.set(video, state);
-  }
-  return state;
-}
-
-function resetCommunityVideoCard(card, options = {}) {
-  const video = card?.querySelector("video[data-src]");
-  const button = card?.querySelector(".community-play-btn");
-  if (!video) return;
-
-  getCommunityVideoState(video).attempt += 1;
-  video.pause();
-  if (options.rewind) rewindVideo(video);
-  if (options.unload) unloadVideoSource(video);
-  setVideoControlsAccess(video, false);
-
-  card.classList.remove("is-playing");
-  card.classList.remove("is-loading");
-  card.classList.remove("is-error");
-
-  if (button) {
-    button.disabled = false;
-    if (options.focus) button.focus();
-  }
-}
-
-function resetHeroVideo(options = {}) {
-  if (!heroVideo) return;
-
-  heroPlayAttempt += 1;
-  heroVideo.pause();
-  if (options.rewind) rewindVideo(heroVideo);
-  if (options.unload) unloadVideoSource(heroVideo);
-  setVideoControlsAccess(heroVideo, false);
-  heroVideo.classList.remove("is-loaded");
-  heroVideo.classList.remove("is-error");
-
-  if (playBtn) {
-    playBtn.classList.remove("is-hidden");
-    playBtn.disabled = false;
-    if (options.focus) playBtn.focus();
-  }
-  if (videoLoading) {
-    videoLoading.classList.remove("is-active");
-    videoLoading.classList.remove("is-error");
-  }
-  videoStage?.classList?.remove("is-playing");
-  videoStage?.classList?.remove("is-error");
-}
 
 function pauseOtherVideos(activeVideo) {
   document.querySelectorAll("video").forEach((video) => {
-    if (video === activeVideo) return;
-    const card = video.closest(".community-video-card");
-    if (card) {
-      resetCommunityVideoCard(card);
-    } else if (video === heroVideo) {
-      resetHeroVideo();
-    } else {
+    if (video !== activeVideo) {
       video.pause();
+      video.closest(".community-video-card")?.classList.remove("is-playing");
     }
   });
 }
 
-function pauseAllPortfolioVideos() {
-  pauseOtherVideos(null);
-}
-
-function resetPortfolioVideoUi() {
-  document.querySelectorAll(".community-video-card").forEach((card) => {
-    resetCommunityVideoCard(card, { rewind: true, unload: true });
-  });
-  resetHeroVideo({ rewind: true, unload: true });
-}
-
 if (playBtn && heroVideo) {
-  setVideoControlsAccess(heroVideo, false);
-
   playBtn.addEventListener("click", () => {
-    const attempt = ++heroPlayAttempt;
-    playBtn.disabled = true;
     playBtn.classList.add("is-hidden");
     if (videoLoading) videoLoading.classList.add("is-active");
 
-    if (!heroVideo.getAttribute("src") && heroVideo.dataset.src) {
-      heroVideo.setAttribute("src", heroVideo.dataset.src);
+    if (!heroVideo.src) {
+      heroVideo.src = "assets/video/买量视频混剪.mp4";
       heroVideo.load();
     }
 
     heroVideo.classList.add("is-loaded");
-    setVideoControlsAccess(heroVideo, true);
     pauseOtherVideos(heroVideo);
 
     heroVideo.addEventListener("playing", function onPlay() {
-      heroVideo.removeEventListener("playing", onPlay);
-      if (attempt !== heroPlayAttempt) return;
       if (videoLoading) videoLoading.classList.remove("is-active");
-      playBtn.disabled = false;
+      heroVideo.removeEventListener("playing", onPlay);
     });
 
     heroVideo.play().catch(() => {
-      if (attempt !== heroPlayAttempt) return;
-      resetHeroVideo({ rewind: true, unload: true, focus: true });
+      if (videoLoading) videoLoading.classList.remove("is-active");
     });
   });
 
@@ -1427,65 +1344,33 @@ function initCommunityVideoCards() {
     const playButton = card.querySelector(".community-play-btn");
 
     if (!video || !playButton) return;
-    const state = getCommunityVideoState(video);
-    setVideoControlsAccess(video, false);
 
     const loadAndPlay = () => {
-      const attempt = ++state.attempt;
-      pauseOtherVideos(video);
-
-      card.classList.remove("is-error");
-      card.classList.add("is-loading");
-      playButton.disabled = true;
-      setVideoControlsAccess(video, true);
-
-      if (!video.getAttribute("src") && video.dataset.src) {
-        video.setAttribute("src", video.dataset.src);
+      if (!video.src) {
+        video.src = video.dataset.src;
         video.load();
       }
 
-      video.play().catch(() => {
-        if (attempt !== state.attempt) return;
-        resetCommunityVideoCard(card, { rewind: true, unload: true, focus: true });
-      });
+      card.classList.add("is-playing");
+      pauseOtherVideos(video);
+
+      video.play().catch(() => {});
     };
 
     playButton.addEventListener("click", loadAndPlay);
     video.addEventListener("play", () => {
       pauseOtherVideos(video);
-      card.classList.remove("is-loading");
       card.classList.add("is-playing");
-      playButton.disabled = false;
-      setVideoControlsAccess(video, true);
     });
-    video.addEventListener("pause", () => {
-      card.classList.remove("is-playing");
-      if (!card.classList.contains("is-loading")) setVideoControlsAccess(video, false);
-    });
-    video.addEventListener("ended", () => {
-      rewindVideo(video);
-      card.classList.remove("is-playing");
-      card.classList.remove("is-loading");
-      setVideoControlsAccess(video, false);
-      playButton.focus();
-    });
+    video.addEventListener("pause", () => card.classList.remove("is-playing"));
+    video.addEventListener("ended", () => card.classList.remove("is-playing"));
   });
 }
 
 initCommunityVideoCards();
 
-const communityVideoGrid = document.querySelector(".community-video-grid");
-if (communityVideoGrid) {
-  window.DetailStage?.registerGallery("community-video", communityVideoGrid, {
-    kind: "video",
-    itemSelector: "[data-video-page-item]",
-  });
-}
-
-document.addEventListener("portfolio:stagechange", resetPortfolioVideoUi);
-
 if ("serviceWorker" in navigator && /^https?:$/.test(window.location.protocol)) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=click-stage-10").catch(() => {});
+    navigator.serviceWorker.register("sw.js?v=stability-1").catch(() => {});
   });
 }

@@ -10,7 +10,6 @@ const uaDetailPath = path.join(root, "ua-creatives.html");
 const communityDetailPath = path.join(root, "community-creatives.html");
 const resumePdfPath = path.join(root, "assets", "resume", "xiao-zikang-ai-gicg-marketing-operations.pdf");
 const cssPath = path.join(root, "styles.css");
-const clickStageCssPath = path.join(root, "click-stage.css");
 const jsPath = path.join(root, "script.js");
 const detailJsPath = path.join(root, "website-design.js");
 const normalize = (content) => content.replace(/\r\n/g, "\n");
@@ -22,7 +21,6 @@ assert.ok(fs.existsSync(uaDetailPath), "ua-creatives.html should exist");
 assert.ok(fs.existsSync(communityDetailPath), "community-creatives.html should exist");
 assert.ok(fs.existsSync(resumePdfPath), "updated resume PDF should exist");
 assert.ok(fs.existsSync(cssPath), "styles.css should exist");
-assert.ok(fs.existsSync(clickStageCssPath), "click-stage.css should exist");
 assert.ok(fs.existsSync(jsPath), "script.js should exist");
 assert.ok(fs.existsSync(detailJsPath), "website-design.js should exist");
 
@@ -32,7 +30,6 @@ const videoDetailHtml = normalize(fs.readFileSync(videoDetailPath, "utf8"));
 const uaDetailHtml = normalize(fs.readFileSync(uaDetailPath, "utf8"));
 const communityDetailHtml = normalize(fs.readFileSync(communityDetailPath, "utf8"));
 const css = normalize(fs.readFileSync(cssPath, "utf8"));
-const clickStageCss = normalize(fs.readFileSync(clickStageCssPath, "utf8"));
 const js = normalize(fs.readFileSync(jsPath, "utf8"));
 const detailJs = normalize(fs.readFileSync(detailJsPath, "utf8"));
 const resumeHref = "assets/resume/xiao-zikang-ai-gicg-marketing-operations.pdf";
@@ -44,7 +41,7 @@ const resumeHref = "assets/resume/xiao-zikang-ai-gicg-marketing-operations.pdf";
   "官网视觉设计",
   "买量图片设计",
   "运营图片设计",
-  "AI 视频设计",
+  "AI视频设计",
   "项目素材产出概览",
   "分阶段全渠道广告素材投放数据",
 ].forEach((text) => {
@@ -63,18 +60,8 @@ assert.ok(!html.includes('id="heroVideo"'), "home page should not keep the video
   assert.ok(html.includes(className) || css.includes(className), `should define ${className}`);
 });
 
-assert.ok(clickStageCss.includes("body.stage-ready"), "enhanced pages should opt into the fixed click stage");
-assert.ok(clickStageCss.includes("height: 100dvh;"), "the click stage should match the viewport height");
-assert.ok(clickStageCss.includes("body.stage-ready .page-shell"), "the enhanced page shell should use fixed-stage overflow");
-assert.match(
-  clickStageCss,
-  /body\.stage-ready \.page-shell\s*{[\s\S]*?overflow:\s*hidden;/,
-  "the enhanced page shell should hide document overflow",
-);
-assert.ok(clickStageCss.includes(".stage-wipe"), "the click stage should define the shared mission wipe");
-[html, websiteDetailHtml, videoDetailHtml, uaDetailHtml, communityDetailHtml].forEach((pageHtml, index) => {
-  assert.ok(pageHtml.includes('class="stage-wipe"'), `page ${index + 1} should include the shared mission wipe`);
-});
+assert.ok(css.includes("position: sticky") || css.includes("position: fixed"), "navigation should stay visible while scrolling");
+assert.ok(css.includes("scroll-behavior: smooth"), "page should scroll smoothly");
 assert.ok(css.includes("@font-face"), "custom font should be declared");
 assert.ok(css.includes("ZHYuwanPortfolio"), "custom font should be used");
 assert.ok(js.includes("IntersectionObserver"), "script should update active nav while scrolling");
@@ -194,13 +181,13 @@ assert.ok(videoDetailHtml.includes("运营社群视频设计"), "video detail sh
 assert.ok(videoDetailHtml.includes('id="heroVideo"'), "video detail should include the playable video element");
 assert.ok(videoDetailHtml.includes('id="playBtn"'), "video detail should include the video play button");
 assert.ok(videoDetailHtml.includes("assets/video/买量视频混剪.mp4") || js.includes("assets/video/买量视频混剪.mp4"), "video detail should use the existing montage asset");
-assert.ok(videoDetailHtml.includes('href="index.html#contents-m4"'), "video detail should link back to mission 04");
+assert.ok(videoDetailHtml.includes('href="index.html#contents"'), "video detail should link back to the portfolio contents");
 assert.ok(videoDetailHtml.includes('href="#community-video"'), "video detail nav should link to the community video section");
 assert.ok(videoDetailHtml.indexOf('id="community-video"') < videoDetailHtml.indexOf('id="video"'), "community videos should appear before the buying video montage");
 assert.ok(/\.play-btn\s*\{[^}]*box-shadow:\s*none;/s.test(css), "video play button should not inherit the generic button shadow in its default state");
 assert.ok(videoDetailHtml.includes("community-video-grid"), "video detail should render community videos in a dedicated grid");
 assert.strictEqual(
-  (videoDetailHtml.match(/<article class="community-video-card[^>]*\bdata-video-page-item\b/g) || []).length,
+  (videoDetailHtml.match(/assets\/video\/community\/community-video-\d{2}\.mp4/g) || []).length,
   6,
   "video detail should render all 6 supplemental community videos",
 );

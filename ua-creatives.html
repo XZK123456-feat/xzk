@@ -69,44 +69,9 @@
         .page-loader { display: none !important; }
         html.is-page-loading .page-shell,
         body.is-page-loading .page-shell { visibility: visible !important; }
-        body.is-page-loading [data-detail-stage] {
-          height: auto !important;
-          overflow: visible !important;
-        }
-        body.is-page-loading [data-stage-view] { display: block !important;
-          position: static !important;
-          height: auto !important;
-          overflow: visible !important;
-        }
-        .noscript-gallery {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-          gap: 12px;
-          width: 100%;
-          margin-top: 18px;
-        }
-        .noscript-gallery__item {
-          display: grid;
-          place-items: center;
-          min-width: 0;
-          padding: 6px;
-          border: 2px solid #111;
-          background: #202020;
-        }
-        .noscript-gallery__item img {
-          display: block;
-          width: 100%;
-          height: auto;
-          max-height: 360px;
-          object-fit: contain;
-        }
-        @media (max-width: 480px) {
-          .noscript-gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-        }
       </style>
     </noscript>
-    <link rel="stylesheet" href="styles.css?v=stability-3" onload="this.dataset.loaderState='loaded'" onerror="this.dataset.loaderState='error'" />
-    <link rel="stylesheet" href="click-stage.css?v=click-stage-10" />
+    <link rel="stylesheet" href="styles.css?v=stability-1" onload="this.dataset.loaderState='loaded'" onerror="this.dataset.loaderState='error'" />
   </head>
   <body class="detail-page is-page-loading">
     <div class="page-loader" role="status" aria-label="页面正在加载">
@@ -117,21 +82,22 @@
         <button class="page-loader__retry" type="button" data-loading-retry hidden>重新加载</button>
       </div>
     </div>
+    <div class="scroll-progress" aria-hidden="true"><span></span></div>
+    <button class="back-to-top" type="button" aria-label="返回顶部"><span>↑</span></button>
     <div class="page-shell">
-      <div class="stage-wipe" aria-hidden="true"><span>MISSION SWITCH</span></div>
       <header class="topbar fixed-nav">
-        <a class="brand-pill back-brand" href="index.html#contents-m2" aria-label="返回作品集目录">‹ 返回</a>
+        <a class="brand-pill back-brand" href="index.html#contents" aria-label="返回作品集目录">‹ 返回</a>
         <span class="vibecoding-tag">本网页内容均由 VibeCoding 创作生成</span>
-        <nav class="nav-pills" aria-label="详情页导航" role="tablist">
-          <a class="nav-pill active" id="detail-tab-overview" href="#overview" role="tab" data-stage-tab="overview" aria-controls="overview" aria-selected="true">项目概览</a>
-          <a class="nav-pill" id="detail-tab-horizontal" href="#horizontal" role="tab" data-stage-tab="horizontal" aria-controls="horizontal" aria-selected="false">横图素材</a>
-          <a class="nav-pill" id="detail-tab-vertical" href="#vertical" role="tab" data-stage-tab="vertical" aria-controls="vertical" aria-selected="false">竖图素材</a>
-          <a class="nav-pill" id="detail-tab-nine-grid" href="#nine-grid" role="tab" data-stage-tab="nine-grid" aria-controls="nine-grid" aria-selected="false">九图素材</a>
+        <nav class="nav-pills" aria-label="详情页导航">
+          <a class="nav-pill active" href="#overview">概览</a>
+          <a class="nav-pill" href="#horizontal">横图</a>
+          <a class="nav-pill" href="#vertical">竖图</a>
+          <a class="nav-pill" href="#nine-grid">九图</a>
         </nav>
       </header>
 
-      <main data-detail-stage data-default-view="overview">
-        <section id="overview" class="project-detail-hero section-panel" data-stage-view="overview" role="tabpanel" aria-labelledby="detail-tab-overview">
+      <main>
+        <section id="overview" class="project-detail-hero section-panel">
           <div class="detail-ticket" data-reveal="mission-card">NO.<strong>02</strong></div>
           <div class="detail-hero-card comic-card halftone" data-reveal="hero-panel">
             <span>UA CREATIVES</span>
@@ -148,11 +114,11 @@
               <span>AI TOOLS</span>
               <strong>Midjourney + SD + ComfyUI</strong>
             </div>
-            <a class="back-link" href="index.html#contents-m2">返回目录</a>
+            <a class="back-link" href="index.html#contents">返回目录</a>
           </div>
         </section>
 
-        <section id="horizontal" class="project-gallery-section section-panel" data-stage-view="horizontal" role="tabpanel" aria-labelledby="detail-tab-horizontal">
+        <section id="horizontal" class="project-gallery-section section-panel">
           <div class="battle-board detail-board" data-reveal="battle-board">
             <div class="battle-header comic-card halftone">
               <span>HORIZONTAL</span>
@@ -160,286 +126,10 @@
             </div>
             <h2 class="section-ribbon" data-reveal="ribbon">横图素材展示 · 90 张</h2>
             <div class="ua-horizontal-gallery detail-gallery" data-ua-gallery="horizontal" aria-label="横图素材"></div>
-            <!-- noscript-gallery:horizontal:start -->
-            <noscript data-noscript-gallery="horizontal">
-              <div class="noscript-gallery" aria-label="horizontal 无 JavaScript 作品列表">
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/new_h_img_001-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/new_h_img_001-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 001" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/new_h_img_002-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/new_h_img_002-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 002" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/new_h_img_003-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/new_h_img_003-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 003" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/new_h_img_004-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/new_h_img_004-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 004" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/new_h_img_005-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/new_h_img_005-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 005" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/new_h_img_006-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/new_h_img_006-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 006" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/new_h_img_007-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/new_h_img_007-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 007" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/new_h_img_008-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/new_h_img_008-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 008" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/new_h_img_009-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/new_h_img_009-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 009" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/new_h_img_010-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/new_h_img_010-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 010" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/im2313131ge-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/im2313131ge-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 011" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK108_H_暗黑人宠对决_250213-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK108_H_暗黑人宠对决_250213-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 012" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK10A_人宠大作战1_241009-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK10A_人宠大作战1_241009-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 013" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK10D_人宠大作战1_241021-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK10D_人宠大作战1_241021-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 014" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK10E_人宠大作战1_241022-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK10E_人宠大作战1_241022-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 015" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK117_H_2D卡通沙滩玩_250218-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK117_H_2D卡通沙滩玩_250218-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 016" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK118_H_女朋友抽卡对比_250219-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK118_H_女朋友抽卡对比_250219-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 017" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK125_H_火龙对战_250224-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK125_H_火龙对战_250224-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 018" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK128_H_手机屏幕篝火_250226-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK128_H_手机屏幕篝火_250226-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 019" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK129_H_可爱霸王龙抱着蛋_250226-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK129_H_可爱霸王龙抱着蛋_250226-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 020" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK131_H_人宠搭配_250226-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK131_H_人宠搭配_250226-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 021" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK134_H_人宠大作战_250303-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK134_H_人宠大作战_250303-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 022" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK13_孵蛋AIGC_240906-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK13_孵蛋AIGC_240906-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 023" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK141_H_红色人宠蛋_250306-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK141_H_红色人宠蛋_250306-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 024" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK143_H_复古RPG横版_250307-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK143_H_复古RPG横版_250307-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 025" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK144_H_在海滩睡觉_250307-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK144_H_在海滩睡觉_250307-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 026" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK148_H_苹果商店模版_250311-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK148_H_苹果商店模版_250311-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 027" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK14_夜间场景AIGC_240906-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK14_夜间场景AIGC_240906-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 028" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK14B_夜间场景AIGC_241015-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK14B_夜间场景AIGC_241015-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 029" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK153_H_雪地狩猎_250313-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK153_H_雪地狩猎_250313-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 030" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK157_H_雷兽进化_250317-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK157_H_雷兽进化_250317-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 031" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK21A_AIGC篝火_241015-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK21A_AIGC篝火_241015-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 032" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK23_AIGC桌面照片_241010-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK23_AIGC桌面照片_241010-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 033" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK26_AIGC人物宠物场景_241014-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK26_AIGC人物宠物场景_241014-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 034" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK26C_H_AIGC人物宠物场景_241127.jpg-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK26C_H_AIGC人物宠物场景_241127.jpg-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 035" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK278_H_霸王龙自拍_250506-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK278_H_霸王龙自拍_250506-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 036" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK296_H_发现蛋_0512-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK296_H_发现蛋_0512-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 037" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK299_H_快回来_0513-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK299_H_快回来_0513-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 038" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK300_H_帕鲁风格_0513-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK300_H_帕鲁风格_0513-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 039" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK34_H_人宠iPhone商店_241122-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK34_H_人宠iPhone商店_241122-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 040" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK36_H_快回来福利展示_241126-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK36_H_快回来福利展示_241126-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 041" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK371_H_霸王龙开箱子_250604-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK371_H_霸王龙开箱子_250604-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 042" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK375_H_雷兽_250604-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK375_H_雷兽_250604-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 043" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK376_H_手机白云边_250604-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK376_H_手机白云边_250604-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 044" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK377_H_鲁鲁比斯_250605-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK377_H_鲁鲁比斯_250605-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 045" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK384_H_救救阿宝_250605-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK384_H_救救阿宝_250605-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 046" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK388_H_黑影战斗紫色_250606-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK388_H_黑影战斗紫色_250606-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 047" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK40_H_一起泡温泉_241129-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK40_H_一起泡温泉_241129-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 048" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK42_H_骑着飞龙_241203-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK42_H_骑着飞龙_241203-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 049" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK507_H_暴君龙展示_AI_宠物展示_250702-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK507_H_暴君龙展示_AI_宠物展示_250702-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 050" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK509_H_漫画界面_AI_宠物展示_250702-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK509_H_漫画界面_AI_宠物展示_250702-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 051" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK510_H_2d铃兰展示_AI_宠物展示_250703-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK510_H_2d铃兰展示_AI_宠物展示_250703-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 052" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK511_H_上线就送铃兰_AI_宠物展示_250703-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK511_H_上线就送铃兰_AI_宠物展示_250703-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 053" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK512_H_白云边二次元_AI_宠物展示_250702-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK512_H_白云边二次元_AI_宠物展示_250702-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 054" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK514_H_草原蛋_AI_福利展示_250704-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK514_H_草原蛋_AI_福利展示_250704-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 055" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK51_H_骨架雷电龙_241211-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK51_H_骨架雷电龙_241211-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 056" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK520_H_雏风展示_AI_宠物展示_250708-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK520_H_雏风展示_AI_宠物展示_250708-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 057" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK521_H_铃兰对战_AI_人宠展示_250708-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK521_H_铃兰对战_AI_人宠展示_250708-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 058" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK524_H_大橙蛋_AI_福利展示_250709-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK524_H_大橙蛋_AI_福利展示_250709-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 059" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK525_H_女王展示_AI_人宠展示_250710 -delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK525_H_女王展示_AI_人宠展示_250710 -thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 060" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK52_H_偷海盗蛋_241211-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK52_H_偷海盗蛋_241211-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 061" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK532_H_女王飞龙_AI_人宠合作_250714-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK532_H_女王飞龙_AI_人宠合作_250714-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 062" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK534_H_卡通白云边_AI_宠物展示_250715-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK534_H_卡通白云边_AI_宠物展示_250715-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 063" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK535_H_阿宝和蛋_AI_福利_250715-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK535_H_阿宝和蛋_AI_福利_250715-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 064" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK536_H_暴君龙对抗_AI_人宠对抗_250715-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK536_H_暴君龙对抗_AI_人宠对抗_250715-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 065" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK537_H_机甲霸王龙_AI_人宠合作_250716-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK537_H_机甲霸王龙_AI_人宠合作_250716-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 066" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK538_H_人宠对战_AI_福利_250716-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK538_H_人宠对战_AI_福利_250716-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 067" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK539_H_摩托车_AI_宠物展示_250716-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK539_H_摩托车_AI_宠物展示_250716-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 068" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK53_H_手握蛋福利_241217-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK53_H_手握蛋福利_241217-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 069" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK540_H_珍珠和蛋_AI_福利_250717-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK540_H_珍珠和蛋_AI_福利_250717-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 070" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK541_H_北极熊_AI_人宠合作_250717-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK541_H_北极熊_AI_人宠合作_250717-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 071" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK560_H_瑰夏国风_AI_宠物展示_250729-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK560_H_瑰夏国风_AI_宠物展示_250729-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 072" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK561_H_灵体暴君龙_AI_人宠合作_250729-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK561_H_灵体暴君龙_AI_人宠合作_250729-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 073" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK571_H_暴君龙_AI_福利_250804-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK571_H_暴君龙_AI_福利_250804-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 074" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK575_H_2D人宠蛋_AI_福利_250806-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK575_H_2D人宠蛋_AI_福利_250806-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 075" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK576_H_2D人宠蛋_AIPS_福利_250806-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK576_H_2D人宠蛋_AIPS_福利_250806-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 076" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK577_H_阿宝人宠_AI_人宠合作_250806-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK577_H_阿宝人宠_AI_人宠合作_250806-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 077" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK578_H_白云边人宠_AI_人宠合作_250807-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK578_H_白云边人宠_AI_人宠合作_250807-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 078" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK579_H_失败人宠_AI_人宠合作_250807-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK579_H_失败人宠_AI_人宠合作_250807-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 079" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK580_H_人宠蛋_AI_福利_250807-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK580_H_人宠蛋_AI_福利_250807-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 080" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK58_H_天降神蛋福利_241219-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK58_H_天降神蛋福利_241219-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 081" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK611_H_答题的霸王龙_AI_热梗_251010-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK611_H_答题的霸王龙_AI_热梗_251010-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 082" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK614_H_躺平白云边_AI_热梗_251013-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK614_H_躺平白云边_AI_热梗_251013-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 083" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK66_H_暗黑人宠对战_241226-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK66_H_暗黑人宠对战_241226-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 084" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK80_H_霸王龙大佬_250110-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK80_H_霸王龙大佬_250110-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 085" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK45_H_人宠雨中撑伞_241206-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK45_H_人宠雨中撑伞_241206-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 086" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK56_H_机甲霸王龙展示_241219-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK56_H_机甲霸王龙展示_241219-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 087" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK57_H_水中人宠大作战_241219-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK57_H_水中人宠大作战_241219-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 088" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK73_H_勇者斗恶龙_241231-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK73_H_勇者斗恶龙_241231-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 089" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/horizontal/ZCXZK74_H_iPhone商店人宠_241231-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/horizontal/thumbnails/ZCXZK74_H_iPhone商店人宠_241231-thumb-delivery.webp" loading="lazy" decoding="async" width="400" height="225" alt="横图 090" />
-                </a>
-              </div>
-            </noscript>
-            <!-- noscript-gallery:horizontal:end -->
           </div>
         </section>
 
-        <section id="vertical" class="project-gallery-section section-panel" data-stage-view="vertical" role="tabpanel" aria-labelledby="detail-tab-vertical">
+        <section id="vertical" class="project-gallery-section section-panel">
           <div class="battle-board detail-board" data-reveal="battle-board">
             <div class="battle-header comic-card halftone">
               <span>VERTICAL</span>
@@ -447,178 +137,10 @@
             </div>
             <h2 class="section-ribbon" data-reveal="ribbon">竖图素材展示 · 54 张</h2>
             <div class="ua-vertical-gallery detail-gallery" data-ua-gallery="vertical" aria-label="竖图素材"></div>
-            <!-- noscript-gallery:vertical:start -->
-            <noscript data-noscript-gallery="vertical">
-              <div class="noscript-gallery" aria-label="vertical 无 JavaScript 作品列表">
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK152_S_暗黑人宠对战_250313-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK152_S_暗黑人宠对战_250313-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 001" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK196_S_点击即玩_250403-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK196_S_点击即玩_250403-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 002" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK198_S_二次元形象_250403-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK198_S_二次元形象_250403-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 003" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK212_S_复古雷兽进化_250409-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK212_S_复古雷兽进化_250409-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 004" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK222_S_霸王龙小手办_250414-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK222_S_霸王龙小手办_250414-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 005" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK224_S_暴君龙玩偶_250414-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK224_S_暴君龙玩偶_250414-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 006" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK231_S_阿宝进化成啥_250416-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK231_S_阿宝进化成啥_250416-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 007" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK238_S_人宠争夺蛋_250417-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK238_S_人宠争夺蛋_250417-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 008" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK240_S_暗黑哥特龙进化_250417-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK240_S_暗黑哥特龙进化_250417-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 009" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK241_S_摄像头滤镜_250418-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK241_S_摄像头滤镜_250418-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 010" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK247_S_3D毛绒人宠_250422-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK247_S_3D毛绒人宠_250422-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 011" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK252_S_警告_250423-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK252_S_警告_250423-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 012" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK254_S_暴君龙人宠对战_250423-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK254_S_暴君龙人宠对战_250423-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 013" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK260_S_宝箱福利_250424-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK260_S_宝箱福利_250424-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 014" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK270_S_冰窖战斗_250429-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK270_S_冰窖战斗_250429-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 015" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK275_S_黑暗之魂战斗风格_250430-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK275_S_黑暗之魂战斗风格_250430-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 016" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK317_S_人宠对战_0516-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK317_S_人宠对战_0516-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 017" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK321_S_黑魂对战模版_0521-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK321_S_黑魂对战模版_0521-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 018" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK325_S_挑战失败剑齿虎_0519-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK325_S_挑战失败剑齿虎_0519-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 019" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK327_S_紫色对战场景_0519-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK327_S_紫色对战场景_0519-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 020" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK328_S_紫色对战苹果框架_0520-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK328_S_紫色对战苹果框架_0520-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 021" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK335_S_紫色对战_0521-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK335_S_紫色对战_0521-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 022" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK337_S_紫色对战_0521-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK337_S_紫色对战_0521-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 023" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK346_S_神宠贴脸开大_0526-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK346_S_神宠贴脸开大_0526-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 024" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK355_S_巨型史诗蛋_0527-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK355_S_巨型史诗蛋_0527-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 025" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK357_S_你醒啦_0528-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK357_S_你醒啦_0528-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 026" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK360_S_好多蛋苹果框架_0528-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK360_S_好多蛋苹果框架_0528-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 027" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK363_S_温馨场景_0529-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK363_S_温馨场景_0529-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 028" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK398_S_紫色对战_AI_玩法展示_250610-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK398_S_紫色对战_AI_玩法展示_250610-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 029" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK401_S_闪电骨架龙_AI_宠物展示_250610-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK401_S_闪电骨架龙_AI_宠物展示_250610-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 030" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK425_S_黑夜霸王龙_AI_宠物展示_250612-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK425_S_黑夜霸王龙_AI_宠物展示_250612-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 031" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK427_S_神圣的鹿_AI_人宠展示_250613-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK427_S_神圣的鹿_AI_人宠展示_250613-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 032" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK428_S_霸王龙通缉令_AI_人宠展示_250614-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK428_S_霸王龙通缉令_AI_人宠展示_250614-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 033" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK429_S_人宠蛋展示_AI_人宠展示_250614-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK429_S_人宠蛋展示_AI_人宠展示_250614-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 034" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK432_S_狮子战士_AI_人宠展示_250614-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK432_S_狮子战士_AI_人宠展示_250614-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 035" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK433_S_石像阿宝_AI_人宠展示_250616-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK433_S_石像阿宝_AI_人宠展示_250616-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 036" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK436_S_暴君龙冒险_AI_人宠展示_250616-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK436_S_暴君龙冒险_AI_人宠展示_250616-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 037" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK451_S_毛绒胡胡鹰_AI_人宠展示_250617-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK451_S_毛绒胡胡鹰_AI_人宠展示_250617-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 038" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK453_S_多页展示_AI_玩法展示_250618-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK453_S_多页展示_AI_玩法展示_250618-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 039" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK455_S_努努比斯人化展示_AI_人宠展示_250618-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK455_S_努努比斯人化展示_AI_人宠展示_250618-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 040" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK456_S_转职展示_AI_玩法展示_250618-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK456_S_转职展示_AI_玩法展示_250618-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 041" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK458_S_人宠跑_AI_人宠展示_250619-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK458_S_人宠跑_AI_人宠展示_250619-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 042" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK461_S_人宠出发_AI_人宠展示_250619-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK461_S_人宠出发_AI_人宠展示_250619-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 043" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK465_S_功夫阿宝_AI_宠物展示_250620-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK465_S_功夫阿宝_AI_宠物展示_250620-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 044" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK466_S_霸王龙送蛋_AI_福利展示_250620-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK466_S_霸王龙送蛋_AI_福利展示_250620-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 045" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK469_S_魔法书霸王龙_AI_宠物展示_250621-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK469_S_魔法书霸王龙_AI_宠物展示_250621-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 046" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK470_S_抽到努努比斯_AI_宠物展示_250621-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK470_S_抽到努努比斯_AI_宠物展示_250621-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 047" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK504_S_兽灵_AI_人宠展示_250628-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK504_S_兽灵_AI_人宠展示_250628-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 048" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK505_S_夕阳光线战斗_AI_人宠展示_250701-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK505_S_夕阳光线战斗_AI_人宠展示_250701-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 049" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK545_S_霸王龙蛋_AIPS_福利_250722-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK545_S_霸王龙蛋_AIPS_福利_250722-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 050" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK549_S_龙和福利_AIPS_福利_250723-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK549_S_龙和福利_AIPS_福利_250723-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 051" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK553_S_阿宝休息_AIPS_宠物展示_250724-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK553_S_阿宝休息_AIPS_宠物展示_250724-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 052" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK267_S_老电影胶片_250428-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK267_S_老电影胶片_250428-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 053" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/vertical/ZCXZK271_S_苹果商店页面_250429-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/vertical/thumbnails/ZCXZK271_S_苹果商店页面_250429-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="400" alt="竖图 054" />
-                </a>
-              </div>
-            </noscript>
-            <!-- noscript-gallery:vertical:end -->
           </div>
         </section>
 
-        <section id="nine-grid" class="project-gallery-section section-panel" data-stage-view="nine-grid" role="tabpanel" aria-labelledby="detail-tab-nine-grid">
+        <section id="nine-grid" class="project-gallery-section section-panel">
           <div class="battle-board detail-board" data-reveal="battle-board">
             <div class="battle-header comic-card halftone">
               <span>9-GRID</span>
@@ -626,79 +148,8 @@
             </div>
             <h2 class="section-ribbon" data-reveal="ribbon">九图素材展示 · 20 组</h2>
             <div class="pc-gallery detail-gallery ua-square-gallery" data-ua-gallery="nine-grid" aria-label="九图素材"></div>
-            <!-- noscript-gallery:nine-grid:start -->
-            <noscript data-noscript-gallery="nine-grid">
-              <div class="noscript-gallery" aria-label="nine-grid 无 JavaScript 作品列表">
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/nine-grid/九图5-001-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/nine-grid/thumbnails/九图5-001-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="225" alt="九图 001" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/nine-grid/九图5-002-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/nine-grid/thumbnails/九图5-002-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="225" alt="九图 002" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/nine-grid/九图5-003-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/nine-grid/thumbnails/九图5-003-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="225" alt="九图 003" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/nine-grid/九图5-004-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/nine-grid/thumbnails/九图5-004-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="225" alt="九图 004" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/nine-grid/九图5-005-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/nine-grid/thumbnails/九图5-005-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="225" alt="九图 005" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/nine-grid/九图5-006-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/nine-grid/thumbnails/九图5-006-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="225" alt="九图 006" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/nine-grid/九图5-007-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/nine-grid/thumbnails/九图5-007-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="225" alt="九图 007" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/nine-grid/九图5-008-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/nine-grid/thumbnails/九图5-008-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="225" alt="九图 008" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/nine-grid/九图5-009-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/nine-grid/thumbnails/九图5-009-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="225" alt="九图 009" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/nine-grid/九图5-010-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/nine-grid/thumbnails/九图5-010-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="225" alt="九图 010" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/nine-grid/九图5-011-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/nine-grid/thumbnails/九图5-011-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="225" alt="九图 011" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/nine-grid/九图5-012-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/nine-grid/thumbnails/九图5-012-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="225" alt="九图 012" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/nine-grid/九图5-013-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/nine-grid/thumbnails/九图5-013-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="225" alt="九图 013" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/nine-grid/九图5-014-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/nine-grid/thumbnails/九图5-014-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="225" alt="九图 014" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/nine-grid/九图5-015-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/nine-grid/thumbnails/九图5-015-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="225" alt="九图 015" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/nine-grid/九图5-016-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/nine-grid/thumbnails/九图5-016-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="225" alt="九图 016" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/nine-grid/九图5-017-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/nine-grid/thumbnails/九图5-017-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="225" alt="九图 017" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/nine-grid/九图5-018-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/nine-grid/thumbnails/九图5-018-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="225" alt="九图 018" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/nine-grid/九图6-001-png-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/nine-grid/thumbnails/九图6-001-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="225" alt="九图 001" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/ua-creatives/sliced/nine-grid/九图7-001-png-delivery.webp">
-                  <img src="assets/ua-creatives/sliced/nine-grid/thumbnails/九图7-001-thumb-delivery.webp" loading="lazy" decoding="async" width="225" height="225" alt="九图 001" />
-                </a>
-              </div>
-            </noscript>
-            <!-- noscript-gallery:nine-grid:end -->
           </div>
         </section>
-        <div class="detail-stage-pager" data-stage-pager hidden aria-label="作品分页">
-          <button type="button" data-stage-previous aria-label="上一页">‹</button>
-          <span data-stage-status aria-live="polite">01 / 01</span>
-          <button type="button" data-stage-next aria-label="下一页">›</button>
-        </div>
       </main>
     </div>
 
@@ -719,13 +170,12 @@
       </figure>
     </div>
 
-    <nav class="detail-directory task-rail" data-task-rail aria-label="详情页目录">
-      <button class="task-rail-toggle" type="button" data-task-rail-toggle aria-expanded="false" aria-label="展开任务目录">☰</button>
-      <span class="directory-title">任务</span>
-      <a class="directory-item" href="website-design.html"><span>01</span><span class="task-rail-label">官网视觉设计</span></a>
-      <a class="directory-item active" href="ua-creatives.html" aria-current="page"><span>02</span><span class="task-rail-label">买量图片设计</span></a>
-      <a class="directory-item" href="community-creatives.html"><span>03</span><span class="task-rail-label">运营图片设计</span></a>
-      <a class="directory-item" href="video-design.html"><span>04</span><span class="task-rail-label">AI视频设计</span></a>
+    <nav class="detail-directory" aria-label="详情页目录">
+      <span class="directory-title">目录</span>
+      <a class="directory-item" href="website-design.html">NO.01 官网视觉设计</a>
+      <a class="directory-item active" href="ua-creatives.html">NO.02 买量图片设计</a>
+      <a class="directory-item" href="community-creatives.html">NO.03 运营图片设计</a>
+      <a class="directory-item" href="video-design.html">NO.04 AI视频设计</a>
     </nav>
 
     <div class="floating-widget" aria-label="个人简历浮窗">
@@ -840,9 +290,7 @@
       </div>
     </div>
 
-    <script src="script.js?v=stability-8"></script>
-    <script src="click-stage.js?v=click-stage-10"></script>
-    <script src="detail-stage.js?v=click-stage-10"></script>
-    <script src="ua-creatives.js?v=click-stage-10"></script>
+    <script src="script.js?v=stability-1"></script>
+    <script src="ua-creatives.js?v=stability-1"></script>
   </body>
 </html>

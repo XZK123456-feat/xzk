@@ -2203,7 +2203,7 @@ body.is-previewing {
 .website-lightbox {
   position: fixed;
   inset: 0;
-  z-index: 100;
+  z-index: 60;
   display: grid;
   place-items: safe center;
   padding: 54px;
@@ -2471,17 +2471,6 @@ body.is-previewing {
 }
 
 @media (max-width: 860px) {
-  .website-lightbox {
-    padding-inline: 20px;
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .website-lightbox figure {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-  }
-
   .lightbox-image-row {
     gap: 12px;
   }
@@ -2498,11 +2487,6 @@ body.is-previewing {
     font-size: 32px;
     border-radius: 18px;
     border-width: 4px;
-  }
-
-  .lightbox-strip {
-    max-width: 100%;
-    min-width: 0;
   }
 }
 

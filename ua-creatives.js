@@ -211,7 +211,7 @@ function createShot(configKey, item, index) {
     <span class="detail-shot-label">${item.label}</span>
     <span class="detail-shot-frame">
       <span class="detail-shot-glass">
-        <img data-stage-thumb-src="${item.src}" data-stage-thumb-srcset="${srcset}" data-stage-thumb-sizes="(max-width: 700px) 44vw, 260px" width="${item.width}" height="${item.height}" alt="买量${item.label}" loading="lazy" decoding="async" />
+        <img src="${item.src}" srcset="${srcset}" sizes="(max-width: 700px) 44vw, 260px" width="${item.width}" height="${item.height}" alt="买量${item.label}" loading="lazy" decoding="async" />
       </span>
       <span class="detail-shot-ui"><i></i><i></i><i></i></span>
     </span>
@@ -226,13 +226,7 @@ const scheduleIdle = window.requestIdleCallback
   : (task) => window.setTimeout(task, 24);
 
 function renderGallery(configKey, gallery) {
-  if (!gallery) {
-    return;
-  }
-  if (gallery.dataset.rendered === "true") {
-    if (gallery.classList.contains("is-gallery-ready")) {
-      window.DetailStage?.refreshGallery(configKey);
-    }
+  if (!gallery || gallery.dataset.rendered === "true") {
     return;
   }
 
@@ -259,29 +253,51 @@ function renderGallery(configKey, gallery) {
 
     gallery.classList.remove("is-gallery-loading");
     gallery.classList.add("is-gallery-ready");
-    window.DetailStage?.registerGallery(configKey, gallery, {
-      kind: configKey === "vertical" ? "vertical" : configKey === "nine-grid" ? "square" : "horizontal",
-    });
   }
 
   renderBatch();
 }
 
 function renderGalleries() {
-  const renderActiveGallery = (configKey) => {
-    if (!sourceGroups[configKey]) {
+  const galleries = Object.keys(sourceGroups)
+    .map((configKey) => ({
+      configKey,
+      gallery: document.querySelector(`[data-ua-gallery="${configKey}"]`),
+    }))
+    .filter((entry) => entry.gallery);
+
+  if (!("IntersectionObserver" in window)) {
+    galleries.forEach(({ configKey, gallery }) => renderGallery(configKey, gallery));
+    return;
+  }
+
+  const lazyGalleryObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) {
+          return;
+        }
+
+        const configKey = entry.target.dataset.uaGallery;
+        renderGallery(configKey, entry.target);
+        lazyGalleryObserver.unobserve(entry.target);
+      });
+    },
+    {
+      rootMargin: "520px 0px",
+      threshold: 0.01,
+    },
+  );
+
+  galleries.forEach(({ configKey, gallery }) => {
+    const section = gallery.closest("section");
+    if (section && `#${section.id}` === window.location.hash) {
+      renderGallery(configKey, gallery);
       return;
     }
-    renderGallery(configKey, document.querySelector(`[data-ua-gallery="${configKey}"]`));
-  };
 
-  document.addEventListener("portfolio:stagechange", (event) => {
-    renderActiveGallery(event.detail?.view);
+    lazyGalleryObserver.observe(gallery);
   });
-
-  const activeView = document.querySelector("[data-stage-view].is-active")?.dataset.stageView
-    || window.location.hash.replace(/^#/, "").replace(/-p\d+$/, "");
-  renderActiveGallery(activeView);
 }
 
 renderGalleries();
@@ -294,6 +310,8 @@ const lightboxCounter = lightbox?.querySelector(".lightbox-counter");
 const lightboxStrip = lightbox?.querySelector(".lightbox-strip");
 
 let zoomState = { scale: 1, x: 0, y: 0, dragging: false, lastX: 0, lastY: 0 };
+let lastPreviewIndex = -1;
+const LIGHTBOX_BACKDROP_SAFE_GAP = 28;
 
 function applyZoom() {
   if (!lightboxImage) return;
@@ -304,6 +322,55 @@ function applyZoom() {
 function resetZoom() {
   zoomState = { scale: 1, x: 0, y: 0, dragging: false, lastX: 0, lastY: 0 };
   applyZoom();
+}
+
+function closePreview() {
+  if (!lightbox) { return; }
+  const wasOpen = lightbox.classList.contains("is-open");
+  lightbox.classList.remove("is-open");
+  lightbox.setAttribute("aria-hidden", "true");
+  if (wasOpen) {
+    window.unlockPreviewScroll?.();
+    window.deactivateModalDialog?.(lightbox);
+  }
+  lightbox.removeAttribute("data-direction");
+  resetZoom();
+}
+
+function isWithinExpandedRect(event, element, gap = 0) {
+  if (!element) {
+    return false;
+  }
+
+  const rect = element.getBoundingClientRect();
+  return (
+    event.clientX >= rect.left - gap &&
+    event.clientX <= rect.right + gap &&
+    event.clientY >= rect.top - gap &&
+    event.clientY <= rect.bottom + gap
+  );
+}
+
+function shouldCloseFromBackdropClick(event) {
+  if (!lightbox || event.defaultPrevented) {
+    return false;
+  }
+
+  if (event.target.closest(".lightbox-image-row, .lightbox-meta, .lightbox-strip, .lightbox-arrow, .lightbox-close")) {
+    return false;
+  }
+
+  const figure = lightbox.querySelector("figure");
+  if (isWithinExpandedRect(event, figure, LIGHTBOX_BACKDROP_SAFE_GAP)) {
+    return false;
+  }
+
+  return event.target === lightbox || !figure;
+}
+
+function getPreviewGroup(button) {
+  const gallery = button.closest(".detail-gallery");
+  return gallery ? Array.from(gallery.querySelectorAll("[data-detail-preview]")) : [];
 }
 
 function getLightboxStripKey(previews) {
@@ -334,46 +401,48 @@ function renderLightboxStrip(previews, currentIndex) {
   previews.forEach((preview, index) => {
     const image = preview.querySelector("img");
     const thumb = document.createElement("button");
-    const thumbSource = image?.currentSrc || image?.getAttribute("src") || "";
     thumb.className = `lightbox-thumb${index === currentIndex ? " active" : ""}`;
     thumb.type = "button";
     thumb.setAttribute("aria-label", `切换到${preview.querySelector(".detail-shot-label")?.textContent || image?.alt || "作品"}`);
-    thumb.innerHTML = `${thumbSource ? `<img src="${thumbSource}" alt="" />` : ""}<span>${String(index + 1).padStart(2, "0")}</span>`;
+    thumb.innerHTML = `<img src="${image?.currentSrc || image?.src || ""}" alt="" /><span>${String(index + 1).padStart(2, "0")}</span>`;
     thumb.addEventListener("click", () => openPreview(preview));
     lightboxStrip.append(thumb);
   });
   updateLightboxStrip(currentIndex);
 }
 
-const lightboxController = window.PortfolioLightbox?.createController({
-  activateModal: (dialog, opener) => window.activateModalDialog?.(dialog, opener),
-  deactivateModal: (dialog) => window.deactivateModalDialog?.(dialog),
-  image: lightboxImage,
-  lightbox,
-  lockScroll: () => window.lockPreviewScroll?.(),
-  onClose: resetZoom,
-  onRender({ index: currentIndex, item: button, items: previews, presentation }) {
-    resetZoom();
-    lightboxCaption.textContent = button.querySelector(".detail-shot-label")?.textContent || presentation.alt;
-    if (lightboxCounter) {
-      lightboxCounter.textContent = `${String(currentIndex + 1).padStart(2, "0")} / ${String(previews.length).padStart(2, "0")}`;
-    }
-    renderLightboxStrip(previews, currentIndex);
-    lightbox.scrollTop = 0;
-  },
-  unlockScroll: () => window.unlockPreviewScroll?.(),
-});
-
 function openPreview(button) {
-  lightboxController?.open(button);
-}
-
-function closePreview() {
-  lightboxController?.close();
-}
-
-function shouldCloseFromBackdropClick(event) {
-  return lightboxController?.shouldCloseFromBackdropClick(event) || false;
+  const image = button.querySelector("img");
+  if (!lightbox || !lightboxImage || !lightboxCaption || !image) { return; }
+  const wasOpen = lightbox.classList.contains("is-open");
+  const previews = getPreviewGroup(button);
+  const currentIndex = Math.max(0, previews.indexOf(button));
+  lightbox.dataset.direction = lastPreviewIndex <= currentIndex ? "next" : "prev";
+  lastPreviewIndex = currentIndex;
+  resetZoom();
+  const fullSource = button.dataset.full || image.currentSrc || image.src;
+  const fullSmallSource = button.dataset.fullSmall;
+  if (fullSmallSource && button.dataset.fullWidth) {
+    lightboxImage.srcset = `${fullSmallSource} 480w, ${fullSource} ${button.dataset.fullWidth}w`;
+    lightboxImage.sizes = "100vw";
+  } else {
+    lightboxImage.removeAttribute("srcset");
+    lightboxImage.removeAttribute("sizes");
+  }
+  lightboxImage.src = fullSource;
+  lightboxImage.alt = image.alt;
+  lightboxCaption.textContent = button.querySelector(".detail-shot-label")?.textContent || image.alt;
+  if (lightboxCounter) {
+    lightboxCounter.textContent = `${String(currentIndex + 1).padStart(2, "0")} / ${String(previews.length).padStart(2, "0")}`;
+  }
+  renderLightboxStrip(previews, currentIndex);
+  lightbox.scrollTop = 0;
+  lightbox.classList.add("is-open");
+  lightbox.setAttribute("aria-hidden", "false");
+  if (!wasOpen) {
+    window.lockPreviewScroll?.();
+    window.activateModalDialog?.(lightbox, button);
+  }
 }
 
 lightboxImage?.addEventListener('wheel', (event) => {

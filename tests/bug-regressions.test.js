@@ -14,27 +14,22 @@ const pages = [
 const detailPages = ["website-design.html", "ua-creatives.html", "community-creatives.html"];
 const detailScripts = ["website-design.js", "ua-creatives.js", "community-creatives.js"];
 const script = read("script.js");
-const clickStage = read("click-stage.js");
 const css = read("styles.css");
 const serviceWorker = read("sw.js");
-const styleRelease = "stability-3";
-const sharedRelease = "stability-8";
-const stageRelease = "click-stage-10";
+const releaseVersion = "stability-1";
 
 detailScripts.forEach((file) => {
   const source = read(file);
   assert.ok(!source.includes("encodeURI(fullSmallSource)"), `${file} must not double-encode prepared image URLs`);
   assert.ok(!source.includes("encodeURI(fullSource)"), `${file} must not double-encode prepared image URLs`);
-  assert.ok(source.includes("window.activateModalDialog?.(dialog, opener)"), `${file} should activate shared dialog focus handling`);
-  assert.ok(source.includes("window.deactivateModalDialog?.(dialog)"), `${file} should restore focus after closing`);
-  assert.ok(source.includes("window.PortfolioLightbox?.createController"), `${file} should use the shared Lightbox controller`);
+  assert.ok(source.includes("window.activateModalDialog?.(lightbox, button)"), `${file} should activate shared dialog focus handling`);
+  assert.ok(source.includes("window.deactivateModalDialog?.(lightbox)"), `${file} should restore focus after closing`);
 });
 
 assert.ok(
-  script.includes("lightbox.portfolioLightboxController?.navigate(direction)"),
-  "arrow navigation should delegate to the idempotent shared controller",
+  script.includes('lightbox.querySelectorAll(".lightbox-thumb")') && script.includes("findIndex"),
+  "arrow navigation should derive its index from the active lightbox thumbnail",
 );
-assert.ok(clickStage.includes("getAdjacentSources"), "the shared Lightbox controller should own bounded prefetching");
 assert.ok(script.includes("function activateModalDialog"), "shared script should activate modal semantics and focus containment");
 assert.ok(script.includes("function deactivateModalDialog"), "shared script should restore the opener after closing");
 assert.ok(script.includes("function trapModalFocus"), "shared script should keep Tab navigation inside an open modal");
@@ -63,15 +58,12 @@ pages.forEach((page) => {
   assert.ok(html.includes('<meta property="og:image"'), `${page} should include a share image`);
   assert.ok(html.includes('<link rel="canonical"'), `${page} should include a canonical URL`);
   assert.ok(html.includes('<link rel="icon" href="favicon.ico"'), `${page} should include a favicon`);
-  assert.ok(html.includes(`styles.css?v=${styleRelease}`), `${page} should request the current stylesheet release`);
-  assert.ok(html.includes(`script.js?v=${sharedRelease}`), `${page} should request the current shared script release`);
+  assert.ok(html.includes(`styles.css?v=${releaseVersion}`), `${page} should request the current stylesheet release`);
+  assert.ok(html.includes(`script.js?v=${releaseVersion}`), `${page} should request the current shared script release`);
 });
 
-assert.ok(script.includes(`sw.js?v=${stageRelease}`), "service worker registration should use the current release version");
-assert.ok(
-  serviceWorker.includes(`zk-portfolio-${stageRelease}`),
-  "service worker caches should use the current release version",
-);
+assert.ok(script.includes(`sw.js?v=${releaseVersion}`), "service worker registration should use the current release version");
+assert.ok(serviceWorker.includes(`zk-portfolio-${releaseVersion}`), "service worker caches should use the current release version");
 
 ["favicon.ico", "robots.txt", "sitemap.xml", "404.html", "assets/share-cover.webp"].forEach((file) => {
   assert.ok(fs.existsSync(path.join(root, file)), `${file} should exist`);

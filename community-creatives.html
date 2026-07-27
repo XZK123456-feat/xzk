@@ -69,44 +69,9 @@
         .page-loader { display: none !important; }
         html.is-page-loading .page-shell,
         body.is-page-loading .page-shell { visibility: visible !important; }
-        body.is-page-loading [data-detail-stage] {
-          height: auto !important;
-          overflow: visible !important;
-        }
-        body.is-page-loading [data-stage-view] { display: block !important;
-          position: static !important;
-          height: auto !important;
-          overflow: visible !important;
-        }
-        .noscript-gallery {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-          gap: 12px;
-          width: 100%;
-          margin-top: 18px;
-        }
-        .noscript-gallery__item {
-          display: grid;
-          place-items: center;
-          min-width: 0;
-          padding: 6px;
-          border: 2px solid #111;
-          background: #202020;
-        }
-        .noscript-gallery__item img {
-          display: block;
-          width: 100%;
-          height: auto;
-          max-height: 360px;
-          object-fit: contain;
-        }
-        @media (max-width: 480px) {
-          .noscript-gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-        }
       </style>
     </noscript>
-    <link rel="stylesheet" href="styles.css?v=stability-3" onload="this.dataset.loaderState='loaded'" onerror="this.dataset.loaderState='error'" />
-    <link rel="stylesheet" href="click-stage.css?v=click-stage-10" />
+    <link rel="stylesheet" href="styles.css?v=stability-1" onload="this.dataset.loaderState='loaded'" onerror="this.dataset.loaderState='error'" />
   </head>
   <body class="detail-page is-page-loading">
     <div class="page-loader" role="status" aria-label="页面正在加载">
@@ -117,21 +82,22 @@
         <button class="page-loader__retry" type="button" data-loading-retry hidden>重新加载</button>
       </div>
     </div>
+    <div class="scroll-progress" aria-hidden="true"><span></span></div>
+    <button class="back-to-top" type="button" aria-label="返回顶部"><span>↑</span></button>
     <div class="page-shell">
-      <div class="stage-wipe" aria-hidden="true"><span>MISSION SWITCH</span></div>
       <header class="topbar fixed-nav">
-        <a class="brand-pill back-brand" href="index.html#contents-m3" aria-label="返回作品集目录">‹ 返回</a>
+        <a class="brand-pill back-brand" href="index.html#contents" aria-label="返回作品集目录">‹ 返回</a>
         <span class="vibecoding-tag">本网页内容均由 VibeCoding 创作生成</span>
-        <nav class="nav-pills" aria-label="详情页导航" role="tablist">
-          <a class="nav-pill active" id="detail-tab-overview" href="#overview" role="tab" data-stage-tab="overview" aria-controls="overview" aria-selected="true">项目概览</a>
-          <a class="nav-pill" id="detail-tab-party-all" href="#party-all" role="tab" data-stage-tab="party-all" aria-controls="party-all" aria-selected="false">小恐龙派对</a>
-          <a class="nav-pill" id="detail-tab-ulala-all" href="#ulala-all" role="tab" data-stage-tab="ulala-all" aria-controls="ulala-all" aria-selected="false">不休的乌拉拉</a>
-          <a class="nav-pill" id="detail-tab-lili-tangquan" href="#lili-tangquan" role="tab" data-stage-tab="lili-tangquan" aria-controls="lili-tangquan" aria-selected="false">狸狸汤泉</a>
+        <nav class="nav-pills" aria-label="详情页导航">
+          <a class="nav-pill active" href="#overview">概览</a>
+          <a class="nav-pill" href="#party-all">小恐龙派对</a>
+          <a class="nav-pill" href="#ulala-all">不休的乌拉拉</a>
+          <a class="nav-pill" href="#lili-tangquan">狸狸汤泉</a>
         </nav>
       </header>
 
-      <main data-detail-stage data-default-view="overview">
-        <section id="overview" class="project-detail-hero section-panel" data-stage-view="overview" role="tabpanel" aria-labelledby="detail-tab-overview">
+      <main>
+        <section id="overview" class="project-detail-hero section-panel">
           <div class="detail-ticket" data-reveal="mission-card">NO.<strong>03</strong></div>
           <div class="detail-hero-card comic-card halftone" data-reveal="hero-panel">
             <span>COMMUNITY CREATIVES</span>
@@ -148,11 +114,11 @@
               <span>AI TOOLS</span>
               <strong>Nanobanana + 即梦seedream + MJ</strong>
             </div>
-            <a class="back-link" href="index.html#contents-m3">返回目录</a>
+            <a class="back-link" href="index.html#contents">返回目录</a>
           </div>
         </section>
 
-        <section id="party-all" class="project-gallery-section section-panel" data-stage-view="party-all" role="tabpanel" aria-labelledby="detail-tab-party-all">
+        <section id="party-all" class="project-gallery-section section-panel">
           <div class="battle-board detail-board" data-reveal="battle-board">
             <div class="battle-header comic-card halftone">
               <span>DINO PARTY</span>
@@ -160,136 +126,10 @@
             </div>
             <h2 class="section-ribbon" data-reveal="ribbon">小恐龙派对 · 40 张</h2>
             <div class="detail-gallery community-gallery" data-community-gallery="party-all" aria-label="小恐龙派对"></div>
-            <!-- noscript-gallery:party-all:start -->
-            <noscript data-noscript-gallery="party-all">
-              <div class="noscript-gallery" aria-label="party-all 无 JavaScript 作品列表">
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/1-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/1-thumb.webp" loading="lazy" decoding="async" width="800" height="450" alt="小恐龙派对 001" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/2-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/2-thumb.webp" loading="lazy" decoding="async" width="800" height="450" alt="小恐龙派对 002" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/3-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/3-thumb.webp" loading="lazy" decoding="async" width="800" height="450" alt="小恐龙派对 003" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/4-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/4-thumb.webp" loading="lazy" decoding="async" width="800" height="450" alt="小恐龙派对 004" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/5-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/5-thumb.webp" loading="lazy" decoding="async" width="800" height="450" alt="小恐龙派对 005" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/6-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/6-thumb.webp" loading="lazy" decoding="async" width="800" height="450" alt="小恐龙派对 006" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/7-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/7-thumb.webp" loading="lazy" decoding="async" width="800" height="450" alt="小恐龙派对 007" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/8-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/8-thumb.webp" loading="lazy" decoding="async" width="800" height="450" alt="小恐龙派对 008" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/9-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/9-thumb.webp" loading="lazy" decoding="async" width="800" height="450" alt="小恐龙派对 009" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/10-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/10-thumb.webp" loading="lazy" decoding="async" width="800" height="450" alt="小恐龙派对 010" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/11-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/11-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="小恐龙派对 011" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/12-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/12-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="小恐龙派对 012" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/13-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/13-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="小恐龙派对 013" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/14-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/14-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="小恐龙派对 014" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/15-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/15-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="小恐龙派对 015" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/16-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/16-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="小恐龙派对 016" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/17-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/17-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="小恐龙派对 017" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/18-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/18-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="小恐龙派对 018" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/19-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/19-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="小恐龙派对 019" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/20-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/20-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="小恐龙派对 020" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/21-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/21-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="小恐龙派对 021" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/22-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/22-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="小恐龙派对 022" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/23-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/23-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="小恐龙派对 023" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/24-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/24-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="小恐龙派对 024" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/25-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/25-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="小恐龙派对 025" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/26-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/26-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="小恐龙派对 026" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/27-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/27-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="小恐龙派对 027" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/28-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/28-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="小恐龙派对 028" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/29-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/29-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="小恐龙派对 029" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/30-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/30-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="小恐龙派对 030" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/31-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/31-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="小恐龙派对 031" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/32-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/32-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="小恐龙派对 032" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/33-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/33-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="小恐龙派对 033" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/34-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/34-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="小恐龙派对 034" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/35-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/35-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="小恐龙派对 035" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/36-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/36-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="小恐龙派对 036" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/37-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/37-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="小恐龙派对 037" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/38-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/38-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="小恐龙派对 038" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/39-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/39-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="小恐龙派对 039" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/party-all/40-delivery.webp">
-                  <img src="assets/community-creatives/sliced/party-all/thumbnails/40-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="小恐龙派对 040" />
-                </a>
-              </div>
-            </noscript>
-            <!-- noscript-gallery:party-all:end -->
           </div>
         </section>
 
-        <section id="ulala-all" class="project-gallery-section section-panel" data-stage-view="ulala-all" role="tabpanel" aria-labelledby="detail-tab-ulala-all">
+        <section id="ulala-all" class="project-gallery-section section-panel">
           <div class="battle-board detail-board" data-reveal="battle-board">
             <div class="battle-header comic-card halftone">
               <span>ULALA</span>
@@ -297,88 +137,10 @@
             </div>
             <h2 class="section-ribbon" data-reveal="ribbon">不休的乌拉拉 · 24 张</h2>
             <div class="detail-gallery community-gallery" data-community-gallery="ulala-all" aria-label="不休的乌拉拉"></div>
-            <!-- noscript-gallery:ulala-all:start -->
-            <noscript data-noscript-gallery="ulala-all">
-              <div class="noscript-gallery" aria-label="ulala-all 无 JavaScript 作品列表">
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/ulala-all/1-delivery.webp">
-                  <img src="assets/community-creatives/sliced/ulala-all/thumbnails/1-thumb.webp" loading="lazy" decoding="async" width="800" height="450" alt="不休的乌拉拉 001" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/ulala-all/2-delivery.webp">
-                  <img src="assets/community-creatives/sliced/ulala-all/thumbnails/2-thumb.webp" loading="lazy" decoding="async" width="800" height="450" alt="不休的乌拉拉 002" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/ulala-all/3-delivery.webp">
-                  <img src="assets/community-creatives/sliced/ulala-all/thumbnails/3-thumb.webp" loading="lazy" decoding="async" width="800" height="450" alt="不休的乌拉拉 003" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/ulala-all/4-delivery.webp">
-                  <img src="assets/community-creatives/sliced/ulala-all/thumbnails/4-thumb.webp" loading="lazy" decoding="async" width="800" height="450" alt="不休的乌拉拉 004" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/ulala-all/5-delivery.webp">
-                  <img src="assets/community-creatives/sliced/ulala-all/thumbnails/5-thumb.webp" loading="lazy" decoding="async" width="685" height="800" alt="不休的乌拉拉 005" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/ulala-all/6-delivery.webp">
-                  <img src="assets/community-creatives/sliced/ulala-all/thumbnails/6-thumb.webp" loading="lazy" decoding="async" width="685" height="800" alt="不休的乌拉拉 006" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/ulala-all/7-delivery.webp">
-                  <img src="assets/community-creatives/sliced/ulala-all/thumbnails/7-thumb.webp" loading="lazy" decoding="async" width="685" height="800" alt="不休的乌拉拉 007" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/ulala-all/8-delivery.webp">
-                  <img src="assets/community-creatives/sliced/ulala-all/thumbnails/8-thumb.webp" loading="lazy" decoding="async" width="685" height="800" alt="不休的乌拉拉 008" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/ulala-all/9-delivery.webp">
-                  <img src="assets/community-creatives/sliced/ulala-all/thumbnails/9-thumb.webp" loading="lazy" decoding="async" width="800" height="450" alt="不休的乌拉拉 009" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/ulala-all/10-delivery.webp">
-                  <img src="assets/community-creatives/sliced/ulala-all/thumbnails/10-thumb.webp" loading="lazy" decoding="async" width="800" height="450" alt="不休的乌拉拉 010" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/ulala-all/11-delivery.webp">
-                  <img src="assets/community-creatives/sliced/ulala-all/thumbnails/11-thumb.webp" loading="lazy" decoding="async" width="800" height="450" alt="不休的乌拉拉 011" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/ulala-all/12-delivery.webp">
-                  <img src="assets/community-creatives/sliced/ulala-all/thumbnails/12-thumb.webp" loading="lazy" decoding="async" width="800" height="450" alt="不休的乌拉拉 012" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/ulala-all/13-delivery.webp">
-                  <img src="assets/community-creatives/sliced/ulala-all/thumbnails/13-thumb.webp" loading="lazy" decoding="async" width="800" height="450" alt="不休的乌拉拉 013" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/ulala-all/14-delivery.webp">
-                  <img src="assets/community-creatives/sliced/ulala-all/thumbnails/14-thumb.webp" loading="lazy" decoding="async" width="800" height="450" alt="不休的乌拉拉 014" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/ulala-all/15-delivery.webp">
-                  <img src="assets/community-creatives/sliced/ulala-all/thumbnails/15-thumb.webp" loading="lazy" decoding="async" width="800" height="450" alt="不休的乌拉拉 015" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/ulala-all/16-delivery.webp">
-                  <img src="assets/community-creatives/sliced/ulala-all/thumbnails/16-thumb.webp" loading="lazy" decoding="async" width="800" height="450" alt="不休的乌拉拉 016" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/ulala-all/17-delivery.webp">
-                  <img src="assets/community-creatives/sliced/ulala-all/thumbnails/17-thumb.webp" loading="lazy" decoding="async" width="800" height="450" alt="不休的乌拉拉 017" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/ulala-all/18-delivery.webp">
-                  <img src="assets/community-creatives/sliced/ulala-all/thumbnails/18-thumb.webp" loading="lazy" decoding="async" width="800" height="450" alt="不休的乌拉拉 018" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/ulala-all/19-delivery.webp">
-                  <img src="assets/community-creatives/sliced/ulala-all/thumbnails/19-thumb.webp" loading="lazy" decoding="async" width="800" height="452" alt="不休的乌拉拉 019" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/ulala-all/20-delivery.webp">
-                  <img src="assets/community-creatives/sliced/ulala-all/thumbnails/20-thumb.webp" loading="lazy" decoding="async" width="800" height="600" alt="不休的乌拉拉 020" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/ulala-all/21-delivery.webp">
-                  <img src="assets/community-creatives/sliced/ulala-all/thumbnails/21-thumb.webp" loading="lazy" decoding="async" width="800" height="200" alt="不休的乌拉拉 021" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/ulala-all/22-delivery.webp">
-                  <img src="assets/community-creatives/sliced/ulala-all/thumbnails/22-thumb.webp" loading="lazy" decoding="async" width="800" height="437" alt="不休的乌拉拉 022" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/ulala-all/023-delivery.webp">
-                  <img src="assets/community-creatives/sliced/ulala-all/thumbnails/023-thumb.webp" loading="lazy" decoding="async" width="400" height="225" alt="不休的乌拉拉 023" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/ulala-all/024-delivery.webp">
-                  <img src="assets/community-creatives/sliced/ulala-all/thumbnails/024-thumb.webp" loading="lazy" decoding="async" width="400" height="225" alt="不休的乌拉拉 024" />
-                </a>
-              </div>
-            </noscript>
-            <!-- noscript-gallery:ulala-all:end -->
           </div>
         </section>
 
-        <section id="lili-tangquan" class="project-gallery-section section-panel" data-stage-view="lili-tangquan" role="tabpanel" aria-labelledby="detail-tab-lili-tangquan">
+        <section id="lili-tangquan" class="project-gallery-section section-panel">
           <div class="battle-board detail-board" data-reveal="battle-board">
             <div class="battle-header comic-card halftone">
               <span>LILI TANGQUAN</span>
@@ -386,79 +148,8 @@
             </div>
             <h2 class="section-ribbon" data-reveal="ribbon">狸狸汤泉 · 20 张</h2>
             <div class="detail-gallery community-gallery" data-community-gallery="lili-tangquan" aria-label="狸狸汤泉"></div>
-            <!-- noscript-gallery:lili-tangquan:start -->
-            <noscript data-noscript-gallery="lili-tangquan">
-              <div class="noscript-gallery" aria-label="lili-tangquan 无 JavaScript 作品列表">
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/lili-tangquan/1-delivery.webp">
-                  <img src="assets/community-creatives/sliced/lili-tangquan/thumbnails/1-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="狸狸汤泉 001" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/lili-tangquan/2-delivery.webp">
-                  <img src="assets/community-creatives/sliced/lili-tangquan/thumbnails/2-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="狸狸汤泉 002" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/lili-tangquan/3-delivery.webp">
-                  <img src="assets/community-creatives/sliced/lili-tangquan/thumbnails/3-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="狸狸汤泉 003" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/lili-tangquan/4-delivery.webp">
-                  <img src="assets/community-creatives/sliced/lili-tangquan/thumbnails/4-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="狸狸汤泉 004" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/lili-tangquan/5-delivery.webp">
-                  <img src="assets/community-creatives/sliced/lili-tangquan/thumbnails/5-thumb.webp" loading="lazy" decoding="async" width="617" height="800" alt="狸狸汤泉 005" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/lili-tangquan/6-delivery.webp">
-                  <img src="assets/community-creatives/sliced/lili-tangquan/thumbnails/6-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="狸狸汤泉 006" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/lili-tangquan/7-delivery.webp">
-                  <img src="assets/community-creatives/sliced/lili-tangquan/thumbnails/7-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="狸狸汤泉 007" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/lili-tangquan/8-delivery.webp">
-                  <img src="assets/community-creatives/sliced/lili-tangquan/thumbnails/8-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="狸狸汤泉 008" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/lili-tangquan/9-delivery.webp">
-                  <img src="assets/community-creatives/sliced/lili-tangquan/thumbnails/9-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="狸狸汤泉 009" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/lili-tangquan/10-delivery.webp">
-                  <img src="assets/community-creatives/sliced/lili-tangquan/thumbnails/10-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="狸狸汤泉 010" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/lili-tangquan/11-delivery.webp">
-                  <img src="assets/community-creatives/sliced/lili-tangquan/thumbnails/11-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="狸狸汤泉 011" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/lili-tangquan/12-delivery.webp">
-                  <img src="assets/community-creatives/sliced/lili-tangquan/thumbnails/12-thumb.webp" loading="lazy" decoding="async" width="600" height="800" alt="狸狸汤泉 012" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/lili-tangquan/13-delivery.webp">
-                  <img src="assets/community-creatives/sliced/lili-tangquan/thumbnails/13-thumb.webp" loading="lazy" decoding="async" width="800" height="800" alt="狸狸汤泉 013" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/lili-tangquan/14-delivery.webp">
-                  <img src="assets/community-creatives/sliced/lili-tangquan/thumbnails/14-thumb.webp" loading="lazy" decoding="async" width="800" height="800" alt="狸狸汤泉 014" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/lili-tangquan/15-delivery.webp">
-                  <img src="assets/community-creatives/sliced/lili-tangquan/thumbnails/15-thumb.webp" loading="lazy" decoding="async" width="800" height="800" alt="狸狸汤泉 015" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/lili-tangquan/16-delivery.webp">
-                  <img src="assets/community-creatives/sliced/lili-tangquan/thumbnails/16-thumb.webp" loading="lazy" decoding="async" width="800" height="800" alt="狸狸汤泉 016" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/lili-tangquan/17-delivery.webp">
-                  <img src="assets/community-creatives/sliced/lili-tangquan/thumbnails/17-thumb.webp" loading="lazy" decoding="async" width="800" height="800" alt="狸狸汤泉 017" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/lili-tangquan/18-delivery.webp">
-                  <img src="assets/community-creatives/sliced/lili-tangquan/thumbnails/18-thumb.webp" loading="lazy" decoding="async" width="800" height="800" alt="狸狸汤泉 018" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/lili-tangquan/19-delivery.webp">
-                  <img src="assets/community-creatives/sliced/lili-tangquan/thumbnails/19-thumb.webp" loading="lazy" decoding="async" width="800" height="800" alt="狸狸汤泉 019" />
-                </a>
-                <a class="noscript-gallery__item" href="assets/community-creatives/sliced/lili-tangquan/20-delivery.webp">
-                  <img src="assets/community-creatives/sliced/lili-tangquan/thumbnails/20-thumb.webp" loading="lazy" decoding="async" width="800" height="800" alt="狸狸汤泉 020" />
-                </a>
-              </div>
-            </noscript>
-            <!-- noscript-gallery:lili-tangquan:end -->
           </div>
         </section>
-        <div class="detail-stage-pager" data-stage-pager hidden aria-label="作品分页">
-          <button type="button" data-stage-previous aria-label="上一页">‹</button>
-          <span data-stage-status aria-live="polite">01 / 01</span>
-          <button type="button" data-stage-next aria-label="下一页">›</button>
-        </div>
       </main>
     </div>
 
@@ -479,13 +170,12 @@
       </figure>
     </div>
 
-    <nav class="detail-directory task-rail" data-task-rail aria-label="详情页目录">
-      <button class="task-rail-toggle" type="button" data-task-rail-toggle aria-expanded="false" aria-label="展开任务目录">☰</button>
-      <span class="directory-title">任务</span>
-      <a class="directory-item" href="website-design.html"><span>01</span><span class="task-rail-label">官网视觉设计</span></a>
-      <a class="directory-item" href="ua-creatives.html"><span>02</span><span class="task-rail-label">买量图片设计</span></a>
-      <a class="directory-item active" href="community-creatives.html" aria-current="page"><span>03</span><span class="task-rail-label">运营图片设计</span></a>
-      <a class="directory-item" href="video-design.html"><span>04</span><span class="task-rail-label">AI视频设计</span></a>
+    <nav class="detail-directory" aria-label="详情页目录">
+      <span class="directory-title">目录</span>
+      <a class="directory-item" href="website-design.html">NO.01 官网视觉设计</a>
+      <a class="directory-item" href="ua-creatives.html">NO.02 买量图片设计</a>
+      <a class="directory-item active" href="community-creatives.html">NO.03 运营图片设计</a>
+      <a class="directory-item" href="video-design.html">NO.04 AI视频设计</a>
     </nav>
 
     <div class="floating-widget" aria-label="个人简历浮窗">
@@ -600,9 +290,7 @@
       </div>
     </div>
 
-    <script src="script.js?v=stability-8"></script>
-    <script src="click-stage.js?v=click-stage-10"></script>
-    <script src="detail-stage.js?v=click-stage-10"></script>
-    <script src="community-creatives.js?v=click-stage-10"></script>
+    <script src="script.js?v=stability-1"></script>
+    <script src="community-creatives.js?v=stability-1"></script>
   </body>
 </html>
