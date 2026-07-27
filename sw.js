@@ -1,4 +1,4 @@
-const CACHE_VERSION = "zk-portfolio-click-stage-11";
+const CACHE_VERSION = "zk-portfolio-click-stage-12";
 const CORE_CACHE = `${CACHE_VERSION}-core`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const CORE_ASSETS = [
@@ -10,13 +10,13 @@ const CORE_ASSETS = [
   "./video-design.html",
   "./styles.css?v=stability-3",
   "./script.js?v=stability-9",
-  "./click-stage.css?v=click-stage-11",
-  "./click-stage.js?v=click-stage-11",
+  "./click-stage.css?v=click-stage-12",
+  "./click-stage.js?v=click-stage-12",
   "./home-stage.js?v=click-stage-2",
-  "./detail-stage.js?v=click-stage-11",
-  "./website-design.js?v=click-stage-11",
-  "./ua-creatives.js?v=click-stage-11",
-  "./community-creatives.js?v=click-stage-11",
+  "./detail-stage.js?v=click-stage-12",
+  "./website-design.js?v=click-stage-12",
+  "./ua-creatives.js?v=click-stage-12",
+  "./community-creatives.js?v=click-stage-12",
   "./favicon.ico",
   "./assets/share-cover.webp",
   "./assets/fonts/ZHYuwanPortfolio-subset.woff2",
